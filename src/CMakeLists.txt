@@ -5,3 +5,7 @@ include_directories(
 add_library(globallock STATIC
     globallock.cpp
 )
+
+add_library(lsm STATIC
+    lsm.cpp
+)
