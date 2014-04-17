@@ -14,7 +14,7 @@ public:
     bool delete_min(uint32_t &v);
 
 private:
-    typedef std::priority_queue<uint32_t> pq_t;
+    typedef std::priority_queue<uint32_t, std::vector<uint32_t>, std::greater<uint32_t>> pq_t;
 
     std::mutex m_mutex;
     pq_t m_q;
