@@ -37,6 +37,29 @@ TEST_F(PQTest, SanityCheck)
     EXPECT_EQ(0, v);
 }
 
+TEST_F(PQTest, NewMinElem)
+{
+    uint32_t v;
+    for (int i = 0; i < 64; i++) {
+        EXPECT_TRUE(m_pq.delete_min(v));
+    }
+
+    const uint32_t w = v - 1;
+    m_pq.insert(w);
+    EXPECT_TRUE(m_pq.delete_min(v));
+    EXPECT_EQ(w, v);
+}
+
+TEST_F(PQTest, ExtractAll)
+{
+    uint32_t v;
+    for (int i = 0; i < PQ_SIZE; i++) {
+        EXPECT_TRUE(m_pq.delete_min(v));
+    }
+
+    EXPECT_FALSE(m_pq.delete_min(v));
+}
+
 int
 main(int argc,
      char **argv)
