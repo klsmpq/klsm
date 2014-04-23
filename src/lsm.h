@@ -20,7 +20,7 @@ public:
     bool delete_min(T &v);
 
 private:
-    LSMBlock<T> *m_head;
+    LSMBlock<T> *m_head; /**< The smallest block in the list. */
 };
 
 }
