@@ -47,7 +47,7 @@ TYPED_TEST(PQTest, NewMinElem)
 {
     uint32_t v;
     for (int i = 0; i < 64; i++) {
-        EXPECT_TRUE(this->m_pq.delete_min(v));
+        ASSERT_TRUE(this->m_pq.delete_min(v));
     }
 
     const uint32_t w = v - 1;
@@ -59,14 +59,14 @@ TYPED_TEST(PQTest, NewMinElem)
 TYPED_TEST(PQTest, ExtractAll)
 {
     uint32_t v, w;
-    EXPECT_TRUE(this->m_pq.delete_min(v));
+    ASSERT_TRUE(this->m_pq.delete_min(v));
     for (int i = 1; i < PQ_SIZE; i++) {
         w = v;
-        EXPECT_TRUE(this->m_pq.delete_min(v));
-        EXPECT_LE(w, v);
+        ASSERT_TRUE(this->m_pq.delete_min(v));
+        ASSERT_LE(w, v);
     }
 
-    EXPECT_FALSE(this->m_pq.delete_min(v));
+    ASSERT_FALSE(this->m_pq.delete_min(v));
 }
 
 /* Doesn't play nice with typed test case.
