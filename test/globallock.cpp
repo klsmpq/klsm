@@ -58,9 +58,12 @@ TYPED_TEST(PQTest, NewMinElem)
 
 TYPED_TEST(PQTest, ExtractAll)
 {
-    uint32_t v;
-    for (int i = 0; i < PQ_SIZE; i++) {
+    uint32_t v, w;
+    EXPECT_TRUE(this->m_pq.delete_min(v));
+    for (int i = 1; i < PQ_SIZE; i++) {
+        w = v;
         EXPECT_TRUE(this->m_pq.delete_min(v));
+        EXPECT_LE(w, v);
     }
 
     EXPECT_FALSE(this->m_pq.delete_min(v));
