@@ -5,7 +5,7 @@
 #include "globallock.h"
 #include "lsm.h"
 
-#define PQ_SIZE (1 << 15)
+#define PQ_SIZE ((1 << 15) - 1)
 
 using namespace kpq;
 
