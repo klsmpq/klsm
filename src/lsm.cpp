@@ -54,16 +54,17 @@ struct LSMBlock {
         return 0; /* FIXME */
     }
 
-    T pop()
+    bool pop(T &v)
     {
         for (uint32_t i = 0; i < m_n; i++) {
             if (m_elems[i].m_used) {
                 m_elems[i].m_used = false;
-                return m_elems[i].m_elem;
+                v = m_elems[i].m_elem;
+                return true;
             }
         }
 
-        return 0; /* FIXME */
+        return false;
     }
 
     void shrink()
@@ -160,7 +161,10 @@ LSM<T>::delete_min(T &v)
         return false;
     }
 
-    v = best->pop();
+    const bool nonempty = best->pop(v);
+    if (!nonempty) {
+        return false;
+    }
 
     if (best->size() < best->m_n / 2) {
         best->shrink();
