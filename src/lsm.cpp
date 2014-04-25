@@ -15,19 +15,6 @@ public:
     {
     }
 
-    bool operator<(const LSMElem<T> &that) const
-    {
-        if (!this->m_used && that.m_used) {
-            return false;
-        }
-
-        if (this->m_used && !that.m_used) {
-            return true;
-        }
-
-        return this->m_elem < that.m_elem;
-    }
-
     T peek() const
     {
         assert(m_used);
