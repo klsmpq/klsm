@@ -16,8 +16,16 @@ protected:
     virtual void
     SetUp()
     {
-        m_elements.reserve(PQ_SIZE);
-        for (uint32_t i = 0; i < PQ_SIZE; i++) {
+        generate_elements(PQ_SIZE);
+    }
+
+    virtual void generate_elements(const int n)
+    {
+        m_elements.clear();
+        m_pq.clear();
+
+        m_elements.reserve(n);
+        for (uint32_t i = 0; i < n; i++) {
             m_elements.push_back(i);
             m_pq.insert(i);
         }
