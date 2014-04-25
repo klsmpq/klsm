@@ -246,9 +246,12 @@ LSM<T>::delete_min(T &v)
 
     auto best = m_head;
     for (auto l = best->m_next; l != nullptr; l = l->m_next) {
-        T lhs, rhs;
-        assert(l->peek(lhs));
-        assert(best->peek(rhs));
+        T lhs = T(), rhs = T();
+        const bool l_has_elems __attribute__((unused)) = l->peek(lhs);
+        const bool r_has_elems __attribute__((unused)) = best->peek(rhs);
+
+        assert(l_has_elems);
+        assert(r_has_elems);
 
         if (lhs < rhs) {
             best = l;
@@ -259,7 +262,8 @@ LSM<T>::delete_min(T &v)
         return false;
     }
 
-    assert(best->pop(v));
+    const bool has_elems __attribute__((unused)) = best->pop(v);
+    assert(has_elems);
 
     if (best->size() == 0 && m_head == best) {
         /* Unlink empty blocks of capacity 1 or 2. */
