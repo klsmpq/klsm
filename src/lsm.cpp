@@ -287,10 +287,6 @@ LSM<T>::delete_min(T &v)
         }
     }
 
-    if (best == nullptr || best->size() == 0) {
-        return false;
-    }
-
     const bool has_elems __attribute__((unused)) = best->pop(v);
     assert(has_elems);
 
