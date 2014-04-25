@@ -28,6 +28,10 @@ private:
     LSMBlock<T> *unused_block(const int n);
     void prune_last_block();
 
+    void insert_between(LSMBlock<T> *new_block,
+                        LSMBlock<T> *prev,
+                        LSMBlock<T> *next);
+
 private:
     LSMBlock<T> *m_head; /**< The smallest block in the list. */
 

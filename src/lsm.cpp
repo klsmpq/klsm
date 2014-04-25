@@ -252,18 +252,12 @@ LSM<T>::insert(const T v)
     while (m_head != nullptr && m_head->capacity() == new_block->capacity()) {
         auto merged_block = unused_block(new_block->capacity() * 2);
         merged_block->merge(m_head, new_block);
+        new_block = merged_block;
 
         m_head = m_head->m_next;
-
-        new_block = merged_block;
     }
 
-    if (m_head != nullptr) {
-        m_head->m_prev = new_block;
-    }
-
-    new_block->m_next = m_head;
-    m_head = new_block;
+    insert_between(new_block, nullptr, m_head);
 
 #ifdef DEBUG
     printf("after insert(%d)\n", v);
@@ -314,27 +308,12 @@ LSM<T>::delete_min(T &v)
     } else if (best->size() < best->capacity() / 2) {
         /* Merge with previous block. */
 
-        bool prune_last = false; /**< Whether last block should be pruned. */
+        /* Whether last block should be pruned. */
+        bool prune_last = (best->m_next == nullptr);
 
         auto shrunk_block = unused_block(best->capacity() / 2);
-
         shrunk_block->shrink(best);
-
-        shrunk_block->m_prev = best->m_prev;
-        shrunk_block->m_next = best->m_next;
-
-        if (shrunk_block->m_prev != nullptr) {
-            shrunk_block->m_prev->m_next = shrunk_block;
-        } else {
-            m_head = shrunk_block;
-        }
-
-        if (shrunk_block->m_next != nullptr) {
-            shrunk_block->m_next->m_prev = shrunk_block;
-        } else {
-            prune_last = true;
-        }
-
+        insert_between(shrunk_block, best->m_prev, best->m_next);
         best = shrunk_block;
 
         auto lhs = best->m_prev;
@@ -345,24 +324,7 @@ LSM<T>::delete_min(T &v)
 
             auto merged_block = unused_block(lhs->capacity() * 2);
             merged_block->merge(lhs, rhs);
-
-
-            /* Reconnect on the left. */
-
-            if (lhs->m_prev != nullptr) {
-                lhs->m_prev->m_next = merged_block;
-            } else {
-                m_head = merged_block;
-            }
-
-            /* Reconnect on the right. */
-
-            if (rhs->m_next != nullptr) {
-                rhs->m_next->m_prev = merged_block;
-            }
-
-            merged_block->m_prev = lhs->m_prev;
-            merged_block->m_next = rhs->m_next;
+            insert_between(merged_block, lhs->m_prev, rhs->m_next);
         }
 
         if (prune_last) {
@@ -440,6 +402,26 @@ LSM<T>::prune_last_block()
     delete m_blocks[last].second;
 
     m_blocks.erase(m_blocks.begin() + last);
+}
+
+template <class T>
+void
+LSM<T>::insert_between(LSMBlock<T> *new_block,
+                       LSMBlock<T> *prev,
+                       LSMBlock<T> *next)
+{
+    if (prev != nullptr) {
+        prev->m_next = new_block;
+    } else {
+        m_head = new_block;
+    }
+
+    if (next != nullptr) {
+        next->m_prev = new_block;
+    }
+
+    new_block->m_prev = prev;
+    new_block->m_next = next;
 }
 
 template class LSM<uint32_t>;
