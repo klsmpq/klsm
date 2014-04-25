@@ -327,6 +327,8 @@ LSM<T>::delete_min(T &v)
     } else if (best->size() < best->capacity() / 2) {
         /* Merge with previous block. */
 
+        bool prune_last = false; /**< Whether last block should be pruned. */
+
         auto shrunk_block = unused_block(best->capacity() / 2);
 
         shrunk_block->shrink(best);
@@ -342,6 +344,8 @@ LSM<T>::delete_min(T &v)
 
         if (shrunk_block->m_next != nullptr) {
             shrunk_block->m_next->m_prev = shrunk_block;
+        } else {
+            prune_last = true;
         }
 
         best = shrunk_block;
@@ -350,6 +354,8 @@ LSM<T>::delete_min(T &v)
         auto rhs = best;
 
         if (lhs != nullptr && lhs->capacity() == rhs->capacity()) {
+            prune_last = false;
+
             auto merged_block = unused_block(lhs->capacity() * 2);
             merged_block->merge(lhs, rhs);
 
@@ -370,8 +376,10 @@ LSM<T>::delete_min(T &v)
 
             merged_block->m_prev = lhs->m_prev;
             merged_block->m_next = rhs->m_next;
+        }
 
-            /* TODO: Free blocks if possible. */
+        if (prune_last) {
+            prune_last_block();
         }
     }
 
@@ -431,6 +439,20 @@ LSM<T>::unused_block(const int n)
     } else {
         return m_blocks[i].first;
     }
+}
+
+template <class T>
+void
+LSM<T>::prune_last_block()
+{
+    const int last = m_blocks.size() - 1;
+
+    assert(m_blocks[last - 1].first->used() || m_blocks[last - 1].second->used());
+
+    delete m_blocks[last].first;
+    delete m_blocks[last].second;
+
+    m_blocks.erase(m_blocks.begin() + last);
 }
 
 template class LSM<uint32_t>;

@@ -26,6 +26,7 @@ private:
 
     /** Returns an unused block of size n == 2^i. */
     LSMBlock<T> *unused_block(const int n);
+    void prune_last_block();
 
 private:
     LSMBlock<T> *m_head; /**< The smallest block in the list. */
