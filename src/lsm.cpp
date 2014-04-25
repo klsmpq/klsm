@@ -250,7 +250,7 @@ LSM<T>::insert(const T v)
     new_block->put(v);
 
     while (m_head != nullptr && m_head->capacity() == new_block->capacity()) {
-        auto merged_block = unused_block(new_block->capacity() * 2);
+        const auto merged_block = unused_block(new_block->capacity() * 2);
         merged_block->merge(m_head, new_block);
         new_block = merged_block;
 
@@ -307,18 +307,18 @@ LSM<T>::delete_min(T &v)
         /* Whether last block should be pruned. */
         bool prune_last = (best->m_next == nullptr);
 
-        auto shrunk_block = unused_block(best->capacity() / 2);
+        const auto shrunk_block = unused_block(best->capacity() / 2);
         shrunk_block->shrink(best);
         insert_between(shrunk_block, best->m_prev, best->m_next);
         best = shrunk_block;
 
-        auto lhs = best->m_prev;
-        auto rhs = best;
+        const auto lhs = best->m_prev;
+        const auto rhs = best;
 
         if (lhs != nullptr && lhs->capacity() == rhs->capacity()) {
             prune_last = false;
 
-            auto merged_block = unused_block(lhs->capacity() * 2);
+            const auto merged_block = unused_block(lhs->capacity() * 2);
             merged_block->merge(lhs, rhs);
             insert_between(merged_block, lhs->m_prev, rhs->m_next);
         }
