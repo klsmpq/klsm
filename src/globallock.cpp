@@ -26,4 +26,12 @@ GlobalLock::insert(const uint32_t v)
     m_q.push(v);
 }
 
+void
+GlobalLock::clear()
+{
+    std::lock_guard<std::mutex> g(m_mutex);
+
+    m_q = pq_t();
+}
+
 }

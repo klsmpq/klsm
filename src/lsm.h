@@ -18,6 +18,7 @@ public:
 
     void insert(const T v);
     bool delete_min(T &v);
+    void clear();
 
 private:
     LSMBlock<T> *m_head; /**< The smallest block in the list. */

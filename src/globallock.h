@@ -12,6 +12,7 @@ class GlobalLock
 public:
     void insert(const uint32_t v);
     bool delete_min(uint32_t &v);
+    void clear();
 
 private:
     typedef std::priority_queue<uint32_t, std::vector<uint32_t>, std::greater<uint32_t>> pq_t;

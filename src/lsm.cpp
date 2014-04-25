@@ -156,11 +156,7 @@ LSM<T>::LSM() :
 template <class T>
 LSM<T>::~LSM()
 {
-    while (m_head != nullptr) {
-        LSMBlock<T> *next = m_head->m_next;
-        delete m_head;
-        m_head = next;
-    }
+    clear();
 }
 
 template <class T>
@@ -259,6 +255,17 @@ LSM<T>::delete_min(T &v)
     }
 
     return true;
+}
+
+template <class T>
+void
+LSM<T>::clear()
+{
+    while (m_head != nullptr) {
+        LSMBlock<T> *next = m_head->m_next;
+        delete m_head;
+        m_head = next;
+    }
 }
 
 template class LSM<uint32_t>;
