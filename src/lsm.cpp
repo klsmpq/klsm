@@ -139,6 +139,18 @@ public:
         return m_capacity;
     }
 
+    void print() const
+    {
+        printf("size: %d, capacity: %d, first: %d\n", m_size, m_capacity, m_first);
+        for (int i = 0; i < m_capacity; i++) {
+            T v = 0;
+            if (m_elems[i].used()) {
+                v = m_elems[i].peek();
+            }
+            printf("%d: { %d, %d }\n", i, v, m_elems[i].used());
+        }
+    }
+
 public:
     LSMBlock<T> *m_prev, *m_next;
 
@@ -183,6 +195,11 @@ LSM<T>::insert(const T v)
 
     new_block->m_next = m_head;
     m_head = new_block;
+
+#ifdef DEBUG
+    printf("after insert(%d)\n", v);
+    print();
+#endif
 }
 
 template <class T>
@@ -254,6 +271,11 @@ LSM<T>::delete_min(T &v)
         }
     }
 
+#ifdef DEBUG
+    printf("after delete_min(%d)\n", v);
+    print();
+#endif
+
     return true;
 }
 
@@ -265,6 +287,15 @@ LSM<T>::clear()
         LSMBlock<T> *next = m_head->m_next;
         delete m_head;
         m_head = next;
+    }
+}
+
+template <class T>
+void
+LSM<T>::print() const
+{
+    for (auto block = m_head; block != nullptr; block = block->m_next) {
+        block->print();
     }
 }
 

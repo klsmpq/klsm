@@ -21,6 +21,9 @@ public:
     void clear();
 
 private:
+    void print() const;
+
+private:
     LSMBlock<T> *m_head; /**< The smallest block in the list. */
 };
 
