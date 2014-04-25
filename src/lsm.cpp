@@ -62,27 +62,41 @@ template <class T>
 class LSMBlock
 {
 public:
-    LSMBlock(const T v) :
+    LSMBlock(const int n) :
         m_prev(nullptr),
         m_next(nullptr),
-        m_elems(1),
+        m_elems(n),
         m_first(0),
-        m_size(1),
-        m_capacity(1)
+        m_size(0),
+        m_capacity(n),
+        m_used(false)
     {
-        m_elems[0].put(v);
     }
 
-    LSMBlock(LSMBlock<T> *lhs,
-             LSMBlock<T> *rhs) :
-        m_prev(nullptr),
-        m_next(nullptr),
-        m_elems(lhs->capacity() * 2),
-        m_first(0),
-        m_size(lhs->size() + rhs->size()),
-        m_capacity(lhs->capacity() * 2)
+    void put(const T &v)
     {
+        assert(m_capacity == 1);
+        assert(m_size == 0);
+        assert(!m_used);
+
+        m_first = 0;
+        m_size = 1;
+        m_elems[0].put(v);
+        m_used = true;
+        m_prev = m_next = nullptr;
+    }
+
+    void merge(LSMBlock<T> *lhs,
+               LSMBlock<T> *rhs)
+    {
+        assert(m_capacity == lhs->capacity() * 2);
         assert(lhs->capacity() == rhs->capacity());
+        assert(!m_used);
+
+        m_first = 0;
+        m_size = lhs->size() + rhs->size();
+        m_used = true;
+        m_prev = m_next = nullptr;
 
         /* Merge. */
 
@@ -121,6 +135,30 @@ public:
             }
             m_elems[dst++] = rhs->m_elems[r++];
         }
+
+        lhs->set_unused();
+        rhs->set_unused();
+    }
+
+    void shrink(LSMBlock<T> *that)
+    {
+        assert(m_size == 0);
+        assert(m_capacity == that->capacity() / 2);
+        assert(!m_used);
+
+        uint32_t j = 0;
+        for (uint32_t i = that->m_first; i < that->m_capacity; i++) {
+            if (that->m_elems[i].used()) {
+                m_elems[j++] = that->m_elems[i];
+            }
+        }
+
+        m_size = that->size();
+        m_first = 0;
+        m_used = true;
+        m_prev = m_next = nullptr;
+
+        that->set_unused();
     }
 
     bool peek(T &v) const
@@ -145,24 +183,6 @@ public:
         return true;
     }
 
-    void shrink()
-    {
-        /* TODO: What happens if the block is emptied in delete_min? */
-        std::vector<LSMElem<T>> new_elems(m_capacity / 2);
-
-        uint32_t j = 0;
-        for (uint32_t i = m_first; i < m_capacity; i++) {
-            if (m_elems[i].used()) {
-                new_elems[j++] = m_elems[i];
-            }
-        }
-
-        m_elems = new_elems;
-
-        m_first = 0;
-        m_capacity /= 2;
-    }
-
     size_t size() const
     {
         return m_size;
@@ -171,6 +191,24 @@ public:
     size_t capacity() const
     {
         return m_capacity;
+    }
+
+    bool used() const
+    {
+        return m_used;
+    }
+
+    void set_unused()
+    {
+        assert(m_used);
+
+        m_used = false;
+        m_first = 0;
+        m_size = 0;
+
+        for (uint32_t i = 0; i < m_capacity; i++) {
+            m_elems[i] = LSMElem<T>();
+        }
     }
 
     void print() const
@@ -190,7 +228,9 @@ public:
 
 private:
     std::vector<LSMElem<T>> m_elems;
-    uint32_t m_first, m_size, m_capacity;
+    uint32_t m_first, m_size;
+    const uint32_t m_capacity;
+    bool m_used;
 };
 
 template <class T>
@@ -209,16 +249,14 @@ template <class T>
 void
 LSM<T>::insert(const T v)
 {
-    auto new_block = new LSMBlock<T>(v);
+    auto new_block = unused_block(1);
+    new_block->put(v);
 
     while (m_head != nullptr && m_head->capacity() == new_block->capacity()) {
-        auto merged_block = new LSMBlock<T>(m_head, new_block);
-        auto old_head = m_head;
+        auto merged_block = unused_block(new_block->capacity() * 2);
+        merged_block->merge(m_head, new_block);
 
         m_head = m_head->m_next;
-
-        delete old_head;
-        delete new_block;
 
         new_block = merged_block;
     }
@@ -275,17 +313,36 @@ LSM<T>::delete_min(T &v)
             m_head->m_prev = nullptr;
         }
 
-        delete best;
+        best->set_unused();
     } else if (best->size() < best->capacity() / 2) {
         /* Merge with previous block. */
 
-        best->shrink();
+        auto shrunk_block = unused_block(best->capacity() / 2);
+
+        shrunk_block->shrink(best);
+
+        shrunk_block->m_prev = best->m_prev;
+        shrunk_block->m_next = best->m_next;
+
+        if (shrunk_block->m_prev != nullptr) {
+            shrunk_block->m_prev->m_next = shrunk_block;
+        } else {
+            m_head = shrunk_block;
+        }
+
+        if (shrunk_block->m_next != nullptr) {
+            shrunk_block->m_next->m_prev = shrunk_block;
+        }
+
+        best = shrunk_block;
 
         auto lhs = best->m_prev;
         auto rhs = best;
 
         if (lhs != nullptr && lhs->capacity() == rhs->capacity()) {
-            auto merged_block = new LSMBlock<T>(lhs, rhs);
+            auto merged_block = unused_block(lhs->capacity() * 2);
+            merged_block->merge(lhs, rhs);
+
 
             /* Reconnect on the left. */
 
@@ -304,8 +361,7 @@ LSM<T>::delete_min(T &v)
             merged_block->m_prev = lhs->m_prev;
             merged_block->m_next = rhs->m_next;
 
-            delete lhs;
-            delete rhs;
+            /* TODO: Free blocks if possible. */
         }
     }
 
@@ -321,11 +377,14 @@ template <class T>
 void
 LSM<T>::clear()
 {
-    while (m_head != nullptr) {
-        LSMBlock<T> *next = m_head->m_next;
-        delete m_head;
-        m_head = next;
+    m_head = nullptr;
+
+    for (auto &block_pair : m_blocks) {
+        delete block_pair.first;
+        delete block_pair.second;
     }
+
+    m_blocks.clear();
 }
 
 template <class T>
@@ -334,6 +393,33 @@ LSM<T>::print() const
 {
     for (auto block = m_head; block != nullptr; block = block->m_next) {
         block->print();
+    }
+}
+
+template <class T>
+LSMBlock<T> *
+LSM<T>::unused_block(const int n)
+{
+    /* TODO: Ugly hack. */
+    int i = 0, m = n;
+    while (m > 1) {
+        m >>= 1;
+        i++;
+    }
+
+    if (i >= m_blocks.size()) {
+        /* Alloc new blocks. */
+
+        assert(m_blocks.size() == i);
+
+        m_blocks.push_back({ new LSMBlock<T>(n), new LSMBlock<T>(n) });
+    }
+
+    if (m_blocks[i].first->used()) {
+        assert(!m_blocks[i].second->used());
+        return m_blocks[i].second;
+    } else {
+        return m_blocks[i].first;
     }
 }
 
