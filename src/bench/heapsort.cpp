@@ -86,7 +86,7 @@ bench(T *pq,
     /* End benchmark. */
 
     const double elapsed = timediff_in_s(start, end);
-    fprintf(stdout, "%s, %d, %1.8f\n", settings.type.c_str(), settings.nelems, elapsed);
+    fprintf(stdout, "%1.8f\n", elapsed);
 
     /* Verify results. */
     for (int i = 1; i < settings.nelems; i++) {
