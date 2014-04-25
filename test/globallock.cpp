@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
+#include <random>
 #include <vector>
 #include <thread>
 
 #include "globallock.h"
 #include "lsm.h"
 
+#define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
 
 using namespace kpq;
@@ -21,13 +23,21 @@ protected:
 
     virtual void generate_elements(const int n)
     {
+        std::mt19937 gen(DEFAULT_SEED);
+        std::uniform_int_distribution<> rand_int;
+
         m_elements.clear();
         m_pq.clear();
 
+        m_min = std::numeric_limits<uint32_t>::max();
+
         m_elements.reserve(n);
         for (uint32_t i = 0; i < n; i++) {
-            m_elements.push_back(i);
-            m_pq.insert(i);
+            const uint32_t v = rand_int(gen);
+
+            m_elements.push_back(v);
+            m_pq.insert(v);
+            m_min = std::min(m_min, v);
         }
     }
 
@@ -39,6 +49,8 @@ protected:
 protected:
     T m_pq;
     std::vector<uint32_t> m_elements;
+
+    uint32_t m_min;
 };
 
 typedef ::testing::Types<GlobalLock, LSM<uint32_t>> TestTypes;
@@ -48,7 +60,7 @@ TYPED_TEST(PQTest, SanityCheck)
 {
     uint32_t v;
     EXPECT_TRUE(this->m_pq.delete_min(v));
-    EXPECT_EQ(0, v);
+    EXPECT_EQ(this->m_min, v);
 }
 
 TYPED_TEST(PQTest, NewMinElem)
@@ -79,7 +91,7 @@ TYPED_TEST(PQTest, ExtractAll)
 
 TYPED_TEST(PQTest, ExtractAllDiffSizes)
 {
-    std::vector<int> sizes { 1, 5, 7, 15, 16, 47, 64, 48, 113, 128, 1234 };
+    std::vector<int> sizes { 1, 5, 7, 15, 16, 47, 64, 48, 113, 128, 1234, 12 };
     for (int size : sizes) {
         this->generate_elements(size);
 
