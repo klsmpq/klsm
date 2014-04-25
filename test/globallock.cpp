@@ -77,6 +77,24 @@ TYPED_TEST(PQTest, ExtractAll)
     ASSERT_FALSE(this->m_pq.delete_min(v));
 }
 
+TYPED_TEST(PQTest, ExtractAllDiffSizes)
+{
+    std::vector<int> sizes { 1, 5, 7, 15, 16, 47, 64, 48, 113, 128, 1234 };
+    for (int size : sizes) {
+        this->generate_elements(size);
+
+        uint32_t v, w;
+        ASSERT_TRUE(this->m_pq.delete_min(v));
+        for (int i = 1; i < size; i++) {
+            w = v;
+            ASSERT_TRUE(this->m_pq.delete_min(v));
+            ASSERT_LE(w, v);
+        }
+
+        ASSERT_FALSE(this->m_pq.delete_min(v));
+    }
+}
+
 /* Doesn't play nice with typed test case.
 static void
 delete_n(GlobalLock *pq,
