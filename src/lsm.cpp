@@ -103,37 +103,50 @@ public:
         int l = 0, r = 0, dst = 0;
 
         while (l < lhs->capacity() && r < rhs->capacity()) {
-            if (!lhs->m_elems[l].used()) {
+            auto &lelem = lhs->m_elems[l];
+            auto &relem = rhs->m_elems[r];
+
+            if (!lelem.used()) {
                 l++;
                 continue;
             }
 
-            if (!rhs->m_elems[r].used()) {
+            if (!relem.used()) {
                 r++;
                 continue;
             }
 
-            if (lhs->m_elems[l].peek() < rhs->m_elems[r].peek()) {
-                m_elems[dst++] = lhs->m_elems[l++];
+            if (lelem.peek() < relem.peek()) {
+                m_elems[dst++] = lelem;
+                lelem.pop();
+                l++;
             } else {
-                m_elems[dst++] = rhs->m_elems[r++];
+                m_elems[dst++] = relem;
+                relem.pop();
+                r++;
             }
         }
 
         while (l < lhs->capacity()) {
-            if (!lhs->m_elems[l].used()) {
+            auto &lelem = lhs->m_elems[l];
+            if (!lelem.used()) {
                 l++;
                 continue;
             }
-            m_elems[dst++] = lhs->m_elems[l++];
+            m_elems[dst++] = lelem;
+            lelem.pop();
+            l++;
         }
 
         while (r < rhs->capacity()) {
-            if (!rhs->m_elems[r].used()) {
+            auto &relem = rhs->m_elems[r];
+            if (!relem.used()) {
                 r++;
                 continue;
             }
-            m_elems[dst++] = rhs->m_elems[r++];
+            m_elems[dst++] = relem;
+            relem.pop();
+            r++;
         }
 
         lhs->set_unused();
@@ -150,6 +163,7 @@ public:
         for (uint32_t i = that->m_first; i < that->m_capacity; i++) {
             if (that->m_elems[i].used()) {
                 m_elems[j++] = that->m_elems[i];
+                that->m_elems[i].pop();
             }
         }
 
@@ -205,10 +219,6 @@ public:
         m_used = false;
         m_first = 0;
         m_size = 0;
-
-        for (uint32_t i = 0; i < m_capacity; i++) {
-            m_elems[i] = LSMElem<T>();
-        }
     }
 
     void print() const
