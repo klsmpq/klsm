@@ -84,9 +84,43 @@ public:
     {
         assert(lhs->capacity() == rhs->capacity());
 
-        std::merge(lhs->m_elems.begin(), lhs->m_elems.end(),
-                   rhs->m_elems.begin(), rhs->m_elems.end(),
-                   m_elems.begin());
+        /* Merge. */
+
+        int l = 0, r = 0, dst = 0;
+
+        while (l < lhs->capacity() && r < rhs->capacity()) {
+            if (!lhs->m_elems[l].used()) {
+                l++;
+                continue;
+            }
+
+            if (!rhs->m_elems[r].used()) {
+                r++;
+                continue;
+            }
+
+            if (lhs->m_elems[l].peek() < rhs->m_elems[r].peek()) {
+                m_elems[dst++] = lhs->m_elems[l++];
+            } else {
+                m_elems[dst++] = rhs->m_elems[r++];
+            }
+        }
+
+        while (l < lhs->capacity()) {
+            if (!lhs->m_elems[l].used()) {
+                l++;
+                continue;
+            }
+            m_elems[dst++] = lhs->m_elems[l++];
+        }
+
+        while (r < rhs->capacity()) {
+            if (!rhs->m_elems[r].used()) {
+                r++;
+                continue;
+            }
+            m_elems[dst++] = rhs->m_elems[r++];
+        }
     }
 
     bool peek(T &v) const
