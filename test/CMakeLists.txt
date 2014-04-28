@@ -3,6 +3,13 @@ include_directories(
     ${GTEST_INCLUDE_DIR}
 )
 
+add_executable(mm-test mm.cpp)
+target_link_libraries(mm-test
+    gtest
+    mm
+)
+add_test(NAME mm-test COMMAND mm-test)
+
 add_executable(pq-seq-test pq_seq.cpp)
 target_link_libraries(pq-seq-test
     globallock
