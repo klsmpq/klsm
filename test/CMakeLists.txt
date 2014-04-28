@@ -3,10 +3,10 @@ include_directories(
     ${GTEST_INCLUDE_DIR}
 )
 
-add_executable(globallock-test globallock.cpp)
-target_link_libraries(globallock-test
+add_executable(pq-seq-test pq_seq.cpp)
+target_link_libraries(pq-seq-test
     globallock
     gtest
     lsm
 )
-add_test(NAME globallock-test COMMAND globallock-test)
+add_test(NAME pq-seq-test COMMAND pq-seq-test)
