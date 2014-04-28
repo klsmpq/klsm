@@ -11,3 +11,8 @@ add_library(globallock STATIC
 add_library(lsm STATIC
     lsm.cpp
 )
+
+add_library(mm STATIC
+    mm.cpp
+)
+
