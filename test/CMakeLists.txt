@@ -6,7 +6,6 @@ include_directories(
 add_executable(mm-test mm.cpp)
 target_link_libraries(mm-test
     gtest
-    mm
 )
 add_test(NAME mm-test COMMAND mm-test)
 

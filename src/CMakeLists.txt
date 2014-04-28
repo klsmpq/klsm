@@ -14,7 +14,3 @@ add_library(lsm STATIC
     lsm.cpp
 )
 
-add_library(mm STATIC
-    mm.cpp
-)
-

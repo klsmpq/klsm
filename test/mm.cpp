@@ -19,9 +19,74 @@
 
 #include <gtest/gtest.h>
 
+#include "mm.h"
+
+struct simple_reuse {
+    bool operator()(const uint32_t &) const
+    {
+        return false;
+    }
+};
+
+struct reuse_above_42 {
+    bool operator()(const uint32_t &v) const
+    {
+        return (v > 42);
+    }
+};
+
 TEST(MMTest, SanityCheck)
 {
-    ASSERT_TRUE(true);
+    kpq::item_allocator<uint32_t, simple_reuse> alloc;
+}
+
+TEST(MMTest, AllocOne)
+{
+    kpq::item_allocator<uint32_t, simple_reuse> alloc;
+    ASSERT_NE(alloc.acquire(), nullptr);
+}
+
+TEST(MMTest, AllocMany)
+{
+    kpq::item_allocator<uint32_t, simple_reuse> alloc;
+
+    for (int i = 0; i < 66; i++) {
+    }
+}
+
+TEST(MMTest, ReuseCheck)
+{
+    kpq::item_allocator<uint32_t, reuse_above_42> alloc;
+
+    std::vector<uint32_t *> xs;
+
+    for (int i = 0; i < 42; i++) {
+        uint32_t *x = alloc.acquire();
+        *x = i;
+
+        /* No reuse below 42. */
+        for (int j = 0; j < i; j++) {
+            ASSERT_NE(x, xs[j]);
+        }
+
+        xs.push_back(x);
+    }
+
+    uint32_t *y = alloc.acquire();
+    *y = 66;
+
+    bool reused = false;
+    for (int i = 0; i < 44; i++) {
+        uint32_t *x = alloc.acquire();
+        *x = i;
+
+        if (x == y) {
+            reused = true;
+            break;
+        }
+    }
+
+    ASSERT_TRUE(reused);
 }
 
 int
