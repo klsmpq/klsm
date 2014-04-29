@@ -12,6 +12,10 @@
 #ifndef UTIL
 #define UTIL
 
+#include <iostream>
+
+using namespace std;
+
 // default debug level. will be overidden e.g. if debug.h is included
 #ifndef DEBUGLEVEL
 #define DEBUGLEVEL 3
@@ -108,8 +112,6 @@ inline double wallClockTime()
 // elapsed CPU time see also /usr/include/sys/time.h
 inline double cpuTime()
 {
-    struct timespec tp;
-
     return clock() * 1e-6;
 //  clock_gettime(CLOCK_VIRTUAL, &tp);
 //  return tp.tv_sec + tp.tv_nsec * 1e-9;
