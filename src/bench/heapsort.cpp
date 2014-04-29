@@ -23,12 +23,14 @@
 
 #include "globallock.h"
 #include "lsm.h"
+#include "sequence_heap/sequence_heap.h"
 
 constexpr int DEFAULT_SEED = 0;
 constexpr int DEFAULT_NELEMS = 1 << 15;
 
 #define PQ_GLOBALLOCK "globallock"
 #define PQ_LSM        "lsm"
+#define PQ_SEQUENCE   "sequence"
 
 struct settings {
     std::string type;
@@ -161,6 +163,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_SEQUENCE) {
+        kpq::sequence_heap<uint32_t> pq;
         ret = bench(&pq, settings);
     } else {
         usage();

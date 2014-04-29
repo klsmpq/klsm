@@ -7,6 +7,7 @@ from optparse import OptionParser
 
 ALGORITHMS = [ 'globallock'
              , 'lsm'
+             , 'sequence'
              ]
 
 NELEMS = [ 100, 512, 1000, 1024

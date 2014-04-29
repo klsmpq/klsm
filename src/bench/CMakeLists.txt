@@ -6,4 +6,5 @@ add_executable(heapsort heapsort.cpp)
 target_link_libraries(heapsort
     globallock
     lsm
+    sequence_heap
 )
