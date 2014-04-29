@@ -1,5 +1,6 @@
 add_subdirectory(bench)
 add_subdirectory(sequence_heap)
+add_subdirectory(skip_list)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}

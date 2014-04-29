@@ -24,6 +24,7 @@
 #include "globallock.h"
 #include "lsm.h"
 #include "sequence_heap/sequence_heap.h"
+#include "skip_list/skip_queue.h"
 
 constexpr int DEFAULT_SEED = 0;
 constexpr int DEFAULT_NELEMS = 1 << 15;
@@ -31,6 +32,7 @@ constexpr int DEFAULT_NELEMS = 1 << 15;
 #define PQ_GLOBALLOCK "globallock"
 #define PQ_LSM        "lsm"
 #define PQ_SEQUENCE   "sequence"
+#define PQ_SKIP       "skip"
 
 struct settings {
     std::string type;
@@ -112,7 +114,7 @@ bench(T *pq,
     /* Verify results. */
     for (int i = 1; i < settings.nelems; i++) {
         if (xs[i] < xs[i - 1]) {
-            fprintf(stderr, "INVALID RESULTS: xs[%d] < xs[%d]\n", i, i - 1);
+            fprintf(stderr, "INVALID RESULTS: xs[%d] (%d) < xs[%d] (%d)\n", i, xs[i], i - 1, xs[i - 1]);
             ret = -1;
         }
     }
@@ -166,6 +168,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SEQUENCE) {
         kpq::sequence_heap<uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_SKIP) {
+        kpq::skip_queue<uint32_t> pq;
         ret = bench(&pq, settings);
     } else {
         usage();

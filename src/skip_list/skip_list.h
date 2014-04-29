@@ -3,7 +3,7 @@
 // Copyright (c) 2011 Pete Goodliffe. All rights reserved.
 //==============================================================================
 
-#pragma once
+// #pragma once
 
 #include "skip_list_detail.h"
 
@@ -15,12 +15,12 @@
 //==============================================================================
 
 #ifdef _MSC_VER
-#pragma warning( push )
-#pragma warning (disable : 4068 ) /* disable unknown pragma warnings */
+// #pragma warning( push )
+// #pragma warning (disable : 4068 ) /* disable unknown pragma warnings */
 #endif
 
 //==============================================================================
-#pragma mark - internal forward declarations
+// #pragma mark - internal forward declarations
 
 namespace goodliffe {
 
@@ -37,7 +37,7 @@ namespace detail
 }
 
 //==============================================================================
-#pragma mark - skip_list
+// #pragma mark - skip_list
 //==============================================================================
 
 namespace goodliffe {
@@ -242,7 +242,7 @@ protected:
 } // namespace goodliffe
 
 //==============================================================================
-#pragma mark - multi_skip_list
+// #pragma mark - multi_skip_list
 //==============================================================================
 
 namespace goodliffe {
@@ -327,7 +327,7 @@ public:
 } // namespace goodliffe
 
 //==============================================================================
-#pragma mark - non-members
+// #pragma mark - non-members
 
 namespace goodliffe {
 
@@ -385,7 +385,7 @@ namespace std
 }
 
 //==============================================================================
-#pragma mark - iterators
+// #pragma mark - iterators
 //==============================================================================
 
 namespace goodliffe {
@@ -413,7 +413,7 @@ public:
         impl(0),
 #endif
         node(0) {}
-    sl_iterator(impl_type *impl_, node_type *node_) :
+    sl_iterator(impl_type *, node_type *node_) :
 #ifdef SKIP_LIST_DIAGNOSTICS
         impl(impl_),
 #endif
@@ -526,7 +526,7 @@ private:
 } // namespace goodliffe
 
 //==============================================================================
-#pragma mark - lifetime management
+// #pragma mark - lifetime management
 //==============================================================================
 
 namespace goodliffe {
@@ -569,7 +569,7 @@ skip_list<T,C,A,LG,D>::skip_list(const skip_list &other, const allocator_type &a
 //skip_list(std::initializer_list<T> init, const Allocator &alloc = Allocator());
 
 //==============================================================================
-#pragma mark assignment
+// #pragma mark assignment
 
 template <class T, class C, class A, class LG, bool D>
 inline
@@ -592,7 +592,7 @@ void skip_list<T,C,A,LG,D>::assign(InputIterator first, InputIterator last)
 }
 
 //==============================================================================
-#pragma mark element access
+// #pragma mark element access
 
 template <class T, class C, class A, class LG, bool D>
 inline
@@ -631,7 +631,7 @@ skip_list<T,C,A,LG,D>::back() const
 }
 
 //==============================================================================
-#pragma mark modifiers
+// #pragma mark modifiers
 
 template <class T, class C, class A, class LG, bool D>
 inline
@@ -731,7 +731,7 @@ skip_list<T,C,A,LG,D>::erase(const_iterator first, const_iterator last)
 }
   
 //==============================================================================
-#pragma mark lookup
+// #pragma mark lookup
 
 template <class T, class C, class A, class LG, bool D>
 inline
@@ -763,14 +763,14 @@ skip_list<T,C,A,LG,D>::find(const value_type &value) const
 } // namespace goodliffe
 
 //==============================================================================
-#pragma mark - multi_skip_list
+// #pragma mark - multi_skip_list
 //==============================================================================
 
 namespace goodliffe {
 
 template <class T, class C, class A, class LG>
 inline
-typename multi_skip_list<T,C,A,LG>::size_type
+typename multi_skip_list<T,C,A,LG>::parent_type::size_type
 multi_skip_list<T,C,A,LG>::count(const value_type &value) const
 {
     return impl.count(value);
@@ -850,7 +850,7 @@ multi_skip_list<T,C,A,LG>::equal_range(const value_type &value) const
 
 template <class T, class C, class A, class LG>
 inline
-typename multi_skip_list<T,C,A,LG>::size_type
+typename multi_skip_list<T,C,A,LG>::parent_type::size_type
 multi_skip_list<T,C,A,LG>::erase(const value_type &value)
 {
     size_type count = 0;
@@ -887,7 +887,7 @@ multi_skip_list<T,C,A,LG>::erase(const_iterator first, const_iterator last)
 } // namespace goodliffe
 
 //==============================================================================
-#pragma mark - sl_impl
+// #pragma mark - sl_impl
 //==============================================================================
 
 namespace goodliffe {
@@ -1437,5 +1437,5 @@ bool sl_impl<T,C,A,LG,AllowDuplicates>::check() const
 //==============================================================================
 
 #ifdef _MSC_VER
-#pragma warning( pop )
+// #pragma warning( pop )
 #endif

@@ -7,4 +7,5 @@ target_link_libraries(heapsort
     globallock
     lsm
     sequence_heap
+    skip_queue
 )
