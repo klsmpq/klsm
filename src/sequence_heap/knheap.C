@@ -540,13 +540,13 @@ void KNHeap<Key, Value>::refillBuffer1()
 
 
 template <class Key, class Value>
-void KNHeap<Key, Value>::refillBuffer13(int sz)
+void KNHeap<Key, Value>::refillBuffer13(int)
 {
     Assert(0); // not yet implemented
 }
 
 template <class Key, class Value>
-void KNHeap<Key, Value>::refillBuffer14(int sz)
+void KNHeap<Key, Value>::refillBuffer14(int)
 {
     Assert(0); // not yet implemented
 }
@@ -868,3 +868,5 @@ finish:
     *f2   = from2;
     *f3   = from3;
 }
+
+template class KNHeap<uint32_t, uint32_t>;
