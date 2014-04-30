@@ -1,4 +1,5 @@
 add_subdirectory(bench)
+add_subdirectory(clsm)
 add_subdirectory(sequence_heap)
 add_subdirectory(skip_list)
 

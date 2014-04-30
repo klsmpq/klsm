@@ -16,6 +16,14 @@ target_link_libraries(mm-test
 )
 add_test(NAME mm-test COMMAND mm-test)
 
+add_executable(pq-par-test pq_par.cpp)
+target_link_libraries(pq-par-test
+    clsm
+    gtest
+    thread_local_ptr
+)
+add_test(NAME pq-par-test COMMAND pq-par-test)
+
 add_executable(pq-seq-test pq_seq.cpp)
 target_link_libraries(pq-seq-test
     globallock
