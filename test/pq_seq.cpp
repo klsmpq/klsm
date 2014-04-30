@@ -22,6 +22,7 @@
 #include <vector>
 #include <thread>
 
+#include "clsm/clsm.h"
 #include "globallock.h"
 #include "lsm.h"
 
@@ -37,6 +38,7 @@ protected:
     virtual void
     SetUp()
     {
+        m_pq = nullptr;
         generate_elements(PQ_SIZE);
     }
 
@@ -46,7 +48,9 @@ protected:
         std::uniform_int_distribution<> rand_int;
 
         m_elements.clear();
-        m_pq.clear();
+
+        delete m_pq;
+        m_pq = new T();
 
         m_min = std::numeric_limits<uint32_t>::max();
 
@@ -55,7 +59,7 @@ protected:
             const uint32_t v = rand_int(gen);
 
             m_elements.push_back(v);
-            m_pq.insert(v);
+            m_pq->insert(v);
             m_min = std::min(m_min, v);
         }
     }
@@ -63,22 +67,23 @@ protected:
     virtual void
     TearDown()
     {
+        delete m_pq;
     }
 
 protected:
-    T m_pq;
+    T *m_pq;
     std::vector<uint32_t> m_elements;
 
     uint32_t m_min;
 };
 
-typedef ::testing::Types<GlobalLock, LSM<uint32_t>> TestTypes;
+typedef ::testing::Types<GlobalLock, LSM<uint32_t>, clsm<uint32_t>> TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
 TYPED_TEST(PQTest, SanityCheck)
 {
     uint32_t v;
-    EXPECT_TRUE(this->m_pq.delete_min(v));
+    EXPECT_TRUE(this->m_pq->delete_min(v));
     EXPECT_EQ(this->m_min, v);
 }
 
@@ -86,26 +91,26 @@ TYPED_TEST(PQTest, NewMinElem)
 {
     uint32_t v;
     for (int i = 0; i < 64; i++) {
-        ASSERT_TRUE(this->m_pq.delete_min(v));
+        ASSERT_TRUE(this->m_pq->delete_min(v));
     }
 
     const uint32_t w = v - 1;
-    this->m_pq.insert(w);
-    EXPECT_TRUE(this->m_pq.delete_min(v));
+    this->m_pq->insert(w);
+    EXPECT_TRUE(this->m_pq->delete_min(v));
     EXPECT_EQ(w, v);
 }
 
 TYPED_TEST(PQTest, ExtractAll)
 {
     uint32_t v, w;
-    ASSERT_TRUE(this->m_pq.delete_min(v));
+    ASSERT_TRUE(this->m_pq->delete_min(v));
     for (int i = 1; i < PQ_SIZE; i++) {
         w = v;
-        ASSERT_TRUE(this->m_pq.delete_min(v));
+        ASSERT_TRUE(this->m_pq->delete_min(v));
         ASSERT_LE(w, v);
     }
 
-    ASSERT_FALSE(this->m_pq.delete_min(v));
+    ASSERT_FALSE(this->m_pq->delete_min(v));
 }
 
 TYPED_TEST(PQTest, ExtractAllDiffSizes)
@@ -115,14 +120,14 @@ TYPED_TEST(PQTest, ExtractAllDiffSizes)
         this->generate_elements(size);
 
         uint32_t v, w;
-        ASSERT_TRUE(this->m_pq.delete_min(v));
+        ASSERT_TRUE(this->m_pq->delete_min(v));
         for (int i = 1; i < size; i++) {
             w = v;
-            ASSERT_TRUE(this->m_pq.delete_min(v));
+            ASSERT_TRUE(this->m_pq->delete_min(v));
             ASSERT_LE(w, v);
         }
 
-        ASSERT_FALSE(this->m_pq.delete_min(v));
+        ASSERT_FALSE(this->m_pq->delete_min(v));
     }
 }
 
