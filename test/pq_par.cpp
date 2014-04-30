@@ -19,18 +19,69 @@
 
 #include <gtest/gtest.h>
 #include <thread>
+#include <random>
 
 #include "clsm/clsm.h"
 
-TEST(PQPar, SanityCheck)
+#define DEFAULT_SEED (0)
+#define PQ_SIZE ((1 << 15) - 1)
+
+using namespace kpq;
+
+template <class T>
+class pq_par_test : public ::testing::Test
 {
-    kpq::clsm<uint32_t> pq;
+protected:
+    virtual void
+    SetUp()
+    {
+        m_pq = nullptr;
+        generate_elements(PQ_SIZE);
+    }
 
-    pq.insert(42);
+    virtual void
+    generate_elements(const int n)
+    {
+        std::mt19937 gen(DEFAULT_SEED);
+        std::uniform_int_distribution<> rand_int;
 
+        m_elements.clear();
+        delete m_pq;
+        m_pq = new T();
+
+        m_min = std::numeric_limits<uint32_t>::max();
+
+        m_elements.reserve(n);
+        for (uint32_t i = 0; i < n; i++) {
+            const uint32_t v = rand_int(gen);
+
+            m_elements.push_back(v);
+            m_pq->insert(v);
+            m_min = std::min(m_min, v);
+        }
+    }
+
+    virtual void
+    TearDown()
+    {
+        delete m_pq;
+    }
+
+protected:
+    T *m_pq;
+    std::vector<uint32_t> m_elements;
+
+    uint32_t m_min;
+};
+
+typedef ::testing::Types<clsm<uint32_t>> test_types;
+TYPED_TEST_CASE(pq_par_test, test_types);
+
+TYPED_TEST(pq_par_test, SanityCheck)
+{
     uint32_t v;
-    ASSERT_TRUE(pq.delete_min(v));
-    ASSERT_EQ(v, 42);
+    EXPECT_TRUE(this->m_pq->delete_min(v));
+    EXPECT_EQ(this->m_min, v);
 }
 
 int
