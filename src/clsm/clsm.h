@@ -20,6 +20,10 @@
 #ifndef __CLSM_H
 #define __CLSM_H
 
+#include "block_storage.h"
+#include "mm.h"
+#include "thread_local_ptr.h"
+
 namespace kpq
 {
 
@@ -28,7 +32,21 @@ class clsm
 {
 public:
 
+    /**
+     * Inserts a new item into the local LSM.
+     */
+    void insert(const T v);
+
+    /**
+     * Attempts to remove the locally (i.e. on the current thread) minimal item.
+     * If the local LSM is empty, we try to copy items from another active thread.
+     * In case the local LSM is still empty, false is returned.
+     * If a locally minimal element is successfully found and removed, true is returned.
+     */
+    bool delete_min(T &v);
+
 private:
+    //thread_local_ptr<block_storage<T>> m_block_storage;
 };
 
 }

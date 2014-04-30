@@ -17,9 +17,26 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clsm.h"
+#ifndef __BLOCK_H
+#define __BLOCK_H
+
+#include <tuple>
+#include <vector>
 
 namespace kpq
 {
 
+template <class T>
+class block
+{
+public:
+    bool used() const;
+    void set_unused();
+
+private:
+    bool m_used;
+};
+
 }
+
+#endif /* __BLOCK_H */

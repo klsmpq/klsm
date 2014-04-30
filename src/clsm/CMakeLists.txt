@@ -3,6 +3,8 @@ include_directories(
 )
 
 add_library(clsm STATIC
+    block.cpp
+    block_storage.cpp
     clsm.cpp
 )
 target_link_libraries(clsm

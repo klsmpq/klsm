@@ -17,9 +17,26 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clsm.h"
+#include "block.h"
+
+#include <cassert>
 
 namespace kpq
 {
+
+template <class T>
+bool
+block<T>::used() const
+{
+    return m_used;
+}
+
+template <class T>
+void
+block<T>::set_unused()
+{
+    assert(m_used);
+    m_used = false;
+}
 
 }

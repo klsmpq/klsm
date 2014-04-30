@@ -17,9 +17,32 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clsm.h"
+#ifndef __BLOCK_STORAGE_H
+#define __BLOCK_STORAGE_H
+
+#include <tuple>
+#include <vector>
+
+#include "block.h"
 
 namespace kpq
 {
 
+/**
+ * Maintains 3-tuples of memory blocks of size 2^i.
+ */
+
+template <class T>
+class block_storage
+{
+public:
+
+private:
+    typedef std::tuple<block<T>, block<T>, block<T>> block_3_tuple;
+
+    std::vector<block_3_tuple> m_blocks;
+};
+
 }
+
+#endif /* __BLOCK_STORAGE_H */

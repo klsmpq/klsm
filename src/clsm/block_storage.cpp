@@ -17,9 +17,3 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clsm.h"
-
-namespace kpq
-{
-
-}
