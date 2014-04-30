@@ -21,6 +21,7 @@
 #define __LOCKFREE_VECTOR_H
 
 #include <atomic>
+#include <cassert>
 
 namespace kpq
 {
@@ -35,13 +36,55 @@ class lockfree_vector
 public:
     static constexpr int bucket_count = 32;
 
-    lockfree_vector();
-    virtual ~lockfree_vector();
+    lockfree_vector()
+    {
+        for (int i = 0; i < bucket_count; i++) {
+            m_buckets[i] = nullptr;
+        }
+    }
 
-    T *get(const int n);
+    virtual ~lockfree_vector()
+    {
+        for (int i = 0; i < bucket_count; i++) {
+            if (m_buckets[i] != nullptr) {
+                delete m_buckets[i];
+            }
+        }
+    }
+
+    T *get(const int n)
+    {
+        const int i = index_of(n);
+
+        T *bucket = m_buckets[i].load(std::memory_order_relaxed);
+        if (bucket == nullptr) {
+            bucket = new T[1 << i];
+            T *expected = nullptr;
+            if (!m_buckets[i].compare_exchange_strong(expected, bucket)) {
+                delete[] bucket;
+                bucket = expected;
+                assert(bucket != nullptr);
+            }
+        }
+
+        return &bucket[n + 1 - (1 << i)];
+    }
 
 private:
-    static int index_of(const int n);
+    static int index_of(const int n)
+    {
+        /* We could optimize this for 64/32 bit ints. */
+
+        int i = n + 1;
+        int log = 0;
+
+        while (i > 1) {
+            i >>= 1;
+            log++;
+        }
+
+        return log;
+    }
 
 private:
     std::atomic<T *> m_buckets[bucket_count];

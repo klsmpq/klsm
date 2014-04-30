@@ -27,6 +27,9 @@
 namespace kpq
 {
 
+void set_tid();
+int32_t tid();
+
 /**
  * A thread-local pointer to an element of type T, based on a dynamically growing
  * array and the current thread id.
@@ -36,7 +39,11 @@ template <class T>
 class thread_local_ptr
 {
 public:
-    T *get();
+    T *get()
+    {
+        set_tid();
+        return m_items.get(tid());
+    }
 
 private:
     lockfree_vector<T> m_items;

@@ -19,8 +19,6 @@
 
 #include "thread_local_ptr.h"
 
-#include <stdio.h>
-
 namespace kpq
 {
 
@@ -29,17 +27,18 @@ static constexpr int32_t TID_UNSET = -1;
 static thread_local int32_t m_tid = TID_UNSET;
 static std::atomic<int32_t> m_max_tid(0);
 
-template <class T>
-T *
-thread_local_ptr<T>::get()
+void
+set_tid()
 {
     if (m_tid == TID_UNSET) {
         m_tid = m_max_tid.fetch_add(1, std::memory_order_relaxed);
     }
-
-    return m_items.get(m_tid);
 }
 
-template class thread_local_ptr<uint32_t>;
+int32_t
+tid()
+{
+    return m_tid;
+}
 
 }

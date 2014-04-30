@@ -16,7 +16,6 @@ add_library(lsm STATIC
 )
 
 add_library(thread_local_ptr STATIC
-    lockfree_vector.cpp
     thread_local_ptr.cpp
 )
 
