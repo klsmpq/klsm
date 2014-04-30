@@ -20,9 +20,7 @@
 #ifndef __CLSM_H
 #define __CLSM_H
 
-#include "block_storage.h"
-#include "mm.h"
-#include "thread_local_ptr.h"
+#include "clsm_local.h"
 
 namespace kpq
 {
@@ -35,7 +33,7 @@ public:
     /**
      * Inserts a new item into the local LSM.
      */
-    void insert(const T v);
+    void insert(const T &v);
 
     /**
      * Attempts to remove the locally (i.e. on the current thread) minimal item.
@@ -46,7 +44,7 @@ public:
     bool delete_min(T &v);
 
 private:
-    //thread_local_ptr<block_storage<T>> m_block_storage;
+    thread_local_ptr<clsm_local<T>> m_local;
 };
 
 }

@@ -25,6 +25,19 @@ namespace kpq
 {
 
 template <class T>
+block<T>::block(const size_t power_of_2) :
+    m_power_of_2(power_of_2),
+    m_capacity(1 << power_of_2),
+    m_used(false)
+{
+}
+
+template <class T>
+block<T>::~block()
+{
+}
+
+template <class T>
 bool
 block<T>::used() const
 {
@@ -38,5 +51,7 @@ block<T>::set_unused()
     assert(m_used);
     m_used = false;
 }
+
+template class block<uint32_t>;
 
 }

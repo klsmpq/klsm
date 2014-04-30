@@ -17,25 +17,30 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clsm.h"
+#ifndef __CLSM_LOCAL_H
+#define __CLSM_LOCAL_H
+
+#include "block_storage.h"
+#include "lsm.h"
+#include "mm.h"
+#include "thread_local_ptr.h"
 
 namespace kpq
 {
 
 template <class T>
-void
-clsm<T>::insert(const T &v)
+class clsm_local
 {
-    m_local.get()->insert(v);
-}
+public:
 
-template <class T>
-bool
-clsm<T>::delete_min(T &v)
-{
-    return m_local.get()->delete_min(v);
-}
+    void insert(const T &v);
+    bool delete_min(T &v);
 
-template class clsm<uint32_t>;
+private:
+    block_storage<T> m_block_storage;
+    LSM<T> m_lsm;
+};
 
 }
+
+#endif /* __CLSM_LOCAL_H */

@@ -47,7 +47,7 @@ public:
     {
         for (int i = 0; i < bucket_count; i++) {
             if (m_buckets[i] != nullptr) {
-                delete m_buckets[i];
+                delete[] m_buckets[i];
             }
         }
     }

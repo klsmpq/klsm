@@ -24,7 +24,13 @@
 
 TEST(PQPar, SanityCheck)
 {
-    kpq::clsm<uint32_t> __attribute__((unused)) pq;
+    kpq::clsm<uint32_t> pq;
+
+    pq.insert(42);
+
+    uint32_t v;
+    ASSERT_TRUE(pq.delete_min(v));
+    ASSERT_EQ(v, 42);
 }
 
 int

@@ -30,10 +30,15 @@ template <class T>
 class block
 {
 public:
+    block(const size_t power_of_2);
+    virtual ~block();
+
     bool used() const;
     void set_unused();
 
 private:
+    const size_t m_power_of_2;
+    const size_t m_capacity;
     bool m_used;
 };
 
