@@ -23,3 +23,10 @@ target_link_libraries(pq-seq-test
     lsm
 )
 add_test(NAME pq-seq-test COMMAND pq-seq-test)
+
+add_executable(thread-local-ptr-test thread_local_ptr.cpp)
+target_link_libraries(thread-local-ptr-test
+    gtest
+    thread_local_ptr
+)
+add_test(NAME thread-local-ptr-test COMMAND thread-local-ptr-test)
