@@ -25,6 +25,7 @@
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
+#define NTHREADS (1024)
 
 using namespace kpq;
 
@@ -77,6 +78,15 @@ protected:
 typedef ::testing::Types<clsm<uint32_t>> test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);
 
+TYPED_TEST(pq_par_test, SanityCheck)
+{
+    this->generate_elements(42);
+
+    uint32_t v;
+    EXPECT_TRUE(this->m_pq->delete_min(v));
+    EXPECT_EQ(this->m_min, v);
+}
+
 template <class T>
 static void
 random_insert(T *pq,
@@ -98,11 +108,11 @@ TYPED_TEST(pq_par_test, ConcurrentInsert)
     std::vector<std::thread> threads;
     std::atomic<bool> can_continue(false);
 
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < NTHREADS; i++) {
         threads.push_back(std::thread(random_insert<gtest_TypeParam_>,
                                       this->m_pq,
                                       i,
-                                      1024));
+                                      NTHREADS));
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -112,13 +122,39 @@ TYPED_TEST(pq_par_test, ConcurrentInsert)
     }
 }
 
-TYPED_TEST(pq_par_test, SanityCheck)
+template <class T>
+static void
+random_delete(T *pq,
+              const int n)
 {
-    this->generate_elements(42);
+    uint32_t prev = std::numeric_limits<uint32_t>::min();
+    for (int i = 0; i < n; i++) {
+        uint32_t v;
+        if (pq->delete_min(v)) {
+            ASSERT_LE(prev, v);
+            prev = v;
+        }
+    }
+}
 
-    uint32_t v;
-    EXPECT_TRUE(this->m_pq->delete_min(v));
-    EXPECT_EQ(this->m_min, v);
+TYPED_TEST(pq_par_test, ConcurrentDelete)
+{
+    this->generate_elements(NTHREADS * NTHREADS);
+
+    std::vector<std::thread> threads;
+    std::atomic<bool> can_continue(false);
+
+    for (int i = 0; i < NTHREADS; i++) {
+        threads.push_back(std::thread(random_delete<gtest_TypeParam_>,
+                                      this->m_pq,
+                                      NTHREADS));
+    }
+
+    can_continue.store(true, std::memory_order_relaxed);
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
 }
 
 int
