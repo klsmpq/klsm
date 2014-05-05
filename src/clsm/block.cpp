@@ -29,6 +29,7 @@ template <class K, class V>
 block<K, V>::block(const size_t power_of_2) :
     m_next(nullptr),
     m_prev(nullptr),
+    m_size(0),
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
     m_item_pairs(new item_pair_t[m_capacity]),
@@ -47,10 +48,13 @@ void
 block<K, V>::insert(item<K, V> *it)
 {
     assert(m_used);
+    assert(m_size == 0);
     assert(m_capacity == 1);
 
     m_item_pairs->first  = it;
     m_item_pairs->second = it->version();
+
+    m_size = 1;
 }
 
 template <class K, class V>
@@ -61,6 +65,7 @@ block<K, V>::merge(const block<K, V> *lhs,
     assert(m_power_of_2 == lhs->power_of_2() + 1);
     assert(lhs->power_of_2() == rhs->power_of_2());
     assert(m_used);
+    assert(m_size == 0);
 
     /* Merge. */
 
@@ -109,6 +114,14 @@ block<K, V>::merge(const block<K, V> *lhs,
         r++;
     }
 
+    m_size = dst;
+}
+
+template <class K, class V>
+size_t
+block<K, V>::size() const
+{
+    return m_size;
 }
 
 template <class K, class V>

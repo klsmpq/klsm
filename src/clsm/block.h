@@ -42,6 +42,7 @@ public:
     void merge(const block<K, V> *lhs,
                const block<K, V> *rhs);
 
+    size_t size() const;
     size_t power_of_2() const;
     size_t capacity() const;
 
@@ -59,6 +60,11 @@ private:
     static bool item_owned(const item_pair_t &item_pair);
 
 private:
+    /** Since the CLSM is concurrent and other threads can take items without the owning
+     *  thread knowing about it, size if not an exact value. Instead, it counts the number
+     *  of elements that were written into the local list of items by the owning thread,
+     *  even if those items currently aren't active anymore. */
+    size_t m_size;
     const size_t m_power_of_2;
     const size_t m_capacity;
 
