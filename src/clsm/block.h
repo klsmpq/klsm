@@ -31,6 +31,9 @@ namespace kpq
 template <class K, class V>
 class block
 {
+private:
+    typedef std::pair<item<K, V> *, version_t> item_pair_t;
+
 public:
     block(const size_t power_of_2);
     virtual ~block();
@@ -38,18 +41,18 @@ public:
     bool used() const;
     void set_unused();
 
+public:
+    /** Next pointers may be used by all threads. */
+    std::atomic<block<K, V> *> m_next;
+    /** Prev pointers may be used only by the owning thread. */
+    block<K, V> *m_prev;
+
 private:
-    typedef std::pair<item<K, V>, version_t> item_pair_t;
 
     const size_t m_power_of_2;
     const size_t m_capacity;
 
     item_pair_t *m_item_pairs;
-
-    /** Next pointers may be used by all threads. */
-    std::atomic<block<K, V> *> m_next;
-    /** Prev pointers may be used only by the owning thread. */
-    block<K, V> *m_prev;
 
     bool m_used;
 };
