@@ -38,17 +38,16 @@ clsm_local<K, V>::~clsm_local()
 
 template <class K, class V>
 void
-clsm_local<K, V>::insert(const K &key,
+clsm_local<K, V>::insert(const K &,
                          const V &)
 {
-    m_lsm.insert(key);
 }
 
 template <class K, class V>
 bool
-clsm_local<K, V>::delete_min(V &val)
+clsm_local<K, V>::delete_min(V &)
 {
-    return m_lsm.delete_min(val);
+    return false;
 }
 
 template class clsm_local<uint32_t, uint32_t>;

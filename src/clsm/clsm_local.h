@@ -22,7 +22,6 @@
 
 #include "block_storage.h"
 #include "item.h"
-#include "lsm.h"
 #include "mm.h"
 #include "thread_local_ptr.h"
 
@@ -46,7 +45,6 @@ private:
 
     block_storage<K, V> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
-    LSM<K> m_lsm;
 };
 
 }
