@@ -34,7 +34,19 @@ class item
 public:
     item();
 
+    version_t version() const;
+
+    class reuse
+    {
+    public:
+        bool operator()(const item<K, V> &item) const
+        {
+            return ((item.version() & 0x1) == 0);
+        }
+    };
+
 private:
+    /** Even versions are reusable, odd versions are in use. */
     std::atomic<version_t> m_version;
     K m_key;
     V m_val;

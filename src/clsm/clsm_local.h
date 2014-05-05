@@ -21,6 +21,7 @@
 #define __CLSM_LOCAL_H
 
 #include "block_storage.h"
+#include "item.h"
 #include "lsm.h"
 #include "mm.h"
 #include "thread_local_ptr.h"
@@ -32,13 +33,19 @@ template <class K, class V>
 class clsm_local
 {
 public:
+    clsm_local();
+    virtual ~clsm_local();
 
     void insert(const K &key,
                 const V &val);
     bool delete_min(V &val);
 
 private:
+    block<K, V> *m_head; /**< The largest  block. */
+    block<K, V> *m_tail; /**< The smallest block. */
+
     block_storage<K, V> m_block_storage;
+    item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
     LSM<K> m_lsm;
 };
 

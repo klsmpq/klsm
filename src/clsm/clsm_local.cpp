@@ -23,6 +23,20 @@ namespace kpq
 {
 
 template <class K, class V>
+clsm_local<K, V>::clsm_local() :
+    m_head(nullptr),
+    m_tail(nullptr)
+{
+}
+
+template <class K, class V>
+clsm_local<K, V>::~clsm_local()
+{
+    /* Blocks and items are managed by, respectively,
+     * block_storage and item_allocator. */
+}
+
+template <class K, class V>
 void
 clsm_local<K, V>::insert(const K &key,
                          const V &)
