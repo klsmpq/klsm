@@ -55,7 +55,7 @@ protected:
         m_min = std::numeric_limits<uint32_t>::max();
 
         m_elements.reserve(n);
-        for (uint32_t i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             const uint32_t v = rand_int(gen);
 
             m_elements.push_back(v);

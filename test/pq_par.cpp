@@ -46,13 +46,14 @@ protected:
         std::uniform_int_distribution<> rand_int;
 
         m_elements.clear();
+
         delete m_pq;
         m_pq = new T();
 
         m_min = std::numeric_limits<uint32_t>::max();
 
         m_elements.reserve(n);
-        for (uint32_t i = 0; i < n; i++) {
+        for (int i = 0; i < n; i++) {
             const uint32_t v = rand_int(gen);
 
             m_elements.push_back(v);
