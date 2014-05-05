@@ -131,32 +131,6 @@ TYPED_TEST(PQTest, ExtractAllDiffSizes)
     }
 }
 
-/* Doesn't play nice with typed test case.
-static void
-delete_n(GlobalLock *pq,
-         const uint32_t n)
-{
-    uint32_t v;
-    for (uint32_t i = 0; i < n; i++) {
-        ASSERT_TRUE(pq->delete_min(v));
-    }
-}
-
-TYPED_TEST(PQTest, ThreadSanityCheck)
-{
-    const uint32_t n = std::thread::hardware_concurrency();
-
-    std::vector<std::thread> ts;
-    for (uint32_t i = 0; i < n; i++) {
-        ts.push_back(std::thread(delete_n, &this->m_pq, PQ_SIZE / n));
-    }
-
-    for (uint32_t i = 0; i < n; i++) {
-        ts[i].join();
-    }
-}
-*/
-
 int
 main(int argc,
      char **argv)
