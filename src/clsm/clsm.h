@@ -25,7 +25,7 @@
 namespace kpq
 {
 
-template <class T>
+template <class K, class V>
 class clsm
 {
 public:
@@ -33,7 +33,9 @@ public:
     /**
      * Inserts a new item into the local LSM.
      */
-    void insert(const T &v);
+    void insert(const K &key);
+    void insert(const K &key,
+                const V &val);
 
     /**
      * Attempts to remove the locally (i.e. on the current thread) minimal item.
@@ -41,10 +43,10 @@ public:
      * In case the local LSM is still empty, false is returned.
      * If a locally minimal element is successfully found and removed, true is returned.
      */
-    bool delete_min(T &v);
+    bool delete_min(V &val);
 
 private:
-    thread_local_ptr<clsm_local<T>> m_local;
+    thread_local_ptr<clsm_local<K>> m_local;
 };
 
 }

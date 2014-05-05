@@ -77,7 +77,8 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types<GlobalLock, LSM<uint32_t>, clsm<uint32_t>> TestTypes;
+typedef ::testing::Types<GlobalLock, LSM<uint32_t>,
+        clsm<uint32_t, uint32_t>> TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
 TYPED_TEST(PQTest, SanityCheck)
