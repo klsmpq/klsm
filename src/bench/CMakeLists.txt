@@ -9,3 +9,13 @@ target_link_libraries(heapsort
     sequence_heap
     skip_queue
 )
+
+add_executable(random random.cpp util.cpp)
+target_link_libraries(random
+    ${CMAKE_THREAD_LIBS_INIT}
+    clsm
+    globallock
+    lsm
+    sequence_heap
+    skip_queue
+)
