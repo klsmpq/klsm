@@ -157,6 +157,47 @@ TYPED_TEST(pq_par_test, ConcurrentDelete)
     }
 }
 
+template <class T>
+static void
+random_ins_del(T *pq,
+               const int seed,
+               const int n)
+{
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<> rand_int;
+    std::uniform_int_distribution<> rand_bool(0, 1);
+
+    for (int i = 0; i < n; i++) {
+        if (rand_bool(gen)) {
+            uint32_t v;
+            pq->delete_min(v);
+        } else {
+            pq->insert(rand_int(gen));
+        }
+    }
+}
+
+TYPED_TEST(pq_par_test, ConcurrentInsDel)
+{
+    this->generate_elements(NTHREADS);
+
+    std::vector<std::thread> threads;
+    std::atomic<bool> can_continue(false);
+
+    for (int i = 0; i < NTHREADS; i++) {
+        threads.push_back(std::thread(random_ins_del<gtest_TypeParam_>,
+                                      this->m_pq,
+                                      i,
+                                      NTHREADS));
+    }
+
+    can_continue.store(true, std::memory_order_relaxed);
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+}
+
 int
 main(int argc,
      char **argv)
