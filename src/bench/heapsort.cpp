@@ -25,6 +25,7 @@
 #include "lsm.h"
 #include "sequence_heap/sequence_heap.h"
 #include "skip_list/skip_queue.h"
+#include "util.h"
 
 constexpr int DEFAULT_SEED = 0;
 constexpr int DEFAULT_NELEMS = 1 << 15;
@@ -55,38 +56,6 @@ usage()
     exit(EXIT_FAILURE);
 }
 
-static double
-timediff_in_s(const struct timespec &start,
-              const struct timespec &end)
-{
-    struct timespec tmp;
-    if (end.tv_nsec < start.tv_nsec) {
-        tmp.tv_sec = end.tv_sec - start.tv_sec - 1;
-        tmp.tv_nsec = 1000000000 + end.tv_nsec - start.tv_nsec;
-    } else {
-        tmp.tv_sec = end.tv_sec - start.tv_sec;
-        tmp.tv_nsec = end.tv_nsec - start.tv_nsec;
-    }
-
-    return tmp.tv_sec + (double)tmp.tv_nsec / 1000000000.0;
-}
-
-static std::vector<uint32_t>
-random_array(const struct settings &settings)
-{
-    std::vector<uint32_t> xs;
-    xs.reserve(settings.nelems);
-
-    std::mt19937 gen(settings.seed);
-    std::uniform_int_distribution<> rand_int;
-
-    for (int i = 0; i < settings.nelems; i++) {
-        xs.push_back(rand_int(gen));
-    }
-
-    return xs;
-}
-
 template <class T>
 static int
 bench(T *pq,
@@ -94,7 +63,7 @@ bench(T *pq,
 {
     int ret = 0;
 
-    std::vector<uint32_t> xs = random_array(settings);
+    std::vector<uint32_t> xs = random_array(settings.nelems, settings.seed);
 
     /* Begin benchmark. */
     struct timespec start, end;
