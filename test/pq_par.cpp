@@ -36,7 +36,6 @@ protected:
     SetUp()
     {
         m_pq = nullptr;
-        generate_elements(PQ_SIZE);
     }
 
     virtual void
@@ -78,8 +77,45 @@ protected:
 typedef ::testing::Types<clsm<uint32_t>> test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);
 
+template <class T>
+static void
+random_insert(T *pq,
+              const int seed,
+              const int n)
+{
+    std::mt19937 gen(seed);
+    std::uniform_int_distribution<> rand_int;
+
+    for (int i = 0; i < n; i++) {
+        pq->insert(rand_int(gen));
+    }
+}
+
+TYPED_TEST(pq_par_test, ConcurrentInsert)
+{
+    this->generate_elements(42);
+
+    std::vector<std::thread> threads;
+    std::atomic<bool> can_continue(false);
+
+    for (int i = 0; i < 1024; i++) {
+        threads.push_back(std::thread(random_insert<gtest_TypeParam_>,
+                                      this->m_pq,
+                                      i,
+                                      1024));
+    }
+
+    can_continue.store(true, std::memory_order_relaxed);
+
+    for (auto &thread : threads) {
+        thread.join();
+    }
+}
+
 TYPED_TEST(pq_par_test, SanityCheck)
 {
+    this->generate_elements(42);
+
     uint32_t v;
     EXPECT_TRUE(this->m_pq->delete_min(v));
     EXPECT_EQ(this->m_min, v);
