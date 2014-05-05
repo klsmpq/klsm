@@ -7,6 +7,7 @@ add_library(clsm STATIC
     block_storage.cpp
     clsm.cpp
     clsm_local.cpp
+    item.cpp
 )
 target_link_libraries(clsm
     lsm
