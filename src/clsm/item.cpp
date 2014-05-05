@@ -19,13 +19,43 @@
 
 #include "item.h"
 
+#include <cassert>
+
 namespace kpq
 {
 
 template <class K, class V>
 item<K, V>::item() :
-    m_version(0)
+    m_version(0),
+    m_owner(std::this_thread::get_id())
 {
+}
+
+template <class K, class V>
+void
+item<K, V>::initialize(const K &key, const V &val)
+{
+    assert(!used());
+
+    m_version.fetch_add(1, std::memory_order_relaxed); /* TODO: Really relaxed? */
+    m_key = key;
+    m_val = val;
+
+    assert(used());
+}
+
+template <class K, class V>
+K
+item<K, V>::key() const
+{
+    return m_key;
+}
+
+template <class K, class V>
+V
+item<K, V>::val() const
+{
+    return m_val;
 }
 
 template <class K, class V>
@@ -33,6 +63,13 @@ version_t
 item<K, V>::version() const
 {
     return m_version.load(std::memory_order_relaxed);
+}
+
+template <class K, class V>
+bool
+item<K, V>::used() const
+{
+    return ((version() & 0x1) == 1);
 }
 
 template class item<uint32_t, uint32_t>;

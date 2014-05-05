@@ -43,6 +43,89 @@ block<K, V>::~block()
 }
 
 template <class K, class V>
+void
+block<K, V>::insert(item<K, V> *it)
+{
+    assert(m_used);
+    assert(m_capacity == 1);
+
+    m_item_pairs->first  = it;
+    m_item_pairs->second = it->version();
+}
+
+template <class K, class V>
+void
+block<K, V>::merge(const block<K, V> *lhs,
+                   const block<K, V> *rhs)
+{
+    assert(m_power_of_2 == lhs->power_of_2() + 1);
+    assert(lhs->power_of_2() == rhs->power_of_2());
+    assert(m_used);
+
+    /* Merge. */
+
+    size_t l = 0, r = 0, dst = 0;
+
+    while (l < lhs->capacity() && r < rhs->capacity()) {
+        auto &lelem = lhs->m_item_pairs[l];
+        auto &relem = rhs->m_item_pairs[r];
+
+        if (!item_owned(lelem)) {
+            l++;
+            continue;
+        }
+
+        if (!item_owned(relem)) {
+            r++;
+            continue;
+        }
+
+        if (lelem.first->key() < relem.first->key()) {
+            m_item_pairs[dst++] = lelem;
+            l++;
+        } else {
+            m_item_pairs[dst++] = relem;
+            r++;
+        }
+    }
+
+    while (l < lhs->capacity()) {
+        auto &lelem = lhs->m_item_pairs[l];
+        if (!item_owned(lelem)) {
+            l++;
+            continue;
+        }
+        m_item_pairs[dst++] = lelem;
+        l++;
+    }
+
+    while (r < rhs->capacity()) {
+        auto &relem = rhs->m_item_pairs[r];
+        if (!item_owned(relem)) {
+            r++;
+            continue;
+        }
+        m_item_pairs[dst++] = relem;
+        r++;
+    }
+
+}
+
+template <class K, class V>
+size_t
+block<K, V>::power_of_2() const
+{
+    return m_power_of_2;
+}
+
+template <class K, class V>
+size_t
+block<K, V>::capacity() const
+{
+    return m_capacity;
+}
+
+template <class K, class V>
 bool
 block<K, V>::used() const
 {
@@ -55,6 +138,24 @@ block<K, V>::set_unused()
 {
     assert(m_used);
     m_used = false;
+
+    m_next.store(nullptr, std::memory_order_relaxed);
+    m_prev = nullptr;
+}
+
+template <class K, class V>
+void
+block<K, V>::set_used()
+{
+    assert(!m_used);
+    m_used = true;
+}
+
+template <class K, class V>
+bool
+block<K, V>::item_owned(const item_pair_t &item_pair)
+{
+    return (item_pair.first->version() == item_pair.second);
 }
 
 template class block<uint32_t, uint32_t>;

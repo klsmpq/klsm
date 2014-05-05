@@ -20,6 +20,8 @@
 #ifndef __CLSM_LOCAL_H
 #define __CLSM_LOCAL_H
 
+#include <atomic>
+
 #include "block_storage.h"
 #include "item.h"
 #include "mm.h"
@@ -40,8 +42,15 @@ public:
     bool delete_min(V &val);
 
 private:
-    block<K, V> *m_head; /**< The largest  block. */
-    block<K, V> *m_tail; /**< The smallest block. */
+    /**
+     * Inserts new_block into the linked list of blocks, merging with
+     * same size blocks until no two blocks in the list have the same size.
+     */
+    void merge_insert(block<K, V> *const new_block);
+
+private:
+    std::atomic<block<K, V> *> m_head; /**< The largest  block. */
+    block<K, V>               *m_tail; /**< The smallest block. */
 
     block_storage<K, V> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;

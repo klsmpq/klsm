@@ -40,25 +40,26 @@ template <class K, class V>
 block<K, V> *
 block_storage<K, V>::get_block(const size_t i)
 {
-    const size_t n = (1 << i);
-
     if (i >= m_blocks.size()) {
         assert(m_blocks.size() == i);
 
         /* Alloc new blocks. */
-        m_blocks.push_back(std::make_tuple(new block<K, V>(n),
-                                           new block<K, V>(n),
-                                           new block<K, V>(n)));
+        m_blocks.push_back(std::make_tuple(new block<K, V>(i),
+                                           new block<K, V>(i),
+                                           new block<K, V>(i)));
     }
 
+    block<K, V> *block;
     if (!std::get<0>(m_blocks[i])->used()) {
-        return std::get<0>(m_blocks[i]);
+        block = std::get<0>(m_blocks[i]);
     } else if (!std::get<1>(m_blocks[i])->used()) {
-        return std::get<1>(m_blocks[i]);
+        block = std::get<1>(m_blocks[i]);
     } else {
-        assert(!std::get<2>(m_blocks[i])->used());
-        return std::get<2>(m_blocks[i]);
+        block = std::get<2>(m_blocks[i]);
     }
+
+    block->set_used();
+    return block;
 }
 
 template class block_storage<uint32_t, uint32_t>;

@@ -38,8 +38,16 @@ public:
     block(const size_t power_of_2);
     virtual ~block();
 
+    void insert(item<K, V> *it);
+    void merge(const block<K, V> *lhs,
+               const block<K, V> *rhs);
+
+    size_t power_of_2() const;
+    size_t capacity() const;
+
     bool used() const;
     void set_unused();
+    void set_used();
 
 public:
     /** Next pointers may be used by all threads. */
@@ -48,7 +56,9 @@ public:
     block<K, V> *m_prev;
 
 private:
+    static bool item_owned(const item_pair_t &item_pair);
 
+private:
     const size_t m_power_of_2;
     const size_t m_capacity;
 

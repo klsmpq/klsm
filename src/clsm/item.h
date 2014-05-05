@@ -34,14 +34,21 @@ class item
 public:
     item();
 
+    void initialize(const K &key,
+                    const V &val);
+
+    K key() const;
+    V val() const;
+
     version_t version() const;
+    bool used() const;
 
     class reuse
     {
     public:
         bool operator()(const item<K, V> &item) const
         {
-            return ((item.version() & 0x1) == 0);
+            return !item.used();
         }
     };
 
@@ -50,7 +57,7 @@ private:
     std::atomic<version_t> m_version;
     K m_key;
     V m_val;
-    std::thread::id m_owner;
+    std::thread::id m_owner; /* TODO: Replace by tid_t. */
 };
 
 }
