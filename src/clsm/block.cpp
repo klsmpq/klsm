@@ -118,6 +118,27 @@ block<K, V>::merge(const block<K, V> *lhs,
 }
 
 template <class K, class V>
+typename block<K, V>::peek_t
+block<K, V>::peek()
+{
+    peek_t p;
+    for (size_t i = 0; i < m_size; i++) {
+        p.m_item    = m_item_pairs[i].first;
+        p.m_key     = m_item_pairs[i].first->key();
+        p.m_version = m_item_pairs[i].second;
+
+        if (item_owned(m_item_pairs[i])) {
+            return p;
+        }
+
+        /* TODO: Clean reference to unowned item. */
+    }
+
+    p.m_item = nullptr;
+    return p;
+}
+
+template <class K, class V>
 size_t
 block<K, V>::size() const
 {

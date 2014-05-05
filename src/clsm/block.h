@@ -35,12 +35,27 @@ private:
     typedef std::pair<item<K, V> *, version_t> item_pair_t;
 
 public:
+    struct peek_t {
+        peek_t() : m_item(nullptr), m_version(0) { }
+
+        K m_key;
+        item<K, V> *m_item;
+        version_t m_version;
+
+        static const peek_t EMPTY;
+    };
+
+public:
     block(const size_t power_of_2);
     virtual ~block();
 
     void insert(item<K, V> *it);
     void merge(const block<K, V> *lhs,
                const block<K, V> *rhs);
+
+    /** Returns null if the block is empty, and a peek_t struct of the minimal item
+     *  otherwise. Removes observed unowned items from the current block. */
+    peek_t peek();
 
     size_t size() const;
     size_t power_of_2() const;
