@@ -41,4 +41,10 @@ tid()
     return m_tid;
 }
 
+int32_t
+max_tid()
+{
+    return m_max_tid.load(std::memory_order_relaxed);
+}
+
 }
