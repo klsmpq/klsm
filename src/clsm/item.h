@@ -21,7 +21,7 @@
 #define __ITEM_H
 
 #include <atomic>
-#include <thread>
+#include <cstddef>
 
 namespace kpq
 {
@@ -59,7 +59,6 @@ private:
     std::atomic<version_t> m_version;
     K m_key;
     V m_val;
-    std::thread::id m_owner; /* TODO: Replace by tid_t. */
 };
 
 }

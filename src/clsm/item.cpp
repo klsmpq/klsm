@@ -26,8 +26,7 @@ namespace kpq
 
 template <class K, class V>
 item<K, V>::item() :
-    m_version(0),
-    m_owner(std::this_thread::get_id())
+    m_version(0)
 {
 }
 
