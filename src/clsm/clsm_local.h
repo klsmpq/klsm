@@ -21,6 +21,7 @@
 #define __CLSM_LOCAL_H
 
 #include <atomic>
+#include <random>
 
 #include "block_storage.h"
 #include "item.h"
@@ -31,6 +32,9 @@ namespace kpq
 {
 
 template <class K, class V>
+class clsm;
+
+template <class K, class V>
 class clsm_local
 {
 public:
@@ -39,9 +43,16 @@ public:
 
     void insert(const K &key,
                 const V &val);
-    bool delete_min(V &val);
+    bool delete_min(clsm<K, V> *parent,
+                    V &val);
+
+    void spy(clsm<K, V> *parent);
 
 private:
+    /** The internal insertion, used both in the public insert() and in spy(). */
+    void insert(item<K, V> *it,
+                const version_t version);
+
     /**
      * Inserts new_block into the linked list of blocks, merging with
      * same size blocks until no two blocks in the list have the same size.
@@ -54,6 +65,8 @@ private:
 
     block_storage<K, V> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
+
+    std::mt19937 m_gen;
 };
 
 }

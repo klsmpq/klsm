@@ -41,7 +41,7 @@ template <class K, class V>
 bool
 clsm<K, V>::delete_min(V &val)
 {
-    return m_local.get()->delete_min(val);
+    return m_local.get()->delete_min(this, val);
 }
 
 template class clsm<uint32_t, uint32_t>;

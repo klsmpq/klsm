@@ -53,6 +53,12 @@ public:
         return m_items.get(tid);
     }
 
+    /** Returns the current thread id. */
+    static size_t current_thread()
+    {
+        return tid();
+    }
+
     /** Returns the current thread count. */
     static size_t num_threads()
     {

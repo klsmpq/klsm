@@ -47,13 +47,15 @@ public:
     block(const size_t power_of_2);
     virtual ~block();
 
-    void insert(item<K, V> *it);
+    void insert(item<K, V> *it,
+                const version_t version);
     void merge(const block<K, V> *lhs,
                const block<K, V> *rhs);
 
     /** Returns null if the block is empty, and a peek_t struct of the minimal item
      *  otherwise. Removes observed unowned items from the current block. */
     peek_t peek();
+    peek_t spy_at(const size_t i);
 
     size_t size() const;
     size_t power_of_2() const;

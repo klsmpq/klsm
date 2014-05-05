@@ -28,6 +28,8 @@ namespace kpq
 template <class K, class V>
 class clsm
 {
+    friend void clsm_local<K, V>::spy(clsm<K, V> *parent);
+
 public:
 
     /**

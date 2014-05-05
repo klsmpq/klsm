@@ -45,14 +45,15 @@ block<K, V>::~block()
 
 template <class K, class V>
 void
-block<K, V>::insert(item<K, V> *it)
+block<K, V>::insert(item<K, V> *it,
+                    const version_t version)
 {
     assert(m_used);
     assert(m_size == 0);
     assert(m_capacity == 1);
 
     m_item_pairs->first  = it;
-    m_item_pairs->second = it->version();
+    m_item_pairs->second = version;
 
     m_size = 1;
 }
@@ -135,6 +136,24 @@ block<K, V>::peek()
     }
 
     p.m_item = nullptr;
+    return p;
+}
+
+template <class K, class V>
+typename block<K, V>::peek_t
+block<K, V>::spy_at(const size_t i)
+{
+    assert(i < m_capacity);
+
+    /* Ensure we get a consistent view of the item. Can lead to starvation :( */
+
+    peek_t p;
+    do {
+        p.m_version = m_item_pairs[i].second;
+        p.m_item    = m_item_pairs[i].first;
+        p.m_key     = m_item_pairs[i].first->key();
+    } while (m_item_pairs[i].second != p.m_version);
+
     return p;
 }
 

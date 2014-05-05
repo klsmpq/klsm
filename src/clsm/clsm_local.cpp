@@ -19,6 +19,8 @@
 
 #include "clsm_local.h"
 
+#include "clsm.h"
+
 namespace kpq
 {
 
@@ -44,11 +46,19 @@ clsm_local<K, V>::insert(const K &key,
     item<K, V> *it = m_item_allocator.acquire();
     it->initialize(key, val);
 
+    insert(it, it->version());
+}
+
+template <class K, class V>
+void
+clsm_local<K, V>::insert(item<K, V> *it,
+                         const version_t version)
+{
     /* TODO: Add to existing block optimization. */
     /* TODO: Allocate biggest possible array optimization. */
 
     block<K, V> *new_block = m_block_storage.get_block(0);
-    new_block->insert(it);
+    new_block->insert(it, version);
 
     merge_insert(new_block);
 }
@@ -91,7 +101,8 @@ clsm_local<K, V>::merge_insert(block<K, V> *const new_block)
 
 template <class K, class V>
 bool
-clsm_local<K, V>::delete_min(V &val)
+clsm_local<K, V>::delete_min(clsm<K, V> *parent,
+                             V &val)
 {
     typename block<K, V>::peek_t best;
 
@@ -109,12 +120,46 @@ clsm_local<K, V>::delete_min(V &val)
     }
 
     if (best.m_item == nullptr) {
+        spy(parent);
+        /* TODO: Retry. */
         return false;
     }
 
-    /* TODO: Spy if none found. */
-
     return best.m_item->take(best.m_version, val);
+}
+
+template <class K, class V>
+void
+clsm_local<K, V>::spy(clsm<K, V> *parent)
+{
+    const size_t num_threads    = parent->m_local.num_threads();
+    const size_t current_thread = parent->m_local.current_thread();
+
+    if (num_threads < 2) {
+        return;
+    }
+
+    /* All except current thread, therefore n - 2. */
+    std::uniform_int_distribution<> rand_int(0, num_threads - 2);
+    size_t victim_id = rand_int(m_gen);
+    if (victim_id >= current_thread) {
+        victim_id++;
+    }
+
+    auto victim = parent->m_local.get(victim_id);
+    for (auto i = victim->m_head.load(std::memory_order_relaxed);
+            i != nullptr;
+            i = i->m_next.load(std::memory_order_relaxed)) {
+        const size_t size = i->size();
+        for (size_t j = 0; j < size; j++) {
+            auto p = i->spy_at(j);
+            if (p.m_item == nullptr) {
+                continue;
+            }
+
+            insert(p.m_item, p.m_version);
+        }
+    }
 }
 
 template class clsm_local<uint32_t, uint32_t>;
