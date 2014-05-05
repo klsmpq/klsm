@@ -29,6 +29,8 @@ block<K, V>::block(const size_t power_of_2) :
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
     m_item_pairs(new item_pair_t[m_capacity]),
+    m_next(nullptr),
+    m_prev(nullptr),
     m_used(false)
 {
 }

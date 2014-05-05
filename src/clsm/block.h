@@ -20,6 +20,7 @@
 #ifndef __BLOCK_H
 #define __BLOCK_H
 
+#include <atomic>
 #include <utility>
 
 #include "item.h"
@@ -42,7 +43,14 @@ private:
 
     const size_t m_power_of_2;
     const size_t m_capacity;
+
     item_pair_t *m_item_pairs;
+
+    /** Next pointers may be used by all threads. */
+    std::atomic<block<K, V> *> m_next;
+    /** Prev pointers may be used only by the owning thread. */
+    block<K, V> *m_prev;
+
     bool m_used;
 };
 
