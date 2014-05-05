@@ -45,10 +45,13 @@ usage()
 {
     fprintf(stderr,
             "USAGE: heapsort [-s seed] [-n nelems] pq\n"
-            "       -s: Specifies the value used to seed the random number generator (default = 0)\n"
-            "       -n: Specifies the number of elements to sort (default = 2^15)\n"
+            "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
+            "       -n: Specifies the number of elements to sort (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of 'globallock', 'lsm')\n");
+            "           (one of '%s', '%s', '%s', '%s')\n",
+            DEFAULT_SEED,
+            DEFAULT_NELEMS,
+            PQ_GLOBALLOCK, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
     exit(EXIT_FAILURE);
 }
 
