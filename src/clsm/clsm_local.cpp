@@ -112,6 +112,8 @@ clsm_local<K, V>::delete_min(V &val)
         return false;
     }
 
+    /* TODO: Spy if none found. */
+
     return best.m_item->take(best.m_version, val);
 }
 
