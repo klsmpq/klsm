@@ -24,8 +24,8 @@
 namespace kpq
 {
 
-template <class T>
-block_storage<T>::~block_storage()
+template <class K, class V>
+block_storage<K, V>::~block_storage()
 {
     for (auto &block : m_blocks) {
         delete std::get<0>(block);
@@ -36,9 +36,9 @@ block_storage<T>::~block_storage()
     m_blocks.clear();
 }
 
-template <class T>
-block<T> *
-block_storage<T>::get_block(const size_t i)
+template <class K, class V>
+block<K, V> *
+block_storage<K, V>::get_block(const size_t i)
 {
     const size_t n = (1 << i);
 
@@ -46,9 +46,9 @@ block_storage<T>::get_block(const size_t i)
         assert(m_blocks.size() == i);
 
         /* Alloc new blocks. */
-        m_blocks.push_back(std::make_tuple(new block<T>(n),
-                                           new block<T>(n),
-                                           new block<T>(n)));
+        m_blocks.push_back(std::make_tuple(new block<K, V>(n),
+                                           new block<K, V>(n),
+                                           new block<K, V>(n)));
     }
 
     if (!std::get<0>(m_blocks[i])->used()) {
@@ -61,6 +61,6 @@ block_storage<T>::get_block(const size_t i)
     }
 }
 
-template class block_storage<uint32_t>;
+template class block_storage<uint32_t, uint32_t>;
 
 }

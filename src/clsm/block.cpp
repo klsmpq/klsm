@@ -24,34 +24,36 @@
 namespace kpq
 {
 
-template <class T>
-block<T>::block(const size_t power_of_2) :
+template <class K, class V>
+block<K, V>::block(const size_t power_of_2) :
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
+    m_item_pairs(new item_pair_t[m_capacity]),
     m_used(false)
 {
 }
 
-template <class T>
-block<T>::~block()
+template <class K, class V>
+block<K, V>::~block()
 {
+    delete[] m_item_pairs;
 }
 
-template <class T>
+template <class K, class V>
 bool
-block<T>::used() const
+block<K, V>::used() const
 {
     return m_used;
 }
 
-template <class T>
+template <class K, class V>
 void
-block<T>::set_unused()
+block<K, V>::set_unused()
 {
     assert(m_used);
     m_used = false;
 }
 
-template class block<uint32_t>;
+template class block<uint32_t, uint32_t>;
 
 }

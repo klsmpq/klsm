@@ -32,9 +32,9 @@ clsm<K, V>::insert(const K &key)
 template <class K, class V>
 void
 clsm<K, V>::insert(const K &key,
-                   const V &)
+                   const V &val)
 {
-    m_local.get()->insert(key);
+    m_local.get()->insert(key, val);
 }
 
 template <class K, class V>

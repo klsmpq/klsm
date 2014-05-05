@@ -28,17 +28,18 @@
 namespace kpq
 {
 
-template <class T>
+template <class K, class V>
 class clsm_local
 {
 public:
 
-    void insert(const T &v);
-    bool delete_min(T &v);
+    void insert(const K &key,
+                const V &val);
+    bool delete_min(V &val);
 
 private:
-    block_storage<T> m_block_storage;
-    LSM<T> m_lsm;
+    block_storage<K, V> m_block_storage;
+    LSM<K> m_lsm;
 };
 
 }

@@ -28,4 +28,6 @@ item<K, V>::item() :
 {
 }
 
+template class item<uint32_t, uint32_t>;
+
 }

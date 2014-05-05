@@ -32,7 +32,7 @@ namespace kpq
  * Maintains 3-tuples of memory blocks of size 2^i.
  */
 
-template <class T>
+template <class K, class V>
 class block_storage
 {
 public:
@@ -43,10 +43,10 @@ public:
      * Returns an unused block of size 2^i. If such a block does not exist,
      * a new 3-tuple of size 2^i is allocated.
      */
-    block<T> *get_block(const size_t i);
+    block<K, V> *get_block(const size_t i);
 
 private:
-    typedef std::tuple<block<T> *, block<T> *, block<T> *> block_3_tuple;
+    typedef std::tuple<block<K, V> *, block<K, V> *, block<K, V> *> block_3_tuple;
 
     std::vector<block_3_tuple> m_blocks;
 };

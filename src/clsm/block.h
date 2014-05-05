@@ -20,13 +20,14 @@
 #ifndef __BLOCK_H
 #define __BLOCK_H
 
-#include <tuple>
-#include <vector>
+#include <utility>
+
+#include "item.h"
 
 namespace kpq
 {
 
-template <class T>
+template <class K, class V>
 class block
 {
 public:
@@ -37,8 +38,11 @@ public:
     void set_unused();
 
 private:
+    typedef std::pair<item<K, V>, version_t> item_pair_t;
+
     const size_t m_power_of_2;
     const size_t m_capacity;
+    item_pair_t *m_item_pairs;
     bool m_used;
 };
 

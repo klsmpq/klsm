@@ -46,7 +46,7 @@ public:
     bool delete_min(V &val);
 
 private:
-    thread_local_ptr<clsm_local<K>> m_local;
+    thread_local_ptr<clsm_local<K, V>> m_local;
 };
 
 }

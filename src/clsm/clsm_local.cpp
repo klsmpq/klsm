@@ -22,20 +22,21 @@
 namespace kpq
 {
 
-template <class T>
+template <class K, class V>
 void
-clsm_local<T>::insert(const T &v)
+clsm_local<K, V>::insert(const K &key,
+                         const V &)
 {
-    m_lsm.insert(v);
+    m_lsm.insert(key);
 }
 
-template <class T>
+template <class K, class V>
 bool
-clsm_local<T>::delete_min(T &v)
+clsm_local<K, V>::delete_min(V &val)
 {
-    return m_lsm.delete_min(v);
+    return m_lsm.delete_min(val);
 }
 
-template class clsm_local<uint32_t>;
+template class clsm_local<uint32_t, uint32_t>;
 
 }
