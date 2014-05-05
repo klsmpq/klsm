@@ -45,6 +45,18 @@ item<K, V>::initialize(const K &key, const V &val)
 }
 
 template <class K, class V>
+bool
+item<K, V>::take(const version_t version,
+                 V &val)
+{
+    val = m_val;
+
+    version_t expected = version;
+    return m_version.compare_exchange_strong(expected, std::memory_order_relaxed);
+}
+
+
+template <class K, class V>
 K
 item<K, V>::key() const
 {

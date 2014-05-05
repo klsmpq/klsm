@@ -91,9 +91,28 @@ clsm_local<K, V>::merge_insert(block<K, V> *const new_block)
 
 template <class K, class V>
 bool
-clsm_local<K, V>::delete_min(V &)
+clsm_local<K, V>::delete_min(V &val)
 {
-    return false;
+    typename block<K, V>::peek_t best;
+
+    for (auto i = m_head.load(std::memory_order_relaxed);
+            i != nullptr;
+            i = i->m_next.load(std::memory_order_relaxed)) {
+
+        const auto candidate = i->peek();
+        if (best.m_item == nullptr ||
+                (candidate.m_item != nullptr && candidate.m_key < best.m_key)) {
+            best = candidate;
+        }
+
+        /* TODO: Check for merge. */
+    }
+
+    if (best.m_item == nullptr) {
+        return false;
+    }
+
+    return best.m_item->take(best.m_version, val);
 }
 
 template class clsm_local<uint32_t, uint32_t>;

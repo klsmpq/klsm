@@ -41,8 +41,6 @@ public:
         K m_key;
         item<K, V> *m_item;
         version_t m_version;
-
-        static const peek_t EMPTY;
     };
 
 public:

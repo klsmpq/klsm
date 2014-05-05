@@ -172,6 +172,7 @@ block<K, V>::set_unused()
 {
     assert(m_used);
     m_used = false;
+    m_size = 0;
 
     m_next.store(nullptr, std::memory_order_relaxed);
     m_prev = nullptr;
@@ -189,7 +190,7 @@ template <class K, class V>
 bool
 block<K, V>::item_owned(const item_pair_t &item_pair)
 {
-    return (item_pair.first->version() == item_pair.second);
+    return (item_pair.first != nullptr && item_pair.first->version() == item_pair.second);
 }
 
 template class block<uint32_t, uint32_t>;

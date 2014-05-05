@@ -36,6 +36,8 @@ public:
 
     void initialize(const K &key,
                     const V &val);
+    bool take(const version_t version,
+              V &val);
 
     K key() const;
     V val() const;
