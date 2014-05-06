@@ -28,6 +28,15 @@
 namespace kpq
 {
 
+/**
+ * A block stores references to items together with their expected version.
+ * An item is owned by this block if its version is equal to the expected version,
+ * otherwise it has been processed by another thread and possibly reused.
+ *
+ * A block is always of capacity 2^i, i \in N_0. For all owned items, if the index i < j
+ * then i.key < j.key.
+ */
+
 template <class K, class V>
 class block
 {
@@ -75,16 +84,20 @@ private:
     static bool item_owned(const item_pair_t &item_pair);
 
 private:
-    /** Since the CLSM is concurrent and other threads can take items without the owning
+    /** Points to the highest known filled index.
+     *  Since the CLSM is concurrent and other threads can take items without the owning
      *  thread knowing about it, size if not an exact value. Instead, it counts the number
      *  of elements that were written into the local list of items by the owning thread,
      *  even if those items currently aren't active anymore. */
     size_t m_size;
+
+    /** The capacity stored as a power of 2. */
     const size_t m_power_of_2;
     const size_t m_capacity;
 
     item_pair_t *m_item_pairs;
 
+    /** Specifies whether the block is currently in use. */
     bool m_used;
 };
 
