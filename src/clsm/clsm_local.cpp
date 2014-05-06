@@ -112,40 +112,74 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
 
         auto candidate = i->peek();
         while (i->size() <= i->capacity() / 2) {
-            block<K, V> *new_block = nullptr;
-            if (i->capacity() > 1) {
-                new_block = m_block_storage.get_block(i->power_of_2() - 1);
-                new_block->copy(i);
 
-                new_block->m_next.store(i->m_next.load(std::memory_order_relaxed),
-                                        std::memory_order_relaxed);
-                new_block->m_prev = i->m_prev;
+            /* Simply remove empty blocks. */
+            if (i->capacity() == 1) {
+                const auto next = i->m_next.load(std::memory_order_relaxed);
+                if (i == m_tail) {
+                    m_tail = i->m_prev;
+                } else {
+                    next->m_prev = i->m_prev;
+                }
 
-                /* TODO: Merge. */
+                if (i == m_head.load(std::memory_order_relaxed)) {
+                    m_head = next;
+                } else {
+                    i->m_prev->m_next = next;
+                }
+
+                i->set_unused();
+
+                goto out;
+            }
+
+            /* Shrink. */
+
+            block<K, V> *new_block = m_block_storage.get_block(i->power_of_2() - 1);
+            new_block->copy(i);
+
+            new_block->m_next.store(i->m_next.load(std::memory_order_relaxed),
+                                    std::memory_order_relaxed);
+            new_block->m_prev = i->m_prev;
+
+            /* Merge. TODO: Shrink-Merge optimization. */
+
+            auto next = new_block->m_next.load(std::memory_order_relaxed);
+            if (next != nullptr && new_block->capacity() == next->capacity()) {
+                auto merged_block = m_block_storage.get_block(new_block->power_of_2() + 1);
+                merged_block->merge(new_block, next);
+
+                merged_block->m_next = next->m_next.load(std::memory_order_relaxed);
+                merged_block->m_prev = new_block->m_prev;
+
+                new_block->set_unused();
+                new_block = merged_block;
             }
 
             /* Insert new block. */
 
-            if (i == m_tail) {
+            next = new_block->m_next.load(std::memory_order_relaxed);
+
+            if (next == nullptr) {
                 m_tail = new_block;
             } else {
-                i->m_next.load(std::memory_order_relaxed)->m_prev = new_block;
+                next->m_prev = new_block;
             }
 
-            if (i->m_prev == nullptr) {
+            if (new_block->m_prev == nullptr) {
                 m_head.store(new_block, std::memory_order_relaxed);
             } else {
-                i->m_prev->m_next.store(new_block, std::memory_order_relaxed);
+                new_block->m_prev->m_next.store(new_block, std::memory_order_relaxed);
             }
 
             /* Bookkeeping and rerun peek(). */
 
-            i->set_unused();
-            i = new_block;
-
-            if (i == nullptr) {
-                goto out;
+            for (auto j = i; j != nullptr && j != next;) {
+                const auto k = j->m_next.load(std::memory_order_relaxed);
+                j->set_unused();
+                j = k;
             }
+            i = new_block;
 
             candidate = i->peek();
         }
