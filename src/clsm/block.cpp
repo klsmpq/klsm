@@ -145,14 +145,14 @@ block<K, V>::spy_at(const size_t i)
 {
     assert(i < m_capacity);
 
-    /* Ensure we get a consistent view of the item. Can lead to starvation :( */
-
     peek_t p;
-    do {
-        p.m_version = m_item_pairs[i].second;
-        p.m_item    = m_item_pairs[i].first;
-        p.m_key     = m_item_pairs[i].first->key();
-    } while (m_item_pairs[i].second != p.m_version);
+    p.m_version = m_item_pairs[i].second;
+    p.m_item    = m_item_pairs[i].first;
+    p.m_key     = m_item_pairs[i].first->key();
+
+    if (m_item_pairs[i].second != p.m_version) {
+        p.m_item = nullptr;
+    }
 
     return p;
 }
