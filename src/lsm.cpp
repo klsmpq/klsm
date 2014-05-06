@@ -106,7 +106,7 @@ public:
 
         /* Merge. */
 
-        int l = 0, r = 0, dst = 0;
+        size_t l = 0, r = 0, dst = 0;
 
         while (l < lhs->capacity() && r < rhs->capacity()) {
             auto &lelem = lhs->m_elems[l];
@@ -230,12 +230,12 @@ public:
     void print() const
     {
         printf("size: %d, capacity: %d, first: %d\n", m_size, m_capacity, m_first);
-        for (int i = 0; i < m_capacity; i++) {
+        for (size_t i = 0; i < m_capacity; i++) {
             T v = 0;
             if (m_elems[i].used()) {
                 v = m_elems[i].peek();
             }
-            printf("%d: { %d, %d }\n", i, v, m_elems[i].used());
+            printf("%zu: { %d, %d }\n", i, v, m_elems[i].used());
         }
     }
 
@@ -383,7 +383,7 @@ LSMBlock<T> *
 LSM<T>::unused_block(const int n)
 {
     /* TODO: Ugly hack. */
-    int i = 0, m = n;
+    size_t i = 0, m = n;
     while (m > 1) {
         m >>= 1;
         i++;
@@ -391,9 +391,7 @@ LSM<T>::unused_block(const int n)
 
     if (i >= m_blocks.size()) {
         /* Alloc new blocks. */
-
         assert(m_blocks.size() == i);
-
         m_blocks.push_back({ new LSMBlock<T>(n), new LSMBlock<T>(n) });
     }
 
