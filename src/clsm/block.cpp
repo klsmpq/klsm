@@ -30,7 +30,7 @@ block<K, V>::block(const size_t power_of_2) :
     m_next(nullptr),
     m_prev(nullptr),
     m_first(0),
-    m_size(0),
+    m_last(0),
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
     m_item_pairs(new item_pair_t[m_capacity]),
@@ -51,13 +51,13 @@ block<K, V>::insert(item<K, V> *it,
 {
     assert(m_used);
     assert(m_first == 0);
-    assert(m_size == 0);
+    assert(m_last == 0);
     assert(m_capacity == 1);
 
     m_item_pairs->first  = it;
     m_item_pairs->second = version;
 
-    m_size = 1;
+    m_last = 1;
 }
 
 template <class K, class V>
@@ -69,13 +69,13 @@ block<K, V>::merge(const block<K, V> *lhs,
     assert(lhs->power_of_2() == rhs->power_of_2());
     assert(m_used);
     assert(m_first == 0);
-    assert(m_size == 0);
+    assert(m_last == 0);
 
     /* Merge. */
 
     size_t l = lhs->m_first, r = rhs->m_first, dst = 0;
 
-    while (l < lhs->m_size && r < rhs->m_size) {
+    while (l < lhs->m_last && r < rhs->m_last) {
         auto &lelem = lhs->m_item_pairs[l];
         auto &relem = rhs->m_item_pairs[r];
 
@@ -98,7 +98,7 @@ block<K, V>::merge(const block<K, V> *lhs,
         }
     }
 
-    while (l < lhs->m_size) {
+    while (l < lhs->m_last) {
         auto &lelem = lhs->m_item_pairs[l];
         if (!item_owned(lelem)) {
             l++;
@@ -108,7 +108,7 @@ block<K, V>::merge(const block<K, V> *lhs,
         l++;
     }
 
-    while (r < rhs->m_size) {
+    while (r < rhs->m_last) {
         auto &relem = rhs->m_item_pairs[r];
         if (!item_owned(relem)) {
             r++;
@@ -118,7 +118,7 @@ block<K, V>::merge(const block<K, V> *lhs,
         r++;
     }
 
-    m_size = dst;
+    m_last = dst;
 }
 
 template <class K, class V>
@@ -126,7 +126,7 @@ typename block<K, V>::peek_t
 block<K, V>::peek()
 {
     peek_t p;
-    for (size_t i = m_first; i < m_size; i++) {
+    for (size_t i = m_first; i < m_last; i++) {
         p.m_item    = m_item_pairs[i].first;
         p.m_key     = m_item_pairs[i].first->key();
         p.m_version = m_item_pairs[i].second;
@@ -168,7 +168,14 @@ template <class K, class V>
 size_t
 block<K, V>::size() const
 {
-    return m_size;
+    return m_last - m_first;
+}
+
+template <class K, class V>
+size_t
+block<K, V>::last() const
+{
+    return m_last;
 }
 
 template <class K, class V>
@@ -199,7 +206,7 @@ block<K, V>::set_unused()
     assert(m_used);
     m_used  = false;
     m_first = 0;
-    m_size  = 0;
+    m_last  = 0;
 
     m_next.store(nullptr, std::memory_order_relaxed);
     m_prev = nullptr;

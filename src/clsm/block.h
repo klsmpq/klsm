@@ -67,6 +67,7 @@ public:
     peek_t spy_at(const size_t i);
 
     size_t size() const;
+    size_t last() const;
     size_t power_of_2() const;
     size_t capacity() const;
 
@@ -87,12 +88,12 @@ private:
     /** Points to the lowest known filled index. */
     size_t m_first;
 
-    /** Points to the highest known filled index.
+    /** Points to the highest known filled index + 1.
      *  Since the CLSM is concurrent and other threads can take items without the owning
      *  thread knowing about it, size if not an exact value. Instead, it counts the number
      *  of elements that were written into the local list of items by the owning thread,
      *  even if those items currently aren't active anymore. */
-    size_t m_size;
+    size_t m_last;
 
     /** The capacity stored as a power of 2. */
     const size_t m_power_of_2;
