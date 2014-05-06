@@ -110,15 +110,53 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
             i != nullptr;
             i = i->m_next.load(std::memory_order_relaxed)) {
 
-        const auto candidate = i->peek();
+        auto candidate = i->peek();
+        while (i->size() <= i->capacity() / 2) {
+            block<K, V> *new_block = nullptr;
+            if (i->capacity() > 1) {
+                new_block = m_block_storage.get_block(i->power_of_2() - 1);
+                new_block->copy(i);
+
+                new_block->m_next.store(i->m_next.load(std::memory_order_relaxed),
+                                        std::memory_order_relaxed);
+                new_block->m_prev = i->m_prev;
+
+                /* TODO: Merge. */
+            }
+
+            /* Insert new block. */
+
+            if (i == m_tail) {
+                m_tail = new_block;
+            } else {
+                i->m_next.load(std::memory_order_relaxed)->m_prev = new_block;
+            }
+
+            if (i->m_prev == nullptr) {
+                m_head.store(new_block, std::memory_order_relaxed);
+            } else {
+                i->m_prev->m_next.store(new_block, std::memory_order_relaxed);
+            }
+
+            /* Bookkeeping and rerun peek(). */
+
+            i->set_unused();
+            i = new_block;
+
+            if (i == nullptr) {
+                goto out;
+            }
+
+            candidate = i->peek();
+        }
+
         if (best.m_item == nullptr ||
                 (candidate.m_item != nullptr && candidate.m_key < best.m_key)) {
             best = candidate;
         }
-
-        /* TODO: Check for merge. */
     }
 
+out:
     if (best.m_item == nullptr) {
         spy(parent);
         /* TODO: Retry. */

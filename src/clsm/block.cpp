@@ -122,6 +122,28 @@ block<K, V>::merge(const block<K, V> *lhs,
 }
 
 template <class K, class V>
+void
+block<K, V>::copy(const block<K, V> *that)
+{
+    assert(m_power_of_2 == that->power_of_2() - 1);
+    assert(m_used);
+    assert(m_first == 0);
+    assert(m_last == 0);
+
+    size_t dst = 0;
+    for (size_t i = that->m_first; i < that->m_last; i++) {
+        auto &elem = that->m_item_pairs[i];
+        if (!item_owned(elem)) {
+            continue;
+        }
+
+        m_item_pairs[dst++] = elem;
+    }
+
+    m_last = dst;
+}
+
+template <class K, class V>
 typename block<K, V>::peek_t
 block<K, V>::peek()
 {
