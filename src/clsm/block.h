@@ -84,6 +84,9 @@ private:
     static bool item_owned(const item_pair_t &item_pair);
 
 private:
+    /** Points to the lowest known filled index. */
+    size_t m_first;
+
     /** Points to the highest known filled index.
      *  Since the CLSM is concurrent and other threads can take items without the owning
      *  thread knowing about it, size if not an exact value. Instead, it counts the number

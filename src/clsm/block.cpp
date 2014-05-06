@@ -29,6 +29,7 @@ template <class K, class V>
 block<K, V>::block(const size_t power_of_2) :
     m_next(nullptr),
     m_prev(nullptr),
+    m_first(0),
     m_size(0),
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
@@ -49,6 +50,7 @@ block<K, V>::insert(item<K, V> *it,
                     const version_t version)
 {
     assert(m_used);
+    assert(m_first == 0);
     assert(m_size == 0);
     assert(m_capacity == 1);
 
@@ -66,13 +68,14 @@ block<K, V>::merge(const block<K, V> *lhs,
     assert(m_power_of_2 == lhs->power_of_2() + 1);
     assert(lhs->power_of_2() == rhs->power_of_2());
     assert(m_used);
+    assert(m_first == 0);
     assert(m_size == 0);
 
     /* Merge. */
 
-    size_t l = 0, r = 0, dst = 0;
+    size_t l = lhs->m_first, r = rhs->m_first, dst = 0;
 
-    while (l < lhs->capacity() && r < rhs->capacity()) {
+    while (l < lhs->m_size && r < rhs->m_size) {
         auto &lelem = lhs->m_item_pairs[l];
         auto &relem = rhs->m_item_pairs[r];
 
@@ -95,7 +98,7 @@ block<K, V>::merge(const block<K, V> *lhs,
         }
     }
 
-    while (l < lhs->capacity()) {
+    while (l < lhs->m_size) {
         auto &lelem = lhs->m_item_pairs[l];
         if (!item_owned(lelem)) {
             l++;
@@ -105,7 +108,7 @@ block<K, V>::merge(const block<K, V> *lhs,
         l++;
     }
 
-    while (r < rhs->capacity()) {
+    while (r < rhs->m_size) {
         auto &relem = rhs->m_item_pairs[r];
         if (!item_owned(relem)) {
             r++;
@@ -123,7 +126,7 @@ typename block<K, V>::peek_t
 block<K, V>::peek()
 {
     peek_t p;
-    for (size_t i = 0; i < m_size; i++) {
+    for (size_t i = m_first; i < m_size; i++) {
         p.m_item    = m_item_pairs[i].first;
         p.m_key     = m_item_pairs[i].first->key();
         p.m_version = m_item_pairs[i].second;
@@ -132,7 +135,11 @@ block<K, V>::peek()
             return p;
         }
 
-        /* TODO: Clean reference to unowned item. */
+        /* Move initial sequence of unowned item references out
+         * of active scope. */
+        if (i == m_first) {
+            m_first++;
+        }
     }
 
     p.m_item = nullptr;
@@ -190,8 +197,9 @@ void
 block<K, V>::set_unused()
 {
     assert(m_used);
-    m_used = false;
-    m_size = 0;
+    m_used  = false;
+    m_first = 0;
+    m_size  = 0;
 
     m_next.store(nullptr, std::memory_order_relaxed);
     m_prev = nullptr;
