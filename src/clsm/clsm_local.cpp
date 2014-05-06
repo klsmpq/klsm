@@ -150,6 +150,8 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
     for (auto i = victim->m_head.load(std::memory_order_relaxed);
             i != nullptr;
             i = i->m_next.load(std::memory_order_relaxed)) {
+
+        /* TODO: Replace this with an iterator? */
         const size_t size = i->size();
         for (size_t j = 0; j < size; j++) {
             auto p = i->spy_at(j);
