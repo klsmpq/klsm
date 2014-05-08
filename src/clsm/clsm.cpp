@@ -44,6 +44,15 @@ clsm<K, V>::delete_min(V &val)
     return m_local.get()->delete_min(this, val);
 }
 
+template <class K, class V>
+void
+clsm<K, V>::print()
+{
+    for (size_t i = 0; i < m_local.num_threads(); i++) {
+        m_local.get(i)->print();
+    }
+}
+
 template class clsm<uint32_t, uint32_t>;
 
 }

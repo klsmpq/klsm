@@ -45,6 +45,8 @@ public:
      */
     block<K, V> *get_block(const size_t i);
 
+    void print() const;
+
 private:
     typedef std::tuple<block<K, V> *, block<K, V> *, block<K, V> *> block_3_tuple;
 

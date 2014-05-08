@@ -33,6 +33,8 @@ public:
     bool delete_min(uint32_t &v);
     void clear();
 
+    void print() const;
+
 private:
     typedef std::priority_queue<uint32_t, std::vector<uint32_t>, std::greater<uint32_t>> pq_t;
 

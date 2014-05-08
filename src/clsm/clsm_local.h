@@ -48,6 +48,8 @@ public:
 
     void spy(clsm<K, V> *parent);
 
+    void print() const;
+
 private:
     /** The internal insertion, used both in the public insert() and in spy(). */
     void insert(item<K, V> *it,

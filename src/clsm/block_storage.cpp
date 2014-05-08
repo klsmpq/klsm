@@ -62,6 +62,19 @@ block_storage<K, V>::get_block(const size_t i)
     return block;
 }
 
+template <class K, class V>
+void
+block_storage<K, V>::print() const
+{
+    for (size_t i = 0; i < m_blocks.size(); i++) {
+        printf("%zu: {%d, %d, %d}, ", i,
+               std::get<0>(m_blocks[i])->used(),
+               std::get<1>(m_blocks[i])->used(),
+               std::get<2>(m_blocks[i])->used());
+    }
+    printf("\n");
+}
+
 template class block_storage<uint32_t, uint32_t>;
 
 }

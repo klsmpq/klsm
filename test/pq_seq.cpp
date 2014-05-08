@@ -144,8 +144,19 @@ TYPED_TEST(PQTest, InsDel)
         if (rand_bool(gen)) {
             uint32_t v;
             this->m_pq->delete_min(v);
+
+#ifdef DEBUG
+            printf("delete_min(%d):\n", v);
+            this->m_pq->print();
+#endif
         } else {
-            this->m_pq->insert(rand_int(gen));
+            const uint32_t v = rand_int(gen);
+            this->m_pq->insert(v);
+
+#ifdef DEBUG
+            printf("insert(%d):\n", v);
+            this->m_pq->print();
+#endif
         }
     }
 }

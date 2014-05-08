@@ -236,6 +236,13 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
     }
 }
 
+template <class K, class V>
+void
+clsm_local<K, V>::print() const
+{
+    m_block_storage.print();
+}
+
 template class clsm_local<uint32_t, uint32_t>;
 
 }

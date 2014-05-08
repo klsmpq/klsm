@@ -53,4 +53,9 @@ GlobalLock::clear()
     m_q = pq_t();
 }
 
+void GlobalLock::print() const
+{
+    /* NOP */
+}
+
 }
