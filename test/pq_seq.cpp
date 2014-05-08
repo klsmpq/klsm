@@ -132,6 +132,24 @@ TYPED_TEST(PQTest, ExtractAllDiffSizes)
     }
 }
 
+TYPED_TEST(PQTest, InsDel)
+{
+    this->generate_elements(0);
+
+    std::mt19937 gen(8);
+    std::uniform_int_distribution<> rand_int;
+    std::uniform_int_distribution<> rand_bool(0, 1);
+
+    for (int i = 0; i < 1024; i++) {
+        if (rand_bool(gen)) {
+            uint32_t v;
+            this->m_pq->delete_min(v);
+        } else {
+            this->m_pq->insert(rand_int(gen));
+        }
+    }
+}
+
 int
 main(int argc,
      char **argv)
