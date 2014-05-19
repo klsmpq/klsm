@@ -226,6 +226,7 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LINDEN) {
         kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);
+        pq.insert(42); /* A hack to avoid segfault on destructor in empty linden queue. */
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
