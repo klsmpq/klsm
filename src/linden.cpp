@@ -2,7 +2,15 @@
 
 extern "C" {
 #include "linden/gc/gc.h"
+#include "linden/prioq.h"
 }
+
+namespace kpq
+{
+
+struct linden_t {
+    pq_t *pq;
+};
 
 static inline void
 linden_insert(pq_t *pq,
@@ -14,24 +22,28 @@ linden_insert(pq_t *pq,
 Linden::Linden(const int max_offset)
 {
     _init_gc_subsystem();
-    m_q = pq_init(max_offset);
+    m_q = new linden_t;
+    m_q->pq = pq_init(max_offset);
 }
 
 Linden::~Linden()
 {
-    pq_destroy(m_q);
+    pq_destroy(m_q->pq);
+    delete m_q;
     _destroy_gc_subsystem();
 }
 
 void
 Linden::insert(const uint32_t v)
 {
-    linden_insert(m_q, v);
+    linden_insert(m_q->pq, v);
 }
 
 bool
 Linden::delete_min(uint32_t &v)
 {
-    v = deletemin(m_q);
+    v = deletemin(m_q->pq);
     return true;
+}
+
 }

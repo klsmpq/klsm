@@ -1,9 +1,12 @@
 #ifndef __LINDEN_H
 #define __LINDEN_H
 
-extern "C" {
-#include "linden/prioq.h"
-}
+#include <cstdint>
+
+namespace kpq
+{
+
+struct linden_t;
 
 class Linden
 {
@@ -14,7 +17,12 @@ public:
     void insert(const uint32_t v);
     bool delete_min(uint32_t &v);
 
+    constexpr static int DEFAULT_OFFSET = 32;
+
 private:
-    pq_t *m_q;
+    linden_t *m_q;
 };
+
+}
+
 #endif /* __LINDEN_H */
