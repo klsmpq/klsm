@@ -18,8 +18,9 @@
  */
 
 #include <ctime>
-#include <getopt.h>
 #include <future>
+#include <getopt.h>
+#include <hwloc.h>
 #include <random>
 #include <thread>
 #include <unistd.h>
@@ -55,6 +56,26 @@ static std::atomic<int> fill_barrier;
 static std::atomic<bool> start_barrier(false);
 static std::atomic<bool> end_barrier(false);
 
+static hwloc_topology_t topology;
+
+static void
+pin_to_core(const int id)
+{
+    const int depth = hwloc_get_type_or_below_depth(topology, HWLOC_OBJ_CORE);
+    const int ncores = hwloc_get_nbobjs_by_depth(topology, depth);
+
+    const hwloc_obj_t obj = hwloc_get_obj_by_depth(topology, depth, id % ncores);
+
+    hwloc_cpuset_t cpuset = hwloc_bitmap_dup(obj->cpuset);
+    hwloc_bitmap_singlify(cpuset);
+
+    if (hwloc_set_cpubind(topology, cpuset, HWLOC_CPUBIND_THREAD) != 0) {
+        fprintf(stderr, "Could not bind to core: %s\n", strerror(errno));
+    }
+
+    hwloc_bitmap_free(cpuset);
+}
+
 static void
 usage()
 {
@@ -84,6 +105,8 @@ bench_thread(T *pq,
     std::mt19937 gen(settings.seed + thread_id);
     std::uniform_int_distribution<> rand_int;
     std::uniform_int_distribution<> rand_bool(0, 1);
+
+    pin_to_core(thread_id);
 
     /* Fill up to initial size. Do this per thread in order to build a balanced CLSM
      * instead of having one local LSM containing all initial elems. */
@@ -218,6 +241,9 @@ main(int argc,
 
     settings.type = argv[optind];
 
+    hwloc_topology_init(&topology);
+    hwloc_topology_load(topology);
+
     if (settings.type == PQ_CLSM) {
         kpq::clsm<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
@@ -240,6 +266,8 @@ main(int argc,
     } else {
         usage();
     }
+
+    hwloc_topology_destroy(topology);
 
     return ret;
 }

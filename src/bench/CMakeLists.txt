@@ -13,6 +13,7 @@ target_link_libraries(heapsort
 add_executable(random random.cpp util.cpp)
 target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
+    ${HWLOC_LIBRARIES}
     clsm
     globallock
     linden
