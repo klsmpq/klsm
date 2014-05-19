@@ -58,7 +58,7 @@ static void
 usage()
 {
     fprintf(stderr,
-            "USAGE: random [-s seed] [-n nelems] [-p nthreads] [-i size] pq\n"
+            "USAGE: random [-s seed] [-p nthreads] [-i size] pq\n"
             "       -i: Specifies the initial size of the priority queue (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
