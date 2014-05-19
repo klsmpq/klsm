@@ -51,6 +51,7 @@ struct settings {
     std::string type;
 };
 
+static std::atomic<int> fill_barrier;
 static std::atomic<bool> start_barrier(false);
 static std::atomic<bool> end_barrier(false);
 
@@ -74,14 +75,28 @@ usage()
 template <class T>
 static void
 bench_thread(T *pq,
-             const int seed,
+             const int thread_id,
+             const struct settings &settings,
              std::promise<size_t> &&result)
 {
     size_t nops = 0;
 
-    std::mt19937 gen(seed);
+    std::mt19937 gen(settings.seed + thread_id);
     std::uniform_int_distribution<> rand_int;
     std::uniform_int_distribution<> rand_bool(0, 1);
+
+    /* Fill up to initial size. Do this per thread in order to build a balanced CLSM
+     * instead of having one local LSM containing all initial elems. */
+
+    const int slice_size = settings.size / settings.nthreads;
+    const int initial_size = (thread_id == settings.nthreads - 1) ?
+                             settings.size - thread_id * slice_size : slice_size;
+    const int initial_seed = settings.seed + thread_id + settings.nthreads;
+    const auto initial_elems = random_array(initial_size, initial_seed);
+    for (auto elem : initial_elems) {
+        pq->insert(elem);
+    }
+    fill_barrier.fetch_sub(1, std::memory_order_relaxed);
 
     while (!start_barrier.load(std::memory_order_relaxed)) {
         /* Wait. */
@@ -109,12 +124,7 @@ bench(T *pq,
 {
     int ret = 0;
 
-    /* Fill up to initial size. */
-
-    const auto initial_elems = random_array(settings.size, settings.seed);
-    for (auto elem : initial_elems) {
-        pq->insert(elem);
-    }
+    fill_barrier.store(settings.nthreads, std::memory_order_relaxed);
 
     /* Start all threads. */
 
@@ -123,7 +133,12 @@ bench(T *pq,
     for (int i = 0; i < settings.nthreads; i++) {
         std::promise<size_t> p;
         futures.push_back(p.get_future());
-        threads.push_back(std::thread(bench_thread<T>, pq, settings.seed + 1 + i, std::move(p)));
+        threads.push_back(std::thread(bench_thread<T>, pq, i, settings, std::move(p)));
+    }
+
+    /* Wait until threads are done filling their queue. */
+    while (fill_barrier.load(std::memory_order_relaxed) > 0) {
+        /* Wait. */
     }
 
     /* Begin benchmark. */
