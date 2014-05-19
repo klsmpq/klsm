@@ -15,6 +15,7 @@ target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
     clsm
     globallock
+    linden
     lsm
     sequence_heap
     skip_queue

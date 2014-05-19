@@ -26,6 +26,7 @@
 
 #include "clsm/clsm.h"
 #include "globallock.h"
+#include "linden.h"
 #include "lsm.h"
 #include "sequence_heap/sequence_heap.h"
 #include "skip_list/skip_queue.h"
@@ -38,6 +39,7 @@ constexpr int DEFAULT_SLEEP    = 10;
 
 #define PQ_CLSM       "clsm"
 #define PQ_GLOBALLOCK "globallock"
+#define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
 #define PQ_SEQUENCE   "sequence"
 #define PQ_SKIP       "skip"
@@ -61,11 +63,11 @@ usage()
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', %s', '%s', '%s', '%s')\n",
+            "           (one of '%s', %s', '%s', '%s', '%s', '%s')\n",
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            PQ_CLSM, PQ_GLOBALLOCK, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
+            PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
     exit(EXIT_FAILURE);
 }
 
@@ -206,6 +208,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
         kpq::GlobalLock pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_LINDEN) {
+        kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
