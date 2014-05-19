@@ -5,7 +5,9 @@ import subprocess
 
 from optparse import OptionParser
 
-ALGORITHMS = [ 'globallock'
+ALGORITHMS = [ 'clsm'
+             , 'globallock'
+             , 'linden'
              , 'lsm'
              , 'sequence'
              , 'skip'
@@ -29,15 +31,15 @@ NCPUS = [  1,  2,  3
 
 REPS = 5
 
-BIN = 'build/src/bench/heapsort'
+BIN = 'build/src/bench/random'
 
-def bench(algorithm, nelems, outfile):
+def bench(algorithm, nthreads, outfile):
     output = subprocess.check_output([ BIN
-                                     , '-n', str(nelems)
+                                     , '-p', str(nthreads)
                                      , algorithm
                                      ])
 
-    outstr = '%s, %d, %s' % (algorithm, nelems, output.strip())
+    outstr = '%s, %d, %s' % (algorithm, nthreads, output.strip())
 
     print outstr
     f.write(outstr + '\n')
@@ -46,8 +48,8 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-a", "--algorithms", dest = "algorithms", default = ",".join(ALGORITHMS),
             help = "Comma-separated list of %s" % ALGORITHMS)
-    parser.add_option("-n", "--nelems", dest = "nelems", default = ",".join(map(str, NELEMS)),
-            help = "Comma-separated list of element counts")
+    parser.add_option("-p", "--nthreads", dest = "nthreads", default = ",".join(map(str, NCPUS)),
+            help = "Comma-separated list of thread counts")
     parser.add_option("-o", "--outfile", dest = "outfile", default = '/dev/null',
             help = "Write results to outfile")
     parser.add_option("-r", "--reps", dest = "reps", type = 'int', default = REPS,
@@ -59,15 +61,15 @@ if __name__ == '__main__':
         if a not in ALGORITHMS:
             parser.error('Invalid algorithm')
 
-    nelems = list()
-    for n in options.nelems.split(','):
+    nthreads = list()
+    for n in options.nthreads.split(','):
         try:
-            nelems.append(int(n))
+            nthreads.append(int(n))
         except:
             parser.error('Invalid element count')
 
     with open(options.outfile, 'a') as f:
         for a in algorithms:
-            for n in nelems:
+            for n in nthreads:
                 for r in xrange(options.reps):
                     bench(a, n, f)
