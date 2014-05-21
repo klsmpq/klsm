@@ -25,7 +25,8 @@
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
-#define NTHREADS (1024)
+#define NTHREADS (160)
+#define NELEMS (1024)
 
 using namespace kpq;
 
@@ -112,7 +113,7 @@ TYPED_TEST(pq_par_test, ConcurrentInsert)
         threads.push_back(std::thread(random_insert<gtest_TypeParam_>,
                                       this->m_pq,
                                       i,
-                                      NTHREADS));
+                                      NELEMS));
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -137,7 +138,7 @@ random_delete(T *pq,
 
 TYPED_TEST(pq_par_test, ConcurrentDelete)
 {
-    this->generate_elements(NTHREADS * NTHREADS);
+    this->generate_elements(NELEMS * NTHREADS);
 
     std::vector<std::thread> threads;
     std::atomic<bool> can_continue(false);
@@ -145,7 +146,7 @@ TYPED_TEST(pq_par_test, ConcurrentDelete)
     for (int i = 0; i < NTHREADS; i++) {
         threads.push_back(std::thread(random_delete<gtest_TypeParam_>,
                                       this->m_pq,
-                                      NTHREADS));
+                                      NELEMS));
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -186,7 +187,7 @@ TYPED_TEST(pq_par_test, ConcurrentInsDel)
         threads.push_back(std::thread(random_ins_del<gtest_TypeParam_>,
                                       this->m_pq,
                                       i,
-                                      NTHREADS));
+                                      NELEMS));
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -222,7 +223,7 @@ random_ins_del_same_thread(T *pq,
 
 TYPED_TEST(pq_par_test, ConcurrentInsDelSameThread)
 {
-    this->generate_elements(NTHREADS);
+    this->generate_elements(NELEMS);
 
     std::vector<std::thread> threads;
     std::atomic<bool> can_continue(false);
@@ -231,7 +232,7 @@ TYPED_TEST(pq_par_test, ConcurrentInsDelSameThread)
         threads.push_back(std::thread(random_ins_del_same_thread<gtest_TypeParam_>,
                                       this->m_pq,
                                       i,
-                                      NTHREADS));
+                                      NELEMS));
     }
 
     can_continue.store(true, std::memory_order_relaxed);
