@@ -74,10 +74,9 @@ block<K, V>::insert(item<K, V> *it,
     assert(m_used);
     assert(m_first == 0);
     assert(m_last == 0);
-    assert(m_capacity == 1);
 
-    m_item_pairs->first  = it;
-    m_item_pairs->second = version;
+    m_item_pairs[0].first  = it;
+    m_item_pairs[0].second = version;
 
     m_last = 1;
 }
