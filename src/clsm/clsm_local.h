@@ -46,7 +46,9 @@ public:
     bool delete_min(clsm<K, V> *parent,
                     V &val);
 
-    void spy(clsm<K, V> *parent);
+    /** Attempts to copy items from a random other thread's local clsm,
+     *  and returns the number of items copied. */
+    int spy(clsm<K, V> *parent);
 
     void print() const;
 

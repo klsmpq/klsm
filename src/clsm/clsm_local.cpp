@@ -201,14 +201,16 @@ out:
 }
 
 template <class K, class V>
-void
+int
 clsm_local<K, V>::spy(clsm<K, V> *parent)
 {
+    int num_spied = 0;
+
     const size_t num_threads    = parent->m_local.num_threads();
     const size_t current_thread = parent->m_local.current_thread();
 
     if (num_threads < 2) {
-        return;
+        return num_spied;
     }
 
     /* All except current thread, therefore n - 2. */
@@ -232,8 +234,11 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
             }
 
             insert(p.m_item, p.m_version);
+            num_spied++;
         }
     }
+
+    return num_spied;
 }
 
 template <class K, class V>
