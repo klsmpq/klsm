@@ -127,13 +127,11 @@ static void
 random_delete(T *pq,
               const int n)
 {
-    uint32_t prev = std::numeric_limits<uint32_t>::min();
     for (int i = 0; i < n; i++) {
         uint32_t v;
-        if (pq->delete_min(v)) {
-            ASSERT_LE(prev, v);
-            prev = v;
-        }
+        pq->delete_min(v);
+        /* We can't give any guarantees as to ordering of deleted values
+         * because of spy(). */
     }
 }
 
