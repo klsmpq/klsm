@@ -83,6 +83,8 @@ private:
             log++;
         }
 
+        assert(log < bucket_count);
+
         return log;
     }
 
