@@ -105,6 +105,23 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
                              V &val)
 {
     typename block<K, V>::peek_t best;
+    peek(best);
+
+    if (best.m_item == nullptr && spy(parent) > 0) {
+        peek(best); /* Retry once after a successful peek(). */
+    }
+
+    if (best.m_item == nullptr) {
+        return false; /* We did our best, give up. */
+    }
+
+    return best.m_item->take(best.m_version, val);
+}
+
+template <class K, class V>
+void
+clsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
+{
 
     for (auto i = m_head.load(std::memory_order_relaxed);
             i != nullptr;
@@ -130,7 +147,7 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
 
                 i->set_unused();
 
-                goto out;
+                return;
             }
 
             /* Shrink. */
@@ -189,15 +206,6 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
             best = candidate;
         }
     }
-
-out:
-    if (best.m_item == nullptr) {
-        spy(parent);
-        /* TODO: Retry. */
-        return false;
-    }
-
-    return best.m_item->take(best.m_version, val);
 }
 
 template <class K, class V>

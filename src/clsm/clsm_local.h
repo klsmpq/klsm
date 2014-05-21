@@ -57,6 +57,10 @@ private:
     void insert(item<K, V> *it,
                 const version_t version);
 
+    /** Iterates through local items and returns the best one found.
+     *  Used internally by delete_min(). */
+    void peek(typename block<K, V>::peek_t &best);
+
     /**
      * Inserts new_block into the linked list of blocks, merging with
      * same size blocks until no two blocks in the list have the same size.
