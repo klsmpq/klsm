@@ -69,6 +69,8 @@ public:
 
     void insert(item<K, V> *it,
                 const version_t version);
+    void insert_tail(item<K, V> *it,
+                     const version_t version);
     void merge(const block<K, V> *lhs,
                const block<K, V> *rhs);
     void copy(const block<K, V> *that);
@@ -77,8 +79,13 @@ public:
      *  otherwise. Removes observed unowned items from the current block. */
     peek_t peek();
 
+    /** Iterates the block from last to first and sets key to the first key it finds.
+     *  If none are found, returns false. */
+    bool peek_tail(K &key);
+
     spying_iterator iterator();
 
+    size_t last() const;
     size_t size() const;
     size_t power_of_2() const;
     size_t capacity() const;

@@ -54,7 +54,15 @@ void
 clsm_local<K, V>::insert(item<K, V> *it,
                          const version_t version)
 {
-    /* TODO: Add to existing block optimization. */
+    /* If possible, simply append to the current tail block. */
+
+    if (m_tail != nullptr && m_tail->last() < m_tail->capacity()) {
+        K tail_key;
+        if (m_tail->peek_tail(tail_key) && tail_key <= it->key()) {
+            m_tail->insert_tail(it, version);
+            return;
+        }
+    }
 
     /* Allocate the biggest possible array. This is an optimization
      * only. For correctness, it is enough to always allocate a new

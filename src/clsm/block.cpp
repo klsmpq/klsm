@@ -71,14 +71,24 @@ void
 block<K, V>::insert(item<K, V> *it,
                     const version_t version)
 {
-    assert(m_used);
     assert(m_first == 0);
     assert(m_last == 0);
 
-    m_item_pairs[0].first  = it;
-    m_item_pairs[0].second = version;
+    insert_tail(it, version);
+}
 
-    m_last = 1;
+template <class K, class V>
+void
+block<K, V>::insert_tail(item<K, V> *it,
+                         const version_t version)
+{
+    assert(m_used);
+    assert(m_last < m_capacity);
+
+    m_item_pairs[m_last].first  = it;
+    m_item_pairs[m_last].second = version;
+
+    m_last++;
 }
 
 template <class K, class V>
@@ -193,6 +203,21 @@ block<K, V>::peek()
 }
 
 template <class K, class V>
+bool
+block<K, V>::peek_tail(K &key)
+{
+    for (int i = (int)m_last - 1; i >= (int)m_first; i--) {
+        key = m_item_pairs[i].first->key();
+        if (item_owned(m_item_pairs[i])) {
+            return true;
+        }
+        /* Last item is not owned by us anymore, clean it up. */
+        m_last--;
+    }
+    return false;
+}
+
+template <class K, class V>
 typename block<K, V>::spying_iterator
 block<K, V>::iterator()
 {
@@ -203,6 +228,13 @@ block<K, V>::iterator()
     it.m_last = m_last;
 
     return it;
+}
+
+template <class K, class V>
+size_t
+block<K, V>::last() const
+{
+    return m_last;
 }
 
 template <class K, class V>
