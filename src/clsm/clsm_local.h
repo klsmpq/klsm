@@ -58,6 +58,8 @@ private:
                 const version_t version);
 
     /** Iterates through local items and returns the best one found.
+     *  In the process of finding the minimal item, unowned items
+     *  in each block are removed and block merges are performed if possible.
      *  Used internally by delete_min(). */
     void peek(typename block<K, V>::peek_t &best);
 
