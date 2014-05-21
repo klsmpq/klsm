@@ -5,7 +5,7 @@ add_subdirectory(skip_list)
 
 set(CFLAGS_NO_WARNINGS "-Wno-unused-parameter -Wno-type-limits -Wno-overflow -Wno-format -Wno-pedantic")
 set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-long-long")
-set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-unused-function")
+set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-unused-function -Wstrict-aliasing")
 set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-implicit-function-declaration -Wno-unused-variable")
 
 include_directories(
