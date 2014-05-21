@@ -52,6 +52,17 @@ public:
         version_t m_version;
     };
 
+    class spying_iterator
+    {
+        friend class block<K, V>;
+    public:
+        peek_t next();
+
+    private:
+        item_pair_t *m_item_pairs;
+        size_t m_last, m_next;
+    };
+
 public:
     block(const size_t power_of_2);
     virtual ~block();
@@ -65,10 +76,10 @@ public:
     /** Returns null if the block is empty, and a peek_t struct of the minimal item
      *  otherwise. Removes observed unowned items from the current block. */
     peek_t peek();
-    peek_t spy_at(const size_t i);
+
+    spying_iterator iterator();
 
     size_t size() const;
-    size_t last() const;
     size_t power_of_2() const;
     size_t capacity() const;
 

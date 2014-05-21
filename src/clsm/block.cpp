@@ -24,6 +24,28 @@
 namespace kpq
 {
 
+template <class K, class V>
+typename block<K, V>::peek_t
+block<K, V>::spying_iterator::next()
+{
+    peek_t p;
+
+    while (m_next < m_last) {
+        const auto &item = m_item_pairs[m_next++];
+
+        p.m_version = item.second;
+        p.m_item    = item.first;
+        p.m_key     = item.first->key();
+
+        if (item.second != p.m_version) {
+            p.m_item = nullptr;
+        } else {
+            break;
+        }
+    }
+
+    return p;
+}
 
 template <class K, class V>
 block<K, V>::block(const size_t power_of_2) :
@@ -169,21 +191,16 @@ block<K, V>::peek()
 }
 
 template <class K, class V>
-typename block<K, V>::peek_t
-block<K, V>::spy_at(const size_t i)
+typename block<K, V>::spying_iterator
+block<K, V>::iterator()
 {
-    assert(i < m_capacity);
+    typename block<K, V>::spying_iterator it;
 
-    peek_t p;
-    p.m_version = m_item_pairs[i].second;
-    p.m_item    = m_item_pairs[i].first;
-    p.m_key     = m_item_pairs[i].first->key();
+    it.m_item_pairs = m_item_pairs;
+    it.m_next = m_first;
+    it.m_last = m_last;
 
-    if (m_item_pairs[i].second != p.m_version) {
-        p.m_item = nullptr;
-    }
-
-    return p;
+    return it;
 }
 
 template <class K, class V>
@@ -191,13 +208,6 @@ size_t
 block<K, V>::size() const
 {
     return m_last - m_first;
-}
-
-template <class K, class V>
-size_t
-block<K, V>::last() const
-{
-    return m_last;
 }
 
 template <class K, class V>

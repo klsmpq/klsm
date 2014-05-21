@@ -233,14 +233,8 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
             i != nullptr;
             i = i->m_next.load(std::memory_order_relaxed)) {
 
-        /* TODO: Replace this with an iterator? */
-        const size_t last = i->last();
-        for (size_t j = 0; j < last; j++) {
-            auto p = i->spy_at(j);
-            if (p.m_item == nullptr) {
-                continue;
-            }
-
+        auto it = i->iterator();
+        for (auto p = it.next(); p.m_item != nullptr; p = it.next()) {
             insert(p.m_item, p.m_version);
             num_spied++;
         }
