@@ -55,11 +55,21 @@ clsm_local<K, V>::insert(item<K, V> *it,
                          const version_t version)
 {
     /* TODO: Add to existing block optimization. */
-    /* TODO: Allocate biggest possible array optimization. */
 
-    block<K, V> *new_block = m_block_storage.get_block(0);
+    /* Allocate the biggest possible array. This is an optimization
+     * only. For correctness, it is enough to always allocate a new
+     * array of capacity 1. */
+
+    block<K, V> *new_block;
+    if (m_tail == nullptr) {
+        new_block = m_block_storage.get_largest_block();
+    } else if (m_tail->power_of_2() > 0) {
+        new_block = m_block_storage.get_block(m_tail->power_of_2() - 1);
+    } else {
+        new_block = m_block_storage.get_block(0);
+    }
+
     new_block->insert(it, version);
-
     merge_insert(new_block);
 }
 
@@ -73,7 +83,14 @@ clsm_local<K, V>::merge_insert(block<K, V> *const new_block)
 
     /* Merge as long as the prev block is of the same size as the new block. */
     while (other_block != nullptr && insert_block->capacity() == other_block->capacity()) {
-        auto merged_block = m_block_storage.get_block(insert_block->power_of_2() + 1);
+        /* Only merge into a larger block if both candidate blocks have enough elements to
+         * justify the larger size. This change is necessary to avoid huge blocks containing
+         * only a few elements (which actually happens with the 'alloc largest block on insert'
+         * optimization. */
+        const size_t merged_pow2 =
+            (insert_block->size() + other_block->size() <= insert_block->capacity()) ?
+            insert_block->power_of_2() : insert_block->power_of_2() + 1;
+        auto merged_block = m_block_storage.get_block(merged_pow2);
         merged_block->merge(insert_block, other_block);
 
         insert_block->set_unused();

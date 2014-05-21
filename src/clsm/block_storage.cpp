@@ -63,6 +63,17 @@ block_storage<K, V>::get_block(const size_t i)
 }
 
 template <class K, class V>
+block<K, V> *
+block_storage<K, V>::get_largest_block()
+{
+    const size_t size = m_blocks.size();
+    if (size == 0) {
+        return get_block(0);
+    }
+    return get_block(size - 1);
+}
+
+template <class K, class V>
 void
 block_storage<K, V>::print() const
 {

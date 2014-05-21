@@ -86,8 +86,11 @@ void
 block<K, V>::merge(const block<K, V> *lhs,
                    const block<K, V> *rhs)
 {
+    /* The following assertions are no longer valid since we now sometimes merge blocks
+     * of different capacities.
     assert(m_power_of_2 == lhs->power_of_2() + 1);
     assert(lhs->power_of_2() == rhs->power_of_2());
+     */
     assert(m_used);
     assert(m_first == 0);
     assert(m_last == 0);

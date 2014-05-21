@@ -45,6 +45,8 @@ public:
      */
     block<K, V> *get_block(const size_t i);
 
+    block<K, V> *get_largest_block();
+
     void print() const;
 
 private:
