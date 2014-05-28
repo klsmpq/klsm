@@ -21,3 +21,15 @@ target_link_libraries(random
     sequence_heap
     skip_queue
 )
+
+add_executable(shortest_paths shortest_paths.cpp util.cpp)
+target_link_libraries(shortest_paths
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${HWLOC_LIBRARIES}
+    clsm
+    globallock
+    linden
+    lsm
+    sequence_heap
+    skip_queue
+)
