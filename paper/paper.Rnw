@@ -1,0 +1,67 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{acronym}
+\usepackage[backend=bibtex]{biblatex}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{comment}
+\usepackage{graphicx}
+\usepackage[pdfborder={0 0 0}]{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{listings}
+
+\input{acronyms}
+\bibliography{bibliography.bib}
+
+\definecolor{Gray}{gray}{0.5}
+\definecolor{OliveGreen}{cmyk}{0.64,0,0.95,0.40}
+
+\pdfstringdefDisableCommands{\def\citeauthor#1{#1}}
+
+\lstset{
+    language=C++,
+    basicstyle=\ttfamily,
+    keywordstyle=\color{OliveGreen},
+    commentstyle=\color{Gray},
+    captionpos=b,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    showtabs=false,
+    numbers=left,
+}
+
+\title{CLSM: A Concurrent Priority Queue \\
+       Project in Software Engineering \& Internet Computing 2014S \\
+       Technical University of Vienna}
+\author{Jakob Gruber, 0203440}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+[...]
+\end{abstract}
+
+\section{Introduction}
+
+\section{Concepts and Definitions} \label{sec:concepts}
+
+\section{Fine-grained Locking Heaps} \label{sec:hunt}
+
+\section{Lock-free Priority Queues} \label{sec:lockfree}
+
+\section{Relaxed Priority Queues} \label{sec:relaxed}
+
+\section{Performance Results}
+
+\begin{center}
+<<results = tex, echo = FALSE>>=
+\SweaveInput{pqplot.Rnw}
+pqplot("../results/results.csv")
+@
+\end{center}
+
+\printbibliography
+
+\end{document}
