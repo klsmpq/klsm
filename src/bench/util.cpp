@@ -19,7 +19,46 @@
 
 #include "util.h"
 
+#include <hwloc.h>
 #include <random>
+
+class hwloc_wrapper_private
+{
+public:
+    hwloc_topology_t m_topology;
+};
+
+hwloc_wrapper::hwloc_wrapper()
+{
+    m_p = new hwloc_wrapper_private();
+
+    hwloc_topology_init(&m_p->m_topology);
+    hwloc_topology_load(m_p->m_topology);
+}
+
+hwloc_wrapper::~hwloc_wrapper()
+{
+    hwloc_topology_destroy(m_p->m_topology);
+    delete m_p;
+}
+
+void
+hwloc_wrapper::pin_to_core(const int id)
+{
+    const int depth = hwloc_get_type_or_below_depth(m_p->m_topology, HWLOC_OBJ_CORE);
+    const int ncores = hwloc_get_nbobjs_by_depth(m_p->m_topology, depth);
+
+    const hwloc_obj_t obj = hwloc_get_obj_by_depth(m_p->m_topology, depth, id % ncores);
+
+    hwloc_cpuset_t cpuset = hwloc_bitmap_dup(obj->cpuset);
+    hwloc_bitmap_singlify(cpuset);
+
+    if (hwloc_set_cpubind(m_p->m_topology, cpuset, HWLOC_CPUBIND_THREAD) != 0) {
+        fprintf(stderr, "Could not bind to core: %s\n", strerror(errno));
+    }
+
+    hwloc_bitmap_free(cpuset);
+}
 
 double
 timediff_in_s(const struct timespec &start,

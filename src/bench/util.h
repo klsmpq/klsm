@@ -24,6 +24,20 @@
 #include <cstdint>
 #include <vector>
 
+class hwloc_wrapper_private;
+
+class hwloc_wrapper
+{
+public:
+    hwloc_wrapper();
+    virtual ~hwloc_wrapper();
+
+    void pin_to_core(const int id);
+
+private:
+    hwloc_wrapper_private *m_p;
+};
+
 double
 timediff_in_s(const struct timespec &start,
               const struct timespec &end);
