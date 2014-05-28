@@ -5,7 +5,8 @@ import subprocess
 
 from optparse import OptionParser
 
-ALGORITHMS = [ 'clsm'
+ALGORITHMS = [ 'cheap'
+             , 'clsm'
              , 'globallock'
              , 'linden'
              , 'lsm'

@@ -24,6 +24,7 @@
 #include <thread>
 #include <unistd.h>
 
+#include "cheap.h"
 #include "clsm/clsm.h"
 #include "globallock.h"
 #include "linden.h"
@@ -37,6 +38,7 @@ constexpr int DEFAULT_SIZE     = 1 << 15;
 constexpr int DEFAULT_NTHREADS = 1;
 constexpr int DEFAULT_SLEEP    = 10;
 
+#define PQ_CHEAP      "cheap"
 #define PQ_CLSM       "clsm"
 #define PQ_GLOBALLOCK "globallock"
 #define PQ_LINDEN     "linden"
@@ -66,11 +68,11 @@ usage()
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', %s', '%s', '%s', '%s', '%s')\n",
+            "           (one of '%s', %s', %s', '%s', '%s', '%s', '%s')\n",
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
+            PQ_CHEAP, PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
     exit(EXIT_FAILURE);
 }
 
@@ -223,7 +225,10 @@ main(int argc,
 
     settings.type = argv[optind];
 
-    if (settings.type == PQ_CLSM) {
+    if (settings.type == PQ_CHEAP) {
+        kpq::cheap<uint32_t, uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_CLSM) {
         kpq::clsm<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
