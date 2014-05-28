@@ -39,3 +39,6 @@ add_library(thread_local_ptr STATIC
     thread_local_ptr.cpp
 )
 
+# A silly hack to make all files (including headers) show up in QtCreator.
+file(GLOB_RECURSE ALL_HEADERS *.h *.cpp)
+add_library(qtcreator_dummy ${ALL_HEADERS} thread_local_ptr.cpp)
