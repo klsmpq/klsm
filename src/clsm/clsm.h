@@ -53,6 +53,38 @@ private:
     thread_local_ptr<clsm_local<K, V>> m_local;
 };
 
+
+template <class K, class V>
+void
+clsm<K, V>::insert(const K &key)
+{
+    insert(key, key);
+}
+
+template <class K, class V>
+void
+clsm<K, V>::insert(const K &key,
+                   const V &val)
+{
+    m_local.get()->insert(key, val);
+}
+
+template <class K, class V>
+bool
+clsm<K, V>::delete_min(V &val)
+{
+    return m_local.get()->delete_min(this, val);
+}
+
+template <class K, class V>
+void
+clsm<K, V>::print()
+{
+    for (size_t i = 0; i < m_local.num_threads(); i++) {
+        m_local.get(i)->print();
+    }
+}
+
 }
 
 #endif /* __CLSM_H */
