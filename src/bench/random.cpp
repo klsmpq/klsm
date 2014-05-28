@@ -170,7 +170,9 @@ bench(T *pq,
     }
 
     const double elapsed = timediff_in_s(start, end);
-    fprintf(stdout, "%1.8f, %zu\n", elapsed, nops);
+    size_t ops_per_s = (size_t)((double)nops / elapsed);
+
+    fprintf(stdout, "%zu\n", ops_per_s);
 
     return ret;
 }
