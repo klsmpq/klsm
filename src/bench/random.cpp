@@ -98,7 +98,7 @@ bench_thread(T *pq,
     const int initial_seed = settings.seed + thread_id + settings.nthreads;
     const auto initial_elems = random_array(initial_size, initial_seed);
     for (auto elem : initial_elems) {
-        pq->insert(elem);
+        pq->insert(elem, elem);
     }
     fill_barrier.fetch_sub(1, std::memory_order_relaxed);
 
@@ -108,7 +108,8 @@ bench_thread(T *pq,
 
     while (!end_barrier.load(std::memory_order_relaxed)) {
         if (rand_bool(gen)) {
-            pq->insert(rand_int(gen));
+            uint32_t v = rand_int(gen);
+            pq->insert(v, v);
             nops++;
         } else {
             uint32_t v;
@@ -226,11 +227,11 @@ main(int argc,
         kpq::clsm<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
-        kpq::GlobalLock pq;
+        kpq::GlobalLock<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LINDEN) {
         kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);
-        pq.insert(42); /* A hack to avoid segfault on destructor in empty linden queue. */
+        pq.insert(42, 42); /* A hack to avoid segfault on destructor in empty linden queue. */
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;

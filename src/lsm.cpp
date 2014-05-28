@@ -263,10 +263,11 @@ LSM<T>::~LSM()
 
 template <class T>
 void
-LSM<T>::insert(const T v)
+LSM<T>::insert(const T &key,
+               const T & /* Unused */)
 {
     auto new_block = unused_block(1);
-    new_block->put(v);
+    new_block->put(key);
 
     while (m_head != nullptr && m_head->capacity() == new_block->capacity()) {
         const auto merged_block = unused_block(new_block->capacity() * 2);

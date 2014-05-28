@@ -70,7 +70,7 @@ bench(T *pq,
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     for (int i = 0; i < settings.nelems; i++) {
-        pq->insert(xs[i]);
+        pq->insert(xs[i], xs[i]);
     }
 
     for (int i = 0; i < settings.nelems; i++) {
@@ -133,7 +133,7 @@ main(int argc,
 
     settings.type = argv[optind];
     if (settings.type == PQ_GLOBALLOCK) {
-        kpq::GlobalLock pq;
+        kpq::GlobalLock<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;

@@ -25,7 +25,6 @@ add_test(NAME pq-par-test COMMAND pq-par-test)
 
 add_executable(pq-seq-test pq_seq.cpp)
 target_link_libraries(pq-seq-test
-    globallock
     gtest
     lsm
     thread_local_ptr

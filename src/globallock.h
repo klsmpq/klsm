@@ -26,21 +26,76 @@
 namespace kpq
 {
 
+template <class K, class V>
 class GlobalLock
 {
+private:
+    class entry_t
+    {
+    public:
+        K key;
+        V value;
+
+        bool operator>(const entry_t &that) const
+        {
+            return this->key > that.key;
+        }
+    };
+
 public:
-    void insert(const uint32_t v);
-    bool delete_min(uint32_t &v);
+    void insert(const K &key, const V &value);
+    bool delete_min(V &value);
     void clear();
 
     void print() const;
 
 private:
-    typedef std::priority_queue<uint32_t, std::vector<uint32_t>, std::greater<uint32_t>> pq_t;
+    typedef std::priority_queue<entry_t, std::vector<entry_t>, std::greater<entry_t>> pq_t;
 
     std::mutex m_mutex;
     pq_t m_q;
 };
+
+template <class K, class V>
+bool
+GlobalLock<K, V>::delete_min(V &value)
+{
+    std::lock_guard<std::mutex> g(m_mutex);
+
+    if (m_q.empty()) {
+        return false;
+    }
+
+    entry_t entry = m_q.top();
+    m_q.pop();
+
+    value = entry.value;
+
+    return true;
+}
+
+template <class K, class V>
+void
+GlobalLock<K, V>::insert(const K &key,
+                         const V &value)
+{
+    std::lock_guard<std::mutex> g(m_mutex);
+    m_q.push(entry_t { key, value });
+}
+
+template <class K, class V>
+void
+GlobalLock<K, V>::clear()
+{
+    std::lock_guard<std::mutex> g(m_mutex);
+    m_q = pq_t();
+}
+
+template <class K, class V>
+void GlobalLock<K, V>::print() const
+{
+    /* NOP */
+}
 
 }
 

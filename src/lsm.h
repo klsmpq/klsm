@@ -36,7 +36,7 @@ public:
     LSM();
     ~LSM();
 
-    void insert(const T v);
+    void insert(const T &k, const T &v);
     bool delete_min(T &v);
     void clear();
 

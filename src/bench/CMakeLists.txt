@@ -5,7 +5,6 @@ include_directories(
 add_executable(heapsort heapsort.cpp util.cpp)
 target_link_libraries(heapsort
     ${HWLOC_LIBRARIES}
-    globallock
     lsm
     sequence_heap
     skip_queue
@@ -15,7 +14,6 @@ add_executable(random random.cpp util.cpp)
 target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
-    globallock
     linden
     lsm
     sequence_heap
@@ -27,7 +25,6 @@ add_executable(shortest_paths shortest_paths.cpp util.cpp)
 target_link_libraries(shortest_paths
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
-    globallock
     linden
     lsm
     sequence_heap

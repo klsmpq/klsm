@@ -59,7 +59,7 @@ protected:
             const uint32_t v = rand_int(gen);
 
             m_elements.push_back(v);
-            m_pq->insert(v);
+            m_pq->insert(v, v);
             m_min = std::min(m_min, v);
         }
     }
@@ -77,7 +77,7 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types<GlobalLock, LSM<uint32_t>,
+typedef ::testing::Types<GlobalLock<uint32_t, uint32_t>, LSM<uint32_t>,
         clsm<uint32_t, uint32_t>> TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
@@ -96,7 +96,7 @@ TYPED_TEST(PQTest, NewMinElem)
     }
 
     const uint32_t w = v - 1;
-    this->m_pq->insert(w);
+    this->m_pq->insert(w, w);
     EXPECT_TRUE(this->m_pq->delete_min(v));
     EXPECT_EQ(w, v);
 }
@@ -151,7 +151,7 @@ TYPED_TEST(PQTest, InsDel)
 #endif
         } else {
             const uint32_t v = rand_int(gen);
-            this->m_pq->insert(v);
+            this->m_pq->insert(v, v);
 
 #ifdef DEBUG
             printf("insert(%d):\n", v);

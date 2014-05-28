@@ -29,7 +29,7 @@ template <class T>
 class skip_queue
 {
 public:
-    void insert(const T v);
+    void insert(const T &key, const T &value);
     bool delete_min(T &v);
     void clear();
 

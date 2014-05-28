@@ -24,9 +24,10 @@ namespace kpq
 
 template <class T>
 void
-skip_queue<T>::insert(const T v)
+skip_queue<T>::insert(const T &key,
+                      const T & /* Unused */)
 {
-    m_pq.insert(v);
+    m_pq.insert(key);
 }
 
 template <class T>

@@ -14,7 +14,7 @@ public:
     Linden(const int max_offset);
     virtual ~Linden();
 
-    void insert(const uint32_t v);
+    void insert(const uint32_t &key, const uint32_t &value);
     bool delete_min(uint32_t &v);
 
     constexpr static int DEFAULT_OFFSET = 32;

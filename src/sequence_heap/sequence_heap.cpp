@@ -33,9 +33,10 @@ sequence_heap<T>::sequence_heap()
 
 template <class T>
 void
-sequence_heap<T>::insert(const T v)
+sequence_heap<T>::insert(const T &key,
+                         const T &value)
 {
-    m_pq->insert(v, v);
+    m_pq->insert(key, value);
 }
 
 template <class T>
@@ -47,7 +48,7 @@ sequence_heap<T>::delete_min(T &v)
     }
 
     T w;
-    m_pq->deleteMin(&v, &w);
+    m_pq->deleteMin(&w, &v);
 
     return true;
 }

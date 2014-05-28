@@ -34,9 +34,10 @@ Linden::~Linden()
 }
 
 void
-Linden::insert(const uint32_t v)
+Linden::insert(const uint32_t &key,
+               const uint32_t & /* Unused */)
 {
-    linden_insert(m_q->pq, v);
+    linden_insert(m_q->pq, key);
 }
 
 bool
