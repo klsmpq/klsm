@@ -69,7 +69,8 @@ struct vertex_t {
 };
 
 struct task_t {
-    task_t(vertex_t *v) : v(v)
+    task_t(vertex_t *v,
+           const size_t distance) : v(v), distance(distance)
     {
         num_tasks.fetch_add(1, std::memory_order_relaxed);
     }
@@ -80,6 +81,7 @@ struct task_t {
     }
 
     vertex_t *v;
+    const size_t distance;
 };
 
 static void
@@ -196,6 +198,12 @@ bench_thread(T *pq,
 
         const vertex_t *v = task->v;
         const size_t v_dist = v->distance.load(std::memory_order_relaxed);
+
+        if (task->distance > v_dist) {
+            delete task;
+            continue;
+        }
+
         for (size_t i = 0; i < v->num_edges; i++) {
             const edge_t *e = &v->edges[i];
             const size_t new_dist = v_dist + e->weight;
@@ -214,7 +222,7 @@ bench_thread(T *pq,
             } while (!dist_updated && w_dist > new_dist);
 
             if (dist_updated) {
-                pq->insert(new_dist, new task_t(w));
+                pq->insert(new_dist, new task_t(w, new_dist));
             }
         }
 
@@ -232,7 +240,7 @@ bench(T *pq,
 
     /* Our initial node is graph[0]. */
 
-    pq->insert(0, new task_t(&graph[0]));
+    pq->insert(0, new task_t(&graph[0], 0));
 
     /* Start all threads. */
 
