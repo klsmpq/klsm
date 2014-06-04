@@ -76,13 +76,18 @@ private:
     block_storage<K, V> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
 
+    /** Saves the thread id of the spying victim in case the last spy attempt was successful,
+     *  and -1 otherwise. */
+    int32_t m_victim_id;
+
     std::mt19937 m_gen;
 };
 
 template <class K, class V>
 clsm_local<K, V>::clsm_local() :
     m_head(nullptr),
-    m_tail(nullptr)
+    m_tail(nullptr),
+    m_victim_id(-1)
 {
 }
 
@@ -295,20 +300,22 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
     int num_spied = 0;
 
     const size_t num_threads    = parent->m_local.num_threads();
-    const size_t current_thread = parent->m_local.current_thread();
+    const int32_t current_thread = (int32_t)parent->m_local.current_thread();
 
     if (num_threads < 2) {
         return num_spied;
     }
 
-    /* All except current thread, therefore n - 2. */
-    std::uniform_int_distribution<> rand_int(0, num_threads - 2);
-    size_t victim_id = rand_int(m_gen);
-    if (victim_id >= current_thread) {
-        victim_id++;
+    if (m_victim_id == -1) {
+        /* All except current thread, therefore n - 2. */
+        std::uniform_int_distribution<> rand_int(0, num_threads - 2);
+        m_victim_id = rand_int(m_gen);
+        if (m_victim_id >= current_thread) {
+            m_victim_id++;
+        }
     }
 
-    auto victim = parent->m_local.get(victim_id);
+    auto victim = parent->m_local.get(m_victim_id);
     for (auto i = victim->m_head.load(std::memory_order_relaxed);
             i != nullptr;
             i = i->m_next.load(std::memory_order_relaxed)) {
@@ -318,6 +325,10 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
             insert(p.m_item, p.m_version);
             num_spied++;
         }
+    }
+
+    if (num_spied == 0) {
+        m_victim_id = -1;
     }
 
     return num_spied;
