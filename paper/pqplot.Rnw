@@ -41,7 +41,7 @@ pqplot <- function(csvfile) {
                       legend.justification = c(1, 1),
                       legend.background = element_rect(fill = alpha("black", 0)))
 
-    # postscript(file = figfile, paper = "special", width = 10, height = 5, horizontal = FALSE)
+    postscript(file = figfile, paper = "special", width = 10, height = 5, horizontal = FALSE)
     plot(p)
     invisible(dev.off())
     cat("\\includegraphics[width = \\textwidth]{", figfile, "}\n\n", sep = "")
