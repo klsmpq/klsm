@@ -126,10 +126,9 @@ clsm_local<K, V>::insert(item<K, V> *it,
     block<K, V> *new_block;
     if (m_tail == nullptr) {
         new_block = m_block_storage.get_largest_block();
-    } else if (m_tail->power_of_2() > 0) {
-        new_block = m_block_storage.get_block(m_tail->power_of_2() - 1);
     } else {
-        new_block = m_block_storage.get_block(0);
+        const size_t tail_size = m_tail->power_of_2();
+        new_block = m_block_storage.get_block((tail_size == 0) ? 0 : tail_size - 1);
     }
 
     new_block->insert(it, version);
@@ -188,7 +187,7 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
     peek(best);
 
     if (best.m_item == nullptr && spy(parent) > 0) {
-        peek(best); /* Retry once after a successful peek(). */
+        peek(best); /* Retry once after a successful spy(). */
     }
 
     if (best.m_item == nullptr) {
