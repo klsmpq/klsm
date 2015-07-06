@@ -17,48 +17,33 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __BLOCK_STORAGE_H
-#define __BLOCK_STORAGE_H
-
-#include <cassert>
-#include <vector>
-
-#include "block.h"
-
-namespace kpq
-{
-
-/**
- * Maintains 3-tuples of memory blocks of size 2^i.
- */
-
 template <class K, class V>
-class block_storage
+void
+clsm<K, V>::insert(const K &key)
 {
-private:
-    struct block_tuple {
-        block<K, V> *fst, *snd, *thd;
-    };
-
-public:
-    virtual ~block_storage();
-
-    /**
-     * Returns an unused block of size 2^i. If such a block does not exist,
-     * a new 3-tuple of size 2^i is allocated.
-     */
-    block<K, V> *get_block(const size_t i);
-
-    block<K, V> *get_largest_block();
-
-    void print() const;
-
-private:
-    std::vector<block_tuple> m_blocks;
-};
-
-#include "block_storage_inl.h"
-
+    insert(key, key);
 }
 
-#endif /* __BLOCK_STORAGE_H */
+template <class K, class V>
+void
+clsm<K, V>::insert(const K &key,
+                   const V &val)
+{
+    m_local.get()->insert(key, val);
+}
+
+template <class K, class V>
+bool
+clsm<K, V>::delete_min(V &val)
+{
+    return m_local.get()->delete_min(this, val);
+}
+
+template <class K, class V>
+void
+clsm<K, V>::print()
+{
+    for (size_t i = 0; i < m_local.num_threads(); i++) {
+        m_local.get(i)->print();
+    }
+}
