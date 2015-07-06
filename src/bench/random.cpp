@@ -34,7 +34,7 @@
 #include "util.h"
 
 constexpr int DEFAULT_SEED     = 0;
-constexpr int DEFAULT_SIZE     = 1 << 15;
+constexpr int DEFAULT_SIZE     = 1 << 7;
 constexpr int DEFAULT_NTHREADS = 1;
 constexpr int DEFAULT_SLEEP    = 10;
 
