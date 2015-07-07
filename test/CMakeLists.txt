@@ -3,6 +3,13 @@ include_directories(
     ${GTEST_INCLUDE_DIR}
 )
 
+add_executable(block-array-test block_array.cpp)
+target_link_libraries(block-array-test
+    gtest
+    thread_local_ptr
+)
+add_test(NAME block-array-test COMMAND block-array-test)
+
 add_executable(lockfree-vector-test lockfree_vector.cpp)
 target_link_libraries(lockfree-vector-test
     gtest

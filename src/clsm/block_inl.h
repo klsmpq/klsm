@@ -152,7 +152,7 @@ template <class K, class V>
 void
 block<K, V>::copy(const block<K, V> *that)
 {
-    assert(m_power_of_2 == that->power_of_2() - 1);
+    assert(m_capacity >= that->size());
     assert(m_used);
     assert(m_first == 0);
     assert(m_last == 0);

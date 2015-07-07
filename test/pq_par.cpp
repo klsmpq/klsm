@@ -22,6 +22,7 @@
 #include <random>
 
 #include "clsm/clsm.h"
+#include "clsm/sharedlsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
@@ -76,7 +77,9 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types<clsm<uint32_t, uint32_t>> test_types;
+typedef ::testing::Types< clsm<uint32_t, uint32_t>
+                        , shared_lsm<uint32_t, uint32_t>
+                        > test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);
 
 TYPED_TEST(pq_par_test, SanityCheck)
