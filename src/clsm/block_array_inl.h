@@ -21,7 +21,8 @@
 
 template <class K, class V>
 block_array<K, V>::block_array() :
-    m_size(0)
+    m_size(0),
+    m_version(0)
 {
 }
 

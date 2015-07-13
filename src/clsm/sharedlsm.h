@@ -42,7 +42,7 @@ public:
     bool delete_min(V &val);
 
 private:
-    std::atomic<block_array<K, V> *> m_blocks;
+    std::atomic<block_array<K, V> *> m_block_array;
 
     thread_local_ptr<item_allocator<item<K, V>, typename item<K, V>::reuse>> m_item_allocators;
 };

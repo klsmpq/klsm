@@ -19,7 +19,7 @@
 
 template <class K, class V>
 shared_lsm<K, V>::shared_lsm() :
-    m_blocks(new block_array<K, V>())
+    m_block_array(new block_array<K, V>())
 {
 }
 
@@ -55,10 +55,10 @@ void
 shared_lsm<K, V>::insert(block<K, V> *b)
 {
     while (true) {
-        auto old_blocks = m_blocks.load(std::memory_order_relaxed);
+        auto old_blocks = m_block_array.load(std::memory_order_relaxed);
         auto new_blocks = old_blocks->copy();
         new_blocks->insert(b);
-        if (m_blocks.compare_exchange_strong(old_blocks,
+        if (m_block_array.compare_exchange_strong(old_blocks,
                                              new_blocks)) {
             // TODO: Mark old_blocks as reusable.
             break;
@@ -70,6 +70,6 @@ template <class K, class V>
 bool
 shared_lsm<K, V>::delete_min(V &val)
 {
-    auto observed = m_blocks.load(std::memory_order_relaxed);
+    auto observed = m_block_array.load(std::memory_order_relaxed);
     return observed->delete_min(val);
 }

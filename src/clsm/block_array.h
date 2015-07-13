@@ -20,6 +20,7 @@
 #ifndef __BLOCK_ARRAY_H
 #define __BLOCK_ARRAY_H
 
+#include <atomic>
 #include <vector>
 
 #include "block.h"
@@ -52,6 +53,8 @@ private:
      *  visible to other threads. */
     std::vector<block<K, V> *> m_blocks;
     size_t m_size;
+
+    std::atomic<version_t> m_version;
 };
 
 #include "block_array_inl.h"
