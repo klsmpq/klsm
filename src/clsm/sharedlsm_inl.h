@@ -85,9 +85,16 @@ void
 shared_lsm<K, V>::refresh_local_array_copy()
 {
     auto observed = m_block_array.load(std::memory_order_relaxed);
-    if (m_local_array_copy.get()->version() == observed->version()) {
+    auto observed_version = observed->version();
+
+    if (m_local_array_copy.get()->version() == observed_version) {
         return;
     }
 
-    m_local_array_copy.get()->copy_from(observed);
+    do {
+        observed = m_block_array.load(std::memory_order_relaxed);
+        observed_version = observed->version();
+
+        m_local_array_copy.get()->copy_from(observed);
+    } while (m_block_array.load(std::memory_order_relaxed)->version() != observed_version);
 }
