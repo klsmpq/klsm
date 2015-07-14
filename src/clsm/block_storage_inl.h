@@ -17,62 +17,63 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V>
-block_storage<K, V>::~block_storage()
+template <class K, class V, int N>
+block_storage<K, V, N>::~block_storage()
 {
     for (auto &block : m_blocks) {
-        delete block.fst;
-        delete block.snd;
-        delete block.thd;
+        for (int i = 0; i < N; i++) {
+            delete block.xs[i];
+        }
     }
 
     m_blocks.clear();
 }
 
-template <class K, class V>
+template <class K, class V, int N>
 block<K, V> *
-block_storage<K, V>::get_block(const size_t i)
+block_storage<K, V, N>::get_block(const size_t i)
 {
     if (i >= m_blocks.size()) {
         assert(m_blocks.size() == i);
 
         /* Alloc new blocks. */
-        m_blocks.push_back({ new block<K, V>(i)
-                           , new block<K, V>(i)
-                           , new block<K, V>(i)
-                           });
+        block_tuple t;
+        for (int j = 0; j < N; j++) {
+            t.xs[j] = new block<K, V>(i);
+        }
+        m_blocks.push_back(t);
     }
 
-    block<K, V> *block;
-    if (!m_blocks[i].fst->used()) {
-        block = m_blocks[i].fst;
-    } else if (!m_blocks[i].snd->used()) {
-        block = m_blocks[i].snd;
-    } else {
-        block = m_blocks[i].thd;
+    block<K, V> *block = m_blocks[i].xs[N - 1];
+    for (int j = 0; j < N - 1; j++) {
+        if (!m_blocks[i].xs[j]->used()) {
+            block = m_blocks[i].xs[j];
+            break;
+        }
     }
 
     block->set_used();
     return block;
 }
 
-template <class K, class V>
+template <class K, class V, int N>
 block<K, V> *
-block_storage<K, V>::get_largest_block()
+block_storage<K, V, N>::get_largest_block()
 {
     const size_t size = m_blocks.size();
     return get_block((size == 0) ? 0 : size - 1);
 }
 
-template <class K, class V>
+template <class K, class V, int N>
 void
-block_storage<K, V>::print() const
+block_storage<K, V, N>::print() const
 {
     for (size_t i = 0; i < m_blocks.size(); i++) {
-        printf("%zu: {%d, %d, %d}, ", i,
-               m_blocks[i].fst->used(),
-               m_blocks[i].snd->used(),
-               m_blocks[i].thd->used());
+        printf("%zu: {%d", i, m_blocks[i].xs[0]->used());
+        for (int j = 1; j < N; j++) {
+            printf(", %d", m_blocks[i].xs[j]->used());
+        }
+        printf("}, ");
     }
     printf("\n");
 }

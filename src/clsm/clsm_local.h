@@ -73,7 +73,7 @@ private:
     std::atomic<block<K, V> *> m_head; /**< The largest  block. */
     block<K, V>               *m_tail; /**< The smallest block. */
 
-    block_storage<K, V> m_block_storage;
+    block_storage<K, V, 3> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
 
     std::mt19937 m_gen;

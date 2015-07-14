@@ -29,15 +29,15 @@ namespace kpq
 {
 
 /**
- * Maintains 3-tuples of memory blocks of size 2^i.
+ * Maintains N-tuples of memory blocks of size 2^i.
  */
 
-template <class K, class V>
+template <class K, class V, int N>
 class block_storage
 {
 private:
     struct block_tuple {
-        block<K, V> *fst, *snd, *thd;
+        block<K, V> *xs[N];
     };
 
 public:
@@ -45,7 +45,7 @@ public:
 
     /**
      * Returns an unused block of size 2^i. If such a block does not exist,
-     * a new 3-tuple of size 2^i is allocated.
+     * a new N-tuple of size 2^i is allocated.
      */
     block<K, V> *get_block(const size_t i);
 
