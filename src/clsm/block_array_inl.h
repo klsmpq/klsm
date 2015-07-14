@@ -178,15 +178,6 @@ block_array<K, V>::delete_min(V &val)
 }
 
 template <class K, class V>
-block_array<K, V> *
-block_array<K, V>::copy()
-{
-    auto new_array = new block_array<K, V>();
-    new_array->copy_from(this);
-    return new_array;
-}
-
-template <class K, class V>
 void
 block_array<K, V>::copy_from(const block_array<K, V> *that)
 {

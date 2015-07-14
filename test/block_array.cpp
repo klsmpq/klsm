@@ -63,9 +63,9 @@ TEST(BlockArrayTest, Copy)
 
     bs.insert(b);
 
-    auto cs = bs.copy();
+    block_array<uint32_t, uint32_t> cs;
+    cs.copy_from(&bs);
 
-    delete cs;
     delete i;
     delete b;
 }
