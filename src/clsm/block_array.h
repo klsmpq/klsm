@@ -37,7 +37,11 @@ public:
     void insert(block<K, V> *block);
     bool delete_min(V &val);
 
+    /** Creates a new block array as a copy of the current instance and returns it. */
     block_array<K, V> *copy();
+
+    /** Copies the given block array into the current instance. */
+    void copy_from(const block_array<K, V> *that);
 
 private:
     /** May only be called when this block is not visible to other threads. */

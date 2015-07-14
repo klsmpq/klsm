@@ -45,6 +45,9 @@ private:
     std::atomic<block_array<K, V> *> m_block_array;
 
     thread_local_ptr<item_allocator<item<K, V>, typename item<K, V>::reuse>> m_item_allocators;
+
+    /** Contains a copy of the global block array, updated regularly. */
+    thread_local_ptr<block_array<K, V>> m_local_array_copy;
 };
 
 #include "sharedlsm_inl.h"

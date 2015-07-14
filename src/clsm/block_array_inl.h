@@ -182,12 +182,21 @@ block_array<K, V> *
 block_array<K, V>::copy()
 {
     auto new_array = new block_array<K, V>();
-
-    size_t i;
-    for (i = 0; i < m_size; i++) {
-        new_array->m_blocks.push_back(m_blocks[i]);
-    }
-    new_array->m_size = i;
-
+    new_array->copy_from(this);
     return new_array;
+}
+
+template <class K, class V>
+void
+block_array<K, V>::copy_from(const block_array<K, V> *that)
+{
+    do {
+        m_version = that->m_version.load(std::memory_order_acquire);
+
+        size_t i;
+        for (i = 0; i < that->m_size; i++) {
+            m_blocks.push_back(that->m_blocks[i]);
+        }
+        m_size = i;
+    } while (that->m_version.load(std::memory_order_release) != m_version);
 }
