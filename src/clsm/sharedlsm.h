@@ -24,6 +24,7 @@
 
 #include "block_array.h"
 #include "mm.h"
+#include "sharedlsm_block_pool.h"
 #include "thread_local_ptr.h"
 
 namespace kpq {
@@ -53,6 +54,7 @@ private:
 
     /* ---- Block memory management. ---- */
 
+    thread_local_ptr<shared_lsm_block_pool<K, V>> m_block_pool;
 
     /* ---- Block array memory management. ---- */
 
