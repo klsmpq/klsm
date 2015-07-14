@@ -42,12 +42,22 @@ public:
     bool delete_min(V &val);
 
 private:
+    void refresh_local_array_copy();
+
+private:
     std::atomic<block_array<K, V> *> m_block_array;
 
     thread_local_ptr<item_allocator<item<K, V>, typename item<K, V>::reuse>> m_item_allocators;
 
     /** Contains a copy of the global block array, updated regularly. */
     thread_local_ptr<block_array<K, V>> m_local_array_copy;
+
+    /** Local memory pools for use by block arrays. */
+    thread_local_ptr<block_array<K, V>> m_array_pool_odds;
+    thread_local_ptr<block_array<K, V>> m_array_pool_evens;
+
+    /** The block array used to initialize the global pointer. */
+    block_array<K, V> m_array_pool_initial;
 };
 
 #include "sharedlsm_inl.h"

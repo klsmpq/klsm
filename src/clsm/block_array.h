@@ -43,6 +43,9 @@ public:
     /** Copies the given block array into the current instance. */
     void copy_from(const block_array<K, V> *that);
 
+    version_t version() { return m_version.load(std::memory_order_relaxed); }
+    void increment_version() { m_version.fetch_add(1, std::memory_order_relaxed); }
+
 private:
     /** May only be called when this block is not visible to other threads. */
     void compact();

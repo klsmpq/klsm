@@ -192,6 +192,7 @@ block_array<K, V>::copy_from(const block_array<K, V> *that)
 {
     do {
         m_version = that->m_version.load(std::memory_order_acquire);
+        m_blocks.clear();
 
         size_t i;
         for (i = 0; i < that->m_size; i++) {
