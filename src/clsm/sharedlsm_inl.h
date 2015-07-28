@@ -19,7 +19,8 @@
 
 template <class K, class V>
 shared_lsm<K, V>::shared_lsm() :
-    m_block_array(&m_array_pool_initial)
+    m_block_array(&m_array_pool_initial),
+    m_array_version(0)
 {
 }
 
@@ -52,8 +53,13 @@ shared_lsm<K, V>::insert(block<K, V> *b)
 {
     auto pool = m_block_pool.get();
     while (true) {
-        auto old_blocks = m_block_array.load(std::memory_order_relaxed);
         refresh_local_array_copy();
+
+        /* Ensure we have a valid copy. */
+        auto old_version = m_array_version.load();
+        if (m_local_array_copy.get()->version() != old_version) {
+            continue;
+        }
 
         auto new_blocks = (m_local_array_copy.get()->version() & 1)
                 ? m_array_pool_evens.get()
@@ -62,9 +68,11 @@ shared_lsm<K, V>::insert(block<K, V> *b)
         new_blocks->increment_version();
         new_blocks->insert(b, pool);
 
-        /* TODO: This is a problem now that we reuse blocks... */
-        if (m_block_array.compare_exchange_strong(old_blocks,
-                                                  new_blocks)) {
+        if (m_array_version.compare_exchange_strong(old_version,
+                                                    new_blocks->version())) {
+            assert(old_version == new_blocks->version() - 1);
+            m_block_array.store(new_blocks);
+
             pool->publish(new_blocks->m_blocks, new_blocks->version());
             pool->free_local();
             break;

@@ -47,6 +47,7 @@ private:
 
 private:
     std::atomic<block_array<K, V> *> m_block_array;
+    std::atomic<version_t> m_array_version;  /* Required since array is reused. */
 
     /* ---- Item memory management. ---- */
 
