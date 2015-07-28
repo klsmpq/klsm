@@ -264,6 +264,14 @@ block<K, V>::set_unused()
 {
     assert(m_used);
     m_used  = false;
+
+    clear();
+}
+
+template <class K, class V>
+void
+block<K, V>::clear()
+{
     m_first = 0;
     m_last  = 0;
 

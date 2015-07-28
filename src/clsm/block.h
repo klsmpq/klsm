@@ -95,6 +95,8 @@ public:
     void set_unused();
     void set_used();
 
+    void clear();
+
 public:
     /** Next pointers may be used by all threads. */
     std::atomic<block<K, V> *> m_next;

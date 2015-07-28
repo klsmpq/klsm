@@ -43,7 +43,8 @@ TEST(BlockArrayTest, Insert)
     b->set_used();
     b->insert(i, i->version());
 
-    bs.insert(b);
+    shared_lsm_block_pool<uint32_t, uint32_t> pool;
+    bs.insert(b, &pool);
 
     delete i;
     delete b;
@@ -61,7 +62,8 @@ TEST(BlockArrayTest, Copy)
     b->set_used();
     b->insert(i, i->version());
 
-    bs.insert(b);
+    shared_lsm_block_pool<uint32_t, uint32_t> pool;
+    bs.insert(b, &pool);
 
     block_array<uint32_t, uint32_t> cs;
     cs.copy_from(&bs);
@@ -90,7 +92,8 @@ TEST(BlockArrayTest, DeleteMin)
     b->set_used();
     b->insert(i, i->version());
 
-    bs.insert(b);
+    shared_lsm_block_pool<uint32_t, uint32_t> pool;
+    bs.insert(b, &pool);
 
     uint32_t x;
     ASSERT_TRUE(bs.delete_min(x));

@@ -33,7 +33,8 @@ block_array<K, V>::~block_array()
 
 template <class K, class V>
 void
-block_array<K, V>::insert(block<K, V> *new_block)
+block_array<K, V>::insert(block<K, V> *new_block,
+                          shared_lsm_block_pool<K, V> *pool)
 {
     if (m_size == 0) {
         assert(m_blocks.empty());
@@ -60,24 +61,23 @@ block_array<K, V>::insert(block<K, V> *new_block)
                 break;
             } else {
                 assert(other_block->capacity() == insert_block->capacity());
-                auto merged_block = new block<K, V>(insert_block->power_of_2() + 1);
-                merged_block->set_used();
+                auto merged_block = pool->get_block(insert_block->power_of_2() + 1);
                 merged_block->merge(insert_block, other_block);
 
                 insert_block = merged_block;
-                m_blocks[i - 1] = nullptr;  // TODO: Don't lose reference.
+                m_blocks[i - 1] = nullptr;
             }
         }
         m_blocks.insert(m_blocks.begin() + i, insert_block);
     }
 
     m_size++;
-    compact();
+    compact(pool);
 }
 
 template <class K, class V>
 void
-block_array<K, V>::compact()
+block_array<K, V>::compact(shared_lsm_block_pool<K, V> *pool)
 {
     remove_null_blocks();
 
@@ -91,13 +91,11 @@ block_array<K, V>::compact()
         }
 
         if (b->size() < b->capacity() / 2) {
+           /* TODO: Improve shrinking. Ideally, we'd be able to shrink
+            * to an arbitrary level and without physically copying blocks. */
            int shrunk_power_of_2 = b->power_of_2() - 1;
-            while (shrunk_power_of_2 > 0 && (1 << (shrunk_power_of_2 - 1)) > (int)b->size()) {
-                shrunk_power_of_2--;
-            }
 
-            auto shrunk = new block<K, V>(shrunk_power_of_2);
-            shrunk->set_used();  // TODO: Remove all of these manual set_used() calls.
+            auto shrunk = pool->get_block(shrunk_power_of_2);
             shrunk->copy(b);
             b = m_blocks[i] = shrunk;
         }
@@ -121,16 +119,16 @@ block_array<K, V>::compact()
             merge_pow++;
         }
 
-        auto merge_block = new block<K, V>(merge_pow);
-        merge_block->set_used();
+        auto merge_block = pool->get_block(merge_pow);
         merge_block->merge(big_block, small_block);
 
-        /* TODO: Don't lose reference to old blocks. */
         m_blocks[i + 1] = nullptr;
         m_blocks[i] = merge_block;
     }
 
     remove_null_blocks();
+
+    m_blocks.resize(m_size);
 }
 
 template <class K, class V>

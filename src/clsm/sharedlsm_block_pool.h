@@ -40,12 +40,11 @@ private:
     };
 
 public:
-    shared_lsm_block_pool() {
-        for (int i = 0; i < MAX_POWER_OF_2; i++) {
-            for (int j = 0; j < BLOCKS_PER_LEVEL; j++) {
-                m_pool[ix(i) + j] = new block<K, V>(i);
-            }
-        }
+    shared_lsm_block_pool() :
+        m_pool { nullptr },
+        m_status { BLOCK_FREE },
+        m_version { 0 }
+    {
     }
 
     virtual ~shared_lsm_block_pool() {
@@ -69,16 +68,71 @@ public:
 
         for (int j = ix(i); j < ix(i + 1); j++) {
             if (m_status[j] == BLOCK_FREE
-                    || (m_status[j] == BLOCK_GLOBAL && m_version[j] != max_global_version)) {
+                    || (m_status[j] == BLOCK_GLOBAL
+                        && (int)m_version[j] != max_global_version)) {
                 m_status[j] = BLOCK_LOCAL;
+                if (m_pool[j] == nullptr) {
+                    /* Lazy block creation.
+                     * 'used' is not needed for the shared lsm. Figure out a way for both
+                     * mechanisms to interact when integrating shared & dist lsm's. */
+                    m_pool[j] = new block<K, V>(i);
+                    m_pool[j]->set_used();
+                } else {
+                    m_pool[j]->clear();
+                }
                 return m_pool[j];
             }
         }
         assert(false), "A free block should always exist";
     }
 
+    void publish(std::vector<block<K, V> *> blocks,
+                 version_t version)
+    {
+        for (auto block : blocks)
+        {
+            if (block == nullptr) {
+                continue;
+            }
+
+            /* TODO: Optimize out find(). */
+            int i = find(block);
+            if (i != -1) {
+                m_status[i] = BLOCK_GLOBAL;
+                m_version[i] = version;
+            }
+        }
+    }
+
+    void free_local()
+    {
+        free_local_except(nullptr);
+    }
+
+    void free_local_except(block<K, V> *that)
+    {
+        /* TODO: Optimize. */
+        for (int i = 0; i < BLOCKS_IN_POOL; i++) {
+            if (m_status[i] == BLOCK_LOCAL && m_pool[i] != that) {
+                m_status[i] = BLOCK_FREE;
+            }
+        }
+    }
+
 private:
-    static constexpr int ix(const size_t i) {
+    int find(block<K, V> *block)
+    {
+        const int pow = block->power_of_2();
+        for (int j = ix(pow); j < ix(pow + 1); j++) {
+            if (m_pool[j] == block) {
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    static constexpr int ix(const size_t i)
+    {
         return BLOCKS_PER_LEVEL * i;
     }
 

@@ -24,23 +24,29 @@
 #include <vector>
 
 #include "block.h"
+#include "sharedlsm_block_pool.h"
 
 namespace kpq {
 
 template <class K, class V>
 class block_array {
+    /* For access to blocks during publishing. */
+    template <class L, class W>
+    friend class shared_lsm;
 public:
     block_array();
     virtual ~block_array();
 
     /** May only be called when this block is not visible to other threads. */
-    void insert(block<K, V> *block);
+    void insert(block<K, V> *block,
+                shared_lsm_block_pool<K, V> *pool);
 
     /** Callable from other threads. */
     bool delete_min(V &val);
     typename block<K, V>::peek_t peek();
 
-    /** Copies the given block array into the current instance. */
+    /** Copies the given block array into the current instance.
+      * The copy is shallow, i.e. only block pointers are copied. */
     void copy_from(const block_array<K, V> *that);
 
     version_t version() { return m_version.load(std::memory_order_relaxed); }
@@ -48,7 +54,7 @@ public:
 
 private:
     /** May only be called when this block is not visible to other threads. */
-    void compact();
+    void compact(shared_lsm_block_pool<K, V> *pool);
     void remove_null_blocks();
 
 private:

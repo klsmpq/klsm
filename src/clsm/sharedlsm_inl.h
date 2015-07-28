@@ -35,16 +35,12 @@ void
 shared_lsm<K, V>::insert(const K &key,
                          const V &val)
 {
-    // TODO: Memory management. In combined version, will not be necessary for
-    // blocks / items (these are handled by the distributed lsm component),
-    // but we still need to manage block arrays.
-    // We still need to create new blocks during merges though.
-    auto b = new block<K, V>(1);
-
     auto i = m_item_allocators.get()->acquire();
     i->initialize(key, val);
 
-    b->set_used();
+    /* TODO: Allocate larger blocks as an optimization. Find a more elegant
+     * way of handling the special case of the initially allocated block. */
+    auto b = m_block_pool.get()->get_block(1);
     b->insert(i, i->version());
 
     insert(b);
@@ -54,6 +50,7 @@ template <class K, class V>
 void
 shared_lsm<K, V>::insert(block<K, V> *b)
 {
+    auto pool = m_block_pool.get();
     while (true) {
         auto old_blocks = m_block_array.load(std::memory_order_relaxed);
         refresh_local_array_copy();
@@ -63,12 +60,17 @@ shared_lsm<K, V>::insert(block<K, V> *b)
                 : m_array_pool_odds.get();
         new_blocks->copy_from(m_local_array_copy.get());
         new_blocks->increment_version();
-        new_blocks->insert(b);
+        new_blocks->insert(b, pool);
 
+        /* TODO: This is a problem now that we reuse blocks... */
         if (m_block_array.compare_exchange_strong(old_blocks,
                                                   new_blocks)) {
+            pool->publish(new_blocks->m_blocks, new_blocks->version());
+            pool->free_local();
             break;
         }
+
+        pool->free_local_except(b);
     }
 }
 
