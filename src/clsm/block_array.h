@@ -35,7 +35,10 @@ public:
 
     /** May only be called when this block is not visible to other threads. */
     void insert(block<K, V> *block);
+
+    /** Callable from other threads. */
     bool delete_min(V &val);
+    typename block<K, V>::peek_t peek();
 
     /** Copies the given block array into the current instance. */
     void copy_from(const block_array<K, V> *that);

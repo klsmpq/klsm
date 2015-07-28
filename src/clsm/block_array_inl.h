@@ -157,6 +157,19 @@ template <class K, class V>
 bool
 block_array<K, V>::delete_min(V &val)
 {
+    typename block<K, V>::peek_t best = peek();
+
+    if (best.m_item == nullptr) {
+        return false; /* We did our best, give up. */
+    }
+
+    return best.m_item->take(best.m_version, val);
+}
+
+template <class K, class V>
+typename block<K, V>::peek_t
+block_array<K, V>::peek()
+{
     // TODO: Uniformly random relaxed deletion using pivots.
 
     typename block<K, V>::peek_t best;
@@ -170,11 +183,8 @@ block_array<K, V>::delete_min(V &val)
         }
     }
 
-    if (best.m_item == nullptr) {
-        return false; /* We did our best, give up. */
-    }
+    return best;
 
-    return best.m_item->take(best.m_version, val);
 }
 
 template <class K, class V>
