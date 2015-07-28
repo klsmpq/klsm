@@ -22,6 +22,8 @@
 
 #include "block.h"
 
+#include <algorithm>
+
 namespace kpq {
 
 template <class K, class V>
@@ -53,16 +55,26 @@ public:
     }
 
     /** Given the current version of the global array, returns a block of capacity 2^i. */
-    block<K, V> *get_block(const size_t i,
-                           const version_t version)
+    block<K, V> *get_block(const size_t i)
     {
+        /* Find the maximum version of globally allocated blocks.
+         * It is safe to reallocate any but the most recent global block.
+         * We could optimize this loop out in the future. */
+        int max_global_version = -1;
+        for (int j = ix(i); j < ix(i + 1); j++) {
+            if (m_status[j] == BLOCK_GLOBAL) {
+                max_global_version = std::max(max_global_version, (int)m_version[j]);
+            }
+        }
+
         for (int j = ix(i); j < ix(i + 1); j++) {
             if (m_status[j] == BLOCK_FREE
-                    || (m_status[j] == BLOCK_GLOBAL && m_version[j] != version)) {
+                    || (m_status[j] == BLOCK_GLOBAL && m_version[j] != max_global_version)) {
                 m_status[j] = BLOCK_LOCAL;
                 return m_pool[j];
             }
         }
+        assert(false), "A free block should always exist";
     }
 
 private:
