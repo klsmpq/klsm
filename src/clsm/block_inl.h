@@ -152,13 +152,18 @@ template <class K, class V>
 void
 block<K, V>::copy(const block<K, V> *that)
 {
-    assert(m_capacity >= that->size());
     assert(m_used);
     assert(m_first == 0);
     assert(m_last == 0);
 
     size_t dst = 0;
     for (size_t i = that->m_first; i < that->m_last; i++) {
+        if (dst >= m_capacity) {
+            /* Can happen when a block is reused during the shared lsm's
+             * insert(). In that case simply abort, the version compare exchange
+             * will fail once this thread tries to publish it's array. */
+            return;
+        }
         auto &elem = that->m_item_pairs[i];
         if (!item_owned(elem)) {
             continue;
