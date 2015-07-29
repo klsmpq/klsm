@@ -68,6 +68,8 @@ shared_lsm<K, V>::insert(block<K, V> *b)
         new_blocks->increment_version();
         new_blocks->insert(b, pool);
 
+        /* TODO: The array version mechanism is not lock-free, since all other
+         * threads spin until the block is successfully published. */
         if (m_array_version.compare_exchange_strong(old_version,
                                                     new_blocks->version())) {
             assert(old_version == new_blocks->version() - 1);
