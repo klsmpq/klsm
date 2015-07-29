@@ -31,6 +31,8 @@
 
 using namespace kpq;
 
+#define RELAXATION (32)
+
 template <class T>
 class pq_par_test : public ::testing::Test
 {
@@ -78,7 +80,7 @@ protected:
 };
 
 typedef ::testing::Types< clsm<uint32_t, uint32_t>
-                        , shared_lsm<uint32_t, uint32_t>
+                        , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);
 
@@ -226,7 +228,7 @@ random_ins_del_same_thread(T *pq,
 
 TYPED_TEST(pq_par_test, ConcurrentInsDelSameThread)
 {
-    if (typeid(gtest_TypeParam_) == typeid(shared_lsm<uint32_t, uint32_t>)) {
+    if (typeid(gtest_TypeParam_) == typeid(shared_lsm<uint32_t, uint32_t, RELAXATION>)) {
         return;  // TODO: The shared lsm does not preserve local consistency.
     }
     this->generate_elements(NELEMS);

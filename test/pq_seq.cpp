@@ -32,6 +32,8 @@
 
 using namespace kpq;
 
+#define RELAXATION (32)
+
 template <class T>
 class PQTest : public ::testing::Test
 {
@@ -79,7 +81,7 @@ protected:
 };
 
 typedef ::testing::Types<GlobalLock<uint32_t, uint32_t>, LSM<uint32_t>,
-        clsm<uint32_t, uint32_t>, shared_lsm<uint32_t, uint32_t>> TestTypes;
+        clsm<uint32_t, uint32_t>, shared_lsm<uint32_t, uint32_t, RELAXATION>> TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
 TYPED_TEST(PQTest, SanityCheck)

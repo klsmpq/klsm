@@ -17,23 +17,23 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V>
-shared_lsm<K, V>::shared_lsm() :
+template <class K, class V, int Relaxation>
+shared_lsm<K, V, Relaxation>::shared_lsm() :
     m_block_array(&m_array_pool_initial),
     m_array_version(0)
 {
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V>::insert(const K &key)
+shared_lsm<K, V, Relaxation>::insert(const K &key)
 {
     insert(key, key);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V>::insert(const K &key,
+shared_lsm<K, V, Relaxation>::insert(const K &key,
                          const V &val)
 {
     auto i = m_item_allocators.get()->acquire();
@@ -47,9 +47,9 @@ shared_lsm<K, V>::insert(const K &key,
     insert(b);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V>::insert(block<K, V> *b)
+shared_lsm<K, V, Relaxation>::insert(block<K, V> *b)
 {
     auto pool = m_block_pool.get();
     while (true) {
@@ -84,9 +84,9 @@ shared_lsm<K, V>::insert(block<K, V> *b)
     }
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 bool
-shared_lsm<K, V>::delete_min(V &val)
+shared_lsm<K, V, Relaxation>::delete_min(V &val)
 {
     version_t global_version;
     typename block<K, V>::peek_t best;
@@ -103,9 +103,9 @@ shared_lsm<K, V>::delete_min(V &val)
     return best.m_item->take(best.m_version, val);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V>::refresh_local_array_copy()
+shared_lsm<K, V, Relaxation>::refresh_local_array_copy()
 {
     auto observed = m_block_array.load(std::memory_order_relaxed);
     auto observed_version = observed->version();

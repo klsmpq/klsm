@@ -29,7 +29,7 @@
 
 namespace kpq {
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 class shared_lsm {
 public:
     shared_lsm();

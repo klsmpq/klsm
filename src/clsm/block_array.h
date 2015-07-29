@@ -31,7 +31,7 @@ namespace kpq {
 template <class K, class V>
 class block_array {
     /* For access to blocks during publishing. */
-    template <class L, class W>
+    template <class L, class W, int Relaxation>
     friend class shared_lsm;
 public:
     block_array();
