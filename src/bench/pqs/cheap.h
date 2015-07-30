@@ -22,7 +22,7 @@
 
 #include <queue>
 
-#include "thread_local_ptr.h"
+#include "util/thread_local_ptr.h"
 
 namespace kpq
 {

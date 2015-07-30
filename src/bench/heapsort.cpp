@@ -21,10 +21,10 @@
 #include <getopt.h>
 #include <random>
 
-#include "globallock.h"
-#include "lsm.h"
-#include "sequence_heap/sequence_heap.h"
-#include "skip_list/skip_queue.h"
+#include "pqs/globallock.h"
+#include "pqs/sequence_heap/sequence_heap.h"
+#include "pqs/skip_list/skip_queue.h"
+#include "sequential_lsm/lsm.h"
 #include "util.h"
 
 constexpr int DEFAULT_SEED = 0;

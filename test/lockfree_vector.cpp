@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-#include "lockfree_vector.h"
+#include "util/lockfree_vector.h"
 
 TEST(LockfreeVectorTest, SanityCheck)
 {

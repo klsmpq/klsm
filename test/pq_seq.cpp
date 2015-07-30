@@ -22,10 +22,10 @@
 #include <vector>
 #include <thread>
 
+#include "bench/pqs/globallock.h"
 #include "clsm/clsm.h"
 #include "clsm/sharedlsm.h"
-#include "globallock.h"
-#include "lsm.h"
+#include "sequential_lsm/lsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)

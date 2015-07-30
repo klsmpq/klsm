@@ -25,11 +25,11 @@
 #include <unistd.h>
 
 #include "clsm/clsm.h"
-#include "globallock.h"
-#include "linden.h"
-#include "lsm.h"
-#include "sequence_heap/sequence_heap.h"
-#include "skip_list/skip_queue.h"
+#include "pqs/globallock.h"
+#include "pqs/linden.h"
+#include "pqs/sequence_heap/sequence_heap.h"
+#include "pqs/skip_list/skip_queue.h"
+#include "sequential_lsm/lsm.h"
 #include "util.h"
 
 constexpr int DEFAULT_NNODES    = 1 << 10;

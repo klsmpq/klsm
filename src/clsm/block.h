@@ -24,8 +24,8 @@
 #include <cassert>
 #include <utility>
 
+#include "util/thread_local_ptr.h"
 #include "item.h"
-#include "thread_local_ptr.h"
 
 namespace kpq
 {

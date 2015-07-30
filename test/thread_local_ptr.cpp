@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 #include <thread>
 
-#include "thread_local_ptr.h"
+#include "util/thread_local_ptr.h"
 
 TEST(ThreadLocalPtrTest, SanityCheck)
 {

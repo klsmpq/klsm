@@ -19,7 +19,7 @@
 
 #include <gtest/gtest.h>
 
-#include "mm.h"
+#include "util/mm.h"
 
 struct simple_reuse {
     bool operator()(const uint32_t &) const

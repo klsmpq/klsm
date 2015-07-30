@@ -1,3 +1,5 @@
+add_subdirectory(pqs)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
 )
@@ -5,8 +7,8 @@ include_directories(
 add_executable(heapsort heapsort.cpp util.cpp)
 target_link_libraries(heapsort
     ${HWLOC_LIBRARIES}
-    lsm
     sequence_heap
+    sequential_lsm
     skip_queue
 )
 
@@ -15,8 +17,8 @@ target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
     linden
-    lsm
     sequence_heap
+    sequential_lsm
     skip_queue
     thread_local_ptr
 )
@@ -26,8 +28,8 @@ target_link_libraries(shortest_paths
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
     linden
-    lsm
     sequence_heap
+    sequential_lsm
     skip_queue
     thread_local_ptr
 )

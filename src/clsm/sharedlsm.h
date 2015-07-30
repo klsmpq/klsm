@@ -22,10 +22,10 @@
 
 #include <atomic>
 
+#include "util/mm.h"
+#include "util/thread_local_ptr.h"
 #include "block_array.h"
-#include "mm.h"
 #include "sharedlsm_block_pool.h"
-#include "thread_local_ptr.h"
 
 namespace kpq {
 

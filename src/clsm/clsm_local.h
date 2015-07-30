@@ -23,10 +23,10 @@
 #include <atomic>
 #include <random>
 
+#include "util/mm.h"
+#include "util/thread_local_ptr.h"
 #include "block_storage.h"
 #include "item.h"
-#include "mm.h"
-#include "thread_local_ptr.h"
 
 namespace kpq
 {
