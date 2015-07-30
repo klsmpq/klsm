@@ -48,6 +48,7 @@ block<K, V>::block(const size_t power_of_2) :
     m_last(0),
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
+    m_owner_tid(tid()),
     m_item_pairs(new item_pair_t[m_capacity]),
     m_used(false)
 {
@@ -179,6 +180,7 @@ template <class K, class V>
 typename block<K, V>::peek_t
 block<K, V>::peek()
 {
+    int32_t calling_tid = tid();
     peek_t p;
     for (size_t i = m_first; i < m_last; i++) {
         p.m_item    = m_item_pairs[i].first;
@@ -190,8 +192,9 @@ block<K, V>::peek()
         }
 
         /* Move initial sequence of unowned item references out
-         * of active scope. */
-        if (i == m_first) {
+         * of active scope. Only the owner thread may modify m_first
+         * in order to avoid conflicts through reused blocks. */
+        if (calling_tid == m_owner_tid) {
             m_first++;
         }
     }

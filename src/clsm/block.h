@@ -25,6 +25,7 @@
 #include <utility>
 
 #include "item.h"
+#include "thread_local_ptr.h"
 
 namespace kpq
 {
@@ -125,6 +126,8 @@ private:
 
     /** Specifies whether the block is currently in use. */
     bool m_used;
+
+    const int32_t m_owner_tid;
 };
 
 #include "block_inl.h"
