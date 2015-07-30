@@ -18,107 +18,70 @@
  */
 
 template <class K, class V, int Relaxation>
-shared_lsm<K, V, Relaxation>::shared_lsm() :
-    m_block_array(&m_array_pool_initial),
-    m_array_version(0)
+shared_lsm_local<K, V, Relaxation>::shared_lsm_local()
 {
 }
 
 template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V, Relaxation>::insert(const K &key)
+shared_lsm_local<K, V, Relaxation>::insert(const K &key,
+                                           const V &val,
+                                           versioned_array_ptr<K, V> &global_array)
 {
-    insert(key, key);
-}
-
-template <class K, class V, int Relaxation>
-void
-shared_lsm<K, V, Relaxation>::insert(const K &key,
-                         const V &val)
-{
-    auto i = m_item_allocators.get()->acquire();
+    auto i = m_item_pool.acquire();
     i->initialize(key, val);
 
     /* TODO: Allocate larger blocks as an optimization. Find a more elegant
      * way of handling the special case of the initially allocated block. */
-    auto b = m_block_pool.get()->get_block(1);
+    auto b = m_block_pool.get_block(1);
     b->insert(i, i->version());
 
-    insert(b);
+    insert(b, global_array);
 }
 
 template <class K, class V, int Relaxation>
 void
-shared_lsm<K, V, Relaxation>::insert(block<K, V> *b)
+shared_lsm_local<K, V, Relaxation>::insert(
+        block<K, V> *b,
+        versioned_array_ptr<K, V> &global_array)
 {
-    auto pool = m_block_pool.get();
     while (true) {
-        refresh_local_array_copy();
+        /* Fetch a consistent copy of the global array. */
 
-        /* Ensure we have a valid copy. */
-        auto old_version = m_array_version.load();
-        if (m_local_array_copy.get()->version() != old_version) {
-            continue;
-        }
+        block_array<K, V> *observed_packed;
+        version_t observed_version;
+        do {
+            observed_packed = global_array.load_packed();
+            auto observed_unpacked = global_array.unpack(observed_packed);
+            observed_version = observed_unpacked->version();
 
-        auto new_blocks = (m_local_array_copy.get()->version() & 1)
-                ? m_array_pool_evens.get()
-                : m_array_pool_odds.get();
-        new_blocks->copy_from(m_local_array_copy.get());
-        new_blocks->increment_version();
-        new_blocks->insert(b, pool);
+            if (m_local_array_copy.version() == observed_version) {
+                break;
+            }
 
-        /* TODO: The array version mechanism is not lock-free, since all other
-         * threads spin until the block is successfully published. */
-        if (m_array_version.compare_exchange_strong(old_version,
-                                                    new_blocks->version())) {
-            assert(old_version == new_blocks->version() - 1);
-            m_block_array.store(new_blocks);
+            m_local_array_copy.copy_from(observed_unpacked);
+        } while (global_array.load()->version() == observed_version);
 
-            pool->publish(new_blocks->m_blocks, new_blocks->version());
-            pool->free_local();
+        /* Create a new version which we will attempt to push globally. */
+
+        auto &new_blocks = (observed_version & 1)
+                ? m_array_pool_evens
+                : m_array_pool_odds;
+        auto new_blocks_ptr = new_blocks.ptr();
+        new_blocks_ptr->copy_from(&m_local_array_copy);
+        new_blocks_ptr->increment_version();
+        new_blocks_ptr->insert(b, &m_block_pool);
+
+        /* Try to update the global array. */
+
+        if (global_array.compare_exchange_strong(observed_packed,
+                                                 new_blocks)) {
+            m_block_pool.publish(new_blocks_ptr->m_blocks,
+                                 new_blocks_ptr->version());
+            m_block_pool.free_local();
             break;
         }
 
-        pool->free_local_except(b);
+        m_block_pool.free_local_except(b);
     }
-}
-
-template <class K, class V, int Relaxation>
-bool
-shared_lsm<K, V, Relaxation>::delete_min(V &val)
-{
-    version_t global_version;
-    typename block<K, V>::peek_t best;
-    do {
-        refresh_local_array_copy();
-        best = m_local_array_copy.get()->peek();
-        global_version = m_block_array.load(std::memory_order_relaxed)->version();
-    } while (global_version != m_local_array_copy.get()->version());
-
-    if (best.m_item == nullptr) {
-        return false;  /* We did our best, give up. */
-    }
-
-    return best.m_item->take(best.m_version, val);
-}
-
-template <class K, class V, int Relaxation>
-void
-shared_lsm<K, V, Relaxation>::refresh_local_array_copy()
-{
-    auto observed = m_block_array.load(std::memory_order_relaxed);
-    auto observed_version = observed->version();
-
-    /* Our copy is up to date, nothing to do. */
-    if (m_local_array_copy.get()->version() == observed_version) {
-        return;
-    }
-
-    do {
-        observed = m_block_array.load(std::memory_order_relaxed);
-        observed_version = observed->version();
-
-        m_local_array_copy.get()->copy_from(observed);
-    } while (m_block_array.load(std::memory_order_relaxed)->version() != observed_version);
 }

@@ -25,7 +25,7 @@
 #include "bench/pqs/globallock.h"
 #include "dist_lsm/clsm.h"
 #include "sequential_lsm/lsm.h"
-#include "shared_lsm/sharedlsm.h"
+#include "shared_lsm_clean/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
@@ -80,8 +80,11 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types<GlobalLock<uint32_t, uint32_t>, LSM<uint32_t>,
-        clsm<uint32_t, uint32_t>, shared_lsm<uint32_t, uint32_t, RELAXATION>> TestTypes;
+typedef ::testing::Types< GlobalLock<uint32_t, uint32_t>
+                        , LSM<uint32_t>
+                        , clsm<uint32_t, uint32_t>
+                        , shared_lsm<uint32_t, uint32_t, RELAXATION>
+                        > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
 TYPED_TEST(PQTest, SanityCheck)

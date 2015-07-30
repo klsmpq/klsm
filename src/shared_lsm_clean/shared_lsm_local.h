@@ -25,14 +25,23 @@
 #include "util/mm.h"
 #include "block_array.h"
 #include "block_pool.h"
+#include "versioned_array_ptr.h"
 
 namespace kpq {
 
 template <class K, class V, int Relaxation>
 class shared_lsm_local {
+    template <class X, class Y, int Z>
+    friend class shared_lsm;
 public:
     shared_lsm_local();
     virtual ~shared_lsm_local() { }
+
+    void insert(const K &key,
+                const V &val,
+                versioned_array_ptr<K, V> &global_array);
+    void insert(block<K, V> *b,
+                versioned_array_ptr<K, V> &global_array);
 
 private:
     /* ---- Item memory management. ---- */
@@ -49,8 +58,8 @@ private:
     block_array<K, V> m_local_array_copy;
 
     /** Local memory pools for use by block arrays. */
-    block_array<K, V> m_array_pool_odds;
-    block_array<K, V> m_array_pool_evens;
+    aligned_block_array<K, V> m_array_pool_odds;
+    aligned_block_array<K, V> m_array_pool_evens;
 };
 
 #include "shared_lsm_local_inl.h"

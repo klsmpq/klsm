@@ -43,9 +43,6 @@ public:
     bool delete_min(V &val);
 
 private:
-    void refresh_local_array_copy();
-
-private:
     versioned_array_ptr<K, V> m_global_array;
     thread_local_ptr<shared_lsm_local<K, V, Relaxation>> m_local_component;
 };

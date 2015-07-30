@@ -27,7 +27,7 @@
 
 namespace kpq {
 
-template <class K, class V, int Alignment>
+template <class K, class V, int Alignment = DEFAULT_ALIGNMENT>
 class versioned_array_ptr {
 public:
     versioned_array_ptr();
