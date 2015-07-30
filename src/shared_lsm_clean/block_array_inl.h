@@ -34,7 +34,7 @@ block_array<K, V>::~block_array()
 template <class K, class V>
 void
 block_array<K, V>::insert(block<K, V> *new_block,
-                          shared_lsm_block_pool<K, V> *pool)
+                          block_pool<K, V> *pool)
 {
     if (m_size == 0) {
         assert(m_blocks.empty());
@@ -77,7 +77,7 @@ block_array<K, V>::insert(block<K, V> *new_block,
 
 template <class K, class V>
 void
-block_array<K, V>::compact(shared_lsm_block_pool<K, V> *pool)
+block_array<K, V>::compact(block_pool<K, V> *pool)
 {
     remove_null_blocks();
 

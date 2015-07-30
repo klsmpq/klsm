@@ -1,3 +1,5 @@
+add_subdirectory(shared_lsm)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${GTEST_INCLUDE_DIR}
