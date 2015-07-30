@@ -20,13 +20,12 @@
 #ifndef __SHARED_LSM_H
 #define __SHARED_LSM_H
 
-#include <atomic>
-
 #include "util/mm.h"
 #include "util/thread_local_ptr.h"
 #include "block_array.h"
 #include "block_pool.h"
 #include "shared_lsm_local.h"
+#include "versioned_array_ptr.h"
 
 namespace kpq {
 
@@ -47,12 +46,8 @@ private:
     void refresh_local_array_copy();
 
 private:
-    std::atomic<block_array<K, V> *> m_block_array;
-
+    versioned_array_ptr<K, V> m_global_array;
     thread_local_ptr<shared_lsm_local<K, V, Relaxation>> m_local_component;
-
-    /** The block array used to initialize the global pointer. */
-    block_array<K, V> m_array_pool_initial;
 };
 
 #include "shared_lsm_inl.h"

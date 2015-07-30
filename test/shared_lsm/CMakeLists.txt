@@ -9,3 +9,10 @@ target_link_libraries(shared-lsm-block-array-test
     thread_local_ptr
 )
 add_test(NAME shared-lsm-block-array-test COMMAND shared-lsm-block-array-test)
+
+add_executable(shared-lsm-versioned-array-ptr-test versioned_array_ptr.cpp)
+target_link_libraries(shared-lsm-versioned-array-ptr-test
+    gtest
+    thread_local_ptr
+)
+add_test(NAME shared-lsm-versioned-array-ptr-test COMMAND shared-lsm-versioned-array-ptr-test)
