@@ -26,6 +26,7 @@
 
 #include "cheap.h"
 #include "clsm/clsm.h"
+#include "clsm/sharedlsm.h"
 #include "globallock.h"
 #include "linden.h"
 #include "lsm.h"
@@ -33,10 +34,11 @@
 #include "skip_list/skip_queue.h"
 #include "util.h"
 
-constexpr int DEFAULT_SEED     = 0;
-constexpr int DEFAULT_SIZE     = 1 << 7;
-constexpr int DEFAULT_NTHREADS = 1;
-constexpr int DEFAULT_SLEEP    = 10;
+constexpr int DEFAULT_SEED       = 0;
+constexpr int DEFAULT_SIZE       = 1 << 7;
+constexpr int DEFAULT_NTHREADS   = 1;
+constexpr int DEFAULT_RELAXATION = 32;
+constexpr int DEFAULT_SLEEP      = 10;
 
 #define PQ_CHEAP      "cheap"
 #define PQ_CLSM       "clsm"
@@ -45,6 +47,7 @@ constexpr int DEFAULT_SLEEP    = 10;
 #define PQ_LSM        "lsm"
 #define PQ_SEQUENCE   "sequence"
 #define PQ_SKIP       "skip"
+#define PQ_SLSM       "slsm"
 
 struct settings {
     int nthreads;
@@ -68,11 +71,11 @@ usage()
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', %s', %s', '%s', '%s', '%s', '%s')\n",
+            "           (one of '%s', %s', %s', '%s', '%s', '%s', '%s', '%s')\n",
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            PQ_CHEAP, PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
+            PQ_CHEAP, PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
     exit(EXIT_FAILURE);
 }
 
@@ -248,6 +251,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SKIP) {
         kpq::skip_queue<uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_SLSM) {
+        kpq::shared_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
     } else {
         usage();
