@@ -122,12 +122,12 @@ private:
     const size_t m_power_of_2;
     const size_t m_capacity;
 
+    const int32_t m_owner_tid;
+
     item_pair_t *m_item_pairs;
 
     /** Specifies whether the block is currently in use. */
     bool m_used;
-
-    const int32_t m_owner_tid;
 };
 
 #include "block_inl.h"

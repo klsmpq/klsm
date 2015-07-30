@@ -20,7 +20,7 @@
 #ifndef __SHAREDLSM_BLOCK_POOL_H
 #define __SHAREDLSM_BLOCK_POOL_H
 
-#include "block.h"
+#include "components/block.h"
 
 #include <algorithm>
 

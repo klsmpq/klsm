@@ -23,9 +23,9 @@
 #include <thread>
 
 #include "bench/pqs/globallock.h"
-#include "clsm/clsm.h"
-#include "clsm/sharedlsm.h"
+#include "dist_lsm/clsm.h"
 #include "sequential_lsm/lsm.h"
+#include "shared_lsm/sharedlsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)

@@ -23,7 +23,7 @@
 #include <atomic>
 #include <vector>
 
-#include "block.h"
+#include "components/block.h"
 #include "sharedlsm_block_pool.h"
 
 namespace kpq {

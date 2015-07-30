@@ -22,7 +22,7 @@
 #include <vector>
 #include <thread>
 
-#include "clsm/block_array.h"
+#include "shared_lsm/block_array.h"
 
 using namespace kpq;
 

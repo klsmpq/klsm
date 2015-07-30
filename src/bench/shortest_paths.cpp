@@ -24,7 +24,7 @@
 #include <thread>
 #include <unistd.h>
 
-#include "clsm/clsm.h"
+#include "dist_lsm/clsm.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
 #include "pqs/sequence_heap/sequence_heap.h"

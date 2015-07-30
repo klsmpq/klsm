@@ -1,10 +1,9 @@
 add_subdirectory(bench)
+add_subdirectory(components)
 add_subdirectory(dist_lsm)
 add_subdirectory(sequential_lsm)
 add_subdirectory(shared_lsm)
 add_subdirectory(util)
-
-add_subdirectory(clsm)  # To be removed.
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
