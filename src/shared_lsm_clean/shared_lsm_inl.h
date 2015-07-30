@@ -50,18 +50,6 @@ template <class K, class V, int Relaxation>
 bool
 shared_lsm<K, V, Relaxation>::delete_min(V &val)
 {
-//    version_t global_version;
-//    typename block<K, V>::peek_t best;
-//    do {
-//        refresh_local_array_copy();
-//        best = m_local_array_copy.get()->peek();
-//        global_version = m_block_array.load(std::memory_order_relaxed)->version();
-//    } while (global_version != m_local_array_copy.get()->version());
-
-//    if (best.m_item == nullptr) {
-//        return false;  /* We did our best, give up. */
-//    }
-
-//    return best.m_item->take(best.m_version, val);
-    return false;
+    auto local = m_local_component.get();
+    return local->delete_min(val, m_global_array);
 }

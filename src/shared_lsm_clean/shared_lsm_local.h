@@ -43,6 +43,14 @@ public:
     void insert(block<K, V> *b,
                 versioned_array_ptr<K, V> &global_array);
 
+    bool delete_min(V &val,
+                    versioned_array_ptr<K, V> &global_array);
+
+private:
+    void refresh_local_array_copy(block_array<K, V> *&observed_packed,
+                                  version_t &observed_version,
+                                  versioned_array_ptr<K, V> &global_array);
+
 private:
     /* ---- Item memory management. ---- */
 

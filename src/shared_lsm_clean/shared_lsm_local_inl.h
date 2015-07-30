@@ -50,17 +50,7 @@ shared_lsm_local<K, V, Relaxation>::insert(
 
         block_array<K, V> *observed_packed;
         version_t observed_version;
-        do {
-            observed_packed = global_array.load_packed();
-            auto observed_unpacked = global_array.unpack(observed_packed);
-            observed_version = observed_unpacked->version();
-
-            if (m_local_array_copy.version() == observed_version) {
-                break;
-            }
-
-            m_local_array_copy.copy_from(observed_unpacked);
-        } while (global_array.load()->version() == observed_version);
+        refresh_local_array_copy(observed_packed, observed_version, global_array);
 
         /* Create a new version which we will attempt to push globally. */
 
@@ -84,4 +74,46 @@ shared_lsm_local<K, V, Relaxation>::insert(
 
         m_block_pool.free_local_except(b);
     }
+}
+
+template <class K, class V, int Relaxation>
+bool
+shared_lsm_local<K, V, Relaxation>::delete_min(
+        V &val,
+        versioned_array_ptr<K, V> &global_array)
+{
+    typename block<K, V>::peek_t best;
+    block_array<K, V> *observed_packed;
+    version_t observed_version;
+
+    do {
+        refresh_local_array_copy(observed_packed, observed_version, global_array);
+        best = m_local_array_copy.peek();
+    } while (global_array.load()->version() != observed_version);
+
+    if (best.m_item == nullptr) {
+        return false;  /* We did our best, give up. */
+    }
+
+    return best.m_item->take(best.m_version, val);
+}
+
+template <class K, class V, int Relaxation>
+void
+shared_lsm_local<K, V, Relaxation>::refresh_local_array_copy(
+        block_array<K, V> *&observed_packed,
+        version_t &observed_version,
+        versioned_array_ptr<K, V> &global_array)
+{
+    do {
+        observed_packed = global_array.load_packed();
+        auto observed_unpacked = global_array.unpack(observed_packed);
+        observed_version = observed_unpacked->version();
+
+        if (m_local_array_copy.version() == observed_version) {
+            break;
+        }
+
+        m_local_array_copy.copy_from(observed_unpacked);
+    } while (global_array.load()->version() == observed_version);
 }
