@@ -107,6 +107,8 @@ extern pid_t gettid(void);
 extern void  pin(pid_t t, int cpu);
 #endif
 
+struct timespec;
+
 extern void gettime(struct timespec *t);
 extern struct timespec timediff(struct timespec, struct timespec);
 

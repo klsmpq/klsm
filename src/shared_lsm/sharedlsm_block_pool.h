@@ -84,6 +84,7 @@ public:
             }
         }
         assert(false), "A free block should always exist";
+        return nullptr;
     }
 
     void publish(std::vector<block<K, V> *> blocks,

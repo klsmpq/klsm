@@ -144,7 +144,7 @@ block_array<K, V>::remove_null_blocks() {
         m_blocks[dst++] = b;
 
         /* Debugging. */
-        assert(b->capacity() < prev_capacity);
+        assert(b->capacity() < prev_capacity), (void)prev_capacity;
         prev_capacity = b->capacity();
     }
 

@@ -161,7 +161,7 @@ verify_graph(const vertex_t *graph,
             const vertex_t *w = &graph[e->target];
             const size_t w_dist = w->distance.load(std::memory_order_relaxed);
 
-            assert(new_dist >= w_dist);
+            assert(new_dist >= w_dist), (void)new_dist, (void)w_dist;
         }
     }
 }
