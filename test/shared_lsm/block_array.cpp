@@ -22,8 +22,8 @@
 #include <vector>
 #include <thread>
 
-#include "shared_lsm_clean/aligned_block_array.h"
-#include "shared_lsm_clean/block_array.h"
+#include "shared_lsm/aligned_block_array.h"
+#include "shared_lsm/block_array.h"
 
 using namespace kpq;
 

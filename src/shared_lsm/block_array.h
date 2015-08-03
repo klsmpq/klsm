@@ -24,22 +24,22 @@
 #include <vector>
 
 #include "components/block.h"
-#include "sharedlsm_block_pool.h"
+#include "block_pool.h"
 
 namespace kpq {
 
 template <class K, class V>
 class block_array {
     /* For access to blocks during publishing. */
-    template <class L, class W, int Relaxation>
-    friend class shared_lsm;
+    template <class X, class Y, int Z>
+    friend class shared_lsm_local;
 public:
     block_array();
     virtual ~block_array();
 
     /** May only be called when this block is not visible to other threads. */
     void insert(block<K, V> *block,
-                shared_lsm_block_pool<K, V> *pool);
+                block_pool<K, V> *pool);
 
     /** Callable from other threads. */
     bool delete_min(V &val);
@@ -54,7 +54,7 @@ public:
 
 private:
     /** May only be called when this block is not visible to other threads. */
-    void compact(shared_lsm_block_pool<K, V> *pool);
+    void compact(block_pool<K, V> *pool);
     void remove_null_blocks();
 
 private:

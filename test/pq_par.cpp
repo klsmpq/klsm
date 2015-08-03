@@ -22,7 +22,7 @@
 #include <random>
 
 #include "dist_lsm/clsm.h"
-#include "shared_lsm_clean/shared_lsm.h"
+#include "shared_lsm/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)

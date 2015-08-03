@@ -31,7 +31,7 @@
 #include "pqs/sequence_heap/sequence_heap.h"
 #include "pqs/skip_list/skip_queue.h"
 #include "sequential_lsm/lsm.h"
-#include "shared_lsm/sharedlsm.h"
+#include "shared_lsm/shared_lsm.h"
 #include "util.h"
 
 constexpr int DEFAULT_SEED       = 0;

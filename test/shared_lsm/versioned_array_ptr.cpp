@@ -22,7 +22,7 @@
 #include <vector>
 #include <thread>
 
-#include "shared_lsm_clean/versioned_array_ptr.h"
+#include "shared_lsm/versioned_array_ptr.h"
 
 using namespace kpq;
 
