@@ -71,6 +71,7 @@ public:
                     || (m_status[j] == BLOCK_GLOBAL
                         && (int)m_version[j] != max_global_version)) {
                 m_status[j] = BLOCK_LOCAL;
+                m_local_ixs.push_back(j);
                 if (m_pool[j] == nullptr) {
                     /* Lazy block creation.
                      * 'used' is not needed for the shared lsm. Figure out a way for both
@@ -87,10 +88,10 @@ public:
         return nullptr;
     }
 
-    void publish(std::vector<block<K, V> *> blocks,
-                 version_t version)
+    void publish(const std::vector<block<K, V> *> &blocks,
+                 const version_t version)
     {
-        for (auto block : blocks)
+        for (const auto block : blocks)
         {
             if (block == nullptr) {
                 continue;
@@ -112,11 +113,19 @@ public:
 
     void free_local_except(block<K, V> *that)
     {
-        /* TODO: Optimize. */
-        for (int i = 0; i < BLOCKS_IN_POOL; i++) {
-            if (m_status[i] == BLOCK_LOCAL && m_pool[i] != that) {
-                m_status[i] = BLOCK_FREE;
+        int that_ix = -1;
+        for (int ix : m_local_ixs) {
+            if (m_pool[ix] == that) {
+                assert(that_ix == -1);
+                that_ix = ix;
+            } else if (m_status[ix] == BLOCK_LOCAL) {
+                m_status[ix] = BLOCK_FREE;
             }
+        }
+
+        m_local_ixs.clear();
+        if (that_ix != -1) {
+            m_local_ixs.push_back(that_ix);
         }
     }
 
@@ -141,6 +150,13 @@ private:
     block<K, V> *m_pool[BLOCKS_IN_POOL];
     block_status m_status[BLOCKS_IN_POOL];
     version_t    m_version[BLOCKS_IN_POOL];
+
+
+    /** Stores indexes allocated during the current insert iteration.
+     *  Valid stati are LOCAL and GLOBAL (if publish() has been called,
+     *  i.e. the current insert has been successfully completed).
+     *  All other indexes are guaranteed not to be set to LOCAL. */
+    std::vector<int> m_local_ixs;
 };
 
 }
