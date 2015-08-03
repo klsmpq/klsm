@@ -180,7 +180,7 @@ template <class K, class V>
 typename block<K, V>::peek_t
 block<K, V>::peek()
 {
-    int32_t calling_tid = tid();
+    const bool called_by_owner = (tid() == m_owner_tid);
     peek_t p;
     for (size_t i = m_first; i < m_last; i++) {
         p.m_item    = m_item_pairs[i].first;
@@ -194,7 +194,7 @@ block<K, V>::peek()
         /* Move initial sequence of unowned item references out
          * of active scope. Only the owner thread may modify m_first
          * in order to avoid conflicts through reused blocks. */
-        if (calling_tid == m_owner_tid) {
+        if (called_by_owner) {
             m_first++;
         }
     }
