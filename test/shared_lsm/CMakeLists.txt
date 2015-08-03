@@ -3,16 +3,16 @@ include_directories(
     ${GTEST_INCLUDE_DIR}
 )
 
-add_executable(shared-lsm-block-array-test block_array.cpp)
-target_link_libraries(shared-lsm-block-array-test
+add_executable(block-array-test block_array.cpp)
+target_link_libraries(block-array-test
     gtest
     thread_local_ptr
 )
-add_test(NAME shared-lsm-block-array-test COMMAND shared-lsm-block-array-test)
+add_test(NAME block-array-test COMMAND block-array-test)
 
-add_executable(shared-lsm-versioned-array-ptr-test versioned_array_ptr.cpp)
-target_link_libraries(shared-lsm-versioned-array-ptr-test
+add_executable(versioned-array-ptr-test versioned_array_ptr.cpp)
+target_link_libraries(versioned-array-ptr-test
     gtest
     thread_local_ptr
 )
-add_test(NAME shared-lsm-versioned-array-ptr-test COMMAND shared-lsm-versioned-array-ptr-test)
+add_test(NAME versioned-array-ptr-test COMMAND versioned-array-ptr-test)
