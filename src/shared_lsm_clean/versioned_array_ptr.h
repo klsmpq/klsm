@@ -42,6 +42,11 @@ public:
 
     block_array<K, V> *unpack(block_array<K, V> *ptr) { return unpacked_ptr(ptr); }
 
+    /** Returns true, iff the packed version in ptr possibly matches the
+     *  given version. */
+    static bool matches(block_array<K, V> *ptr,
+                        version_t version);
+
 private:
     static block_array<K, V> *packed_ptr(block_array<K, V> *ptr);
     static block_array<K, V> *unpacked_ptr(block_array<K, V> *ptr);

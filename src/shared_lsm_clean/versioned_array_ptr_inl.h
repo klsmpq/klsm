@@ -31,6 +31,15 @@ versioned_array_ptr<K, V, Alignment>::~versioned_array_ptr()
 }
 
 template <class K, class V, int Alignment>
+bool
+versioned_array_ptr<K, V, Alignment>::matches(
+        block_array<K, V> *ptr,
+        version_t version)
+{
+    return ((intptr_t)ptr & MASK) == (version & MASK);
+}
+
+template <class K, class V, int Alignment>
 block_array<K, V> *
 versioned_array_ptr<K, V, Alignment>::packed_ptr(block_array<K, V> *ptr)
 {

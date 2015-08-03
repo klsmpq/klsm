@@ -47,6 +47,9 @@ public:
                     versioned_array_ptr<K, V> &global_array);
 
 private:
+    /** Refreshes the local array copy and ensures that it is both up to date
+     *  and consistent. observed_packed and observed_version are set to the
+     *  corresponding values used to perform the copy. */
     void refresh_local_array_copy(block_array<K, V> *&observed_packed,
                                   version_t &observed_version,
                                   versioned_array_ptr<K, V> &global_array);

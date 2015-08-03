@@ -113,11 +113,27 @@ shared_lsm_local<K, V, Relaxation>::refresh_local_array_copy(
         return;
     }
 
-    do {
+    while (true) {
         observed_packed = global_array.load_packed();
         observed_unpacked = global_array.unpack(observed_packed);
         observed_version = observed_unpacked->version();
 
+        if (!versioned_array_ptr<K, V>::matches(observed_packed,
+                                                observed_version)) {
+            continue;
+        }
+
         m_local_array_copy.copy_from(observed_unpacked);
-    } while (global_array.load()->version() != observed_version);
+
+        if (global_array.load()->version() == observed_version
+                && observed_version == m_local_array_copy.version()) {
+            break;
+        }
+    }
+
+#ifndef NDEBUG
+    for (auto b : m_local_array_copy.m_blocks) {
+        assert(b != nullptr);
+    }
+#endif
 }
