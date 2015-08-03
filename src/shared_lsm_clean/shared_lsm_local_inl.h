@@ -105,15 +105,19 @@ shared_lsm_local<K, V, Relaxation>::refresh_local_array_copy(
         version_t &observed_version,
         versioned_array_ptr<K, V> &global_array)
 {
+    observed_packed = global_array.load_packed();
+    auto observed_unpacked = global_array.unpack(observed_packed);
+    observed_version = observed_unpacked->version();
+
+    if (m_local_array_copy.version() == global_array.load()->version()) {
+        return;
+    }
+
     do {
         observed_packed = global_array.load_packed();
-        auto observed_unpacked = global_array.unpack(observed_packed);
+        observed_unpacked = global_array.unpack(observed_packed);
         observed_version = observed_unpacked->version();
 
-        if (m_local_array_copy.version() == observed_version) {
-            break;
-        }
-
         m_local_array_copy.copy_from(observed_unpacked);
-    } while (global_array.load()->version() == observed_version);
+    } while (global_array.load()->version() != observed_version);
 }
