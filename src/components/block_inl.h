@@ -193,9 +193,13 @@ block<K, V>::peek()
 
         /* Move initial sequence of unowned item references out
          * of active scope. Only the owner thread may modify m_first
-         * in order to avoid conflicts through reused blocks. */
+         * in order to avoid conflicts through reused blocks.
+         * TODO: This is not acceptable long-term, since it prevents us
+         * from giving any decent bounds on delete-min: if peek is never
+         * called by the owning thread, we potentially need to check every
+         * item in the block before returning the last one. */
         if (called_by_owner) {
-            m_first++;
+            m_first = i + 1;
         }
     }
 
