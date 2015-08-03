@@ -134,7 +134,9 @@ block_array<K, V>::compact(block_pool<K, V> *pool)
 template <class K, class V>
 void
 block_array<K, V>::remove_null_blocks() {
+#ifndef NDEBUG
     size_t prev_capacity = std::numeric_limits<size_t>::max();
+#endif
     size_t dst = 0;
     for (size_t src = 0; src < m_size; src++) {
         auto b = m_blocks[src];
@@ -143,9 +145,10 @@ block_array<K, V>::remove_null_blocks() {
         }
         m_blocks[dst++] = b;
 
-        /* Debugging. */
+#ifndef NDEBUG
         assert(b->capacity() < prev_capacity), (void)prev_capacity;
         prev_capacity = b->capacity();
+#endif
     }
 
     m_size = dst;

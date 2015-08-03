@@ -124,6 +124,8 @@ public:
         }
 
         m_local_ixs.clear();
+        m_local_ixs.reserve(MAX_POWER_OF_2);
+
         if (that_ix != -1) {
             m_local_ixs.push_back(that_ix);
         }
