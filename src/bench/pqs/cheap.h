@@ -24,7 +24,9 @@
 
 #include "util/thread_local_ptr.h"
 
-namespace kpq
+using kpq::thread_local_ptr;
+
+namespace kpqbench
 {
 
 /**

@@ -21,7 +21,7 @@
 
 #include <limits>
 
-namespace kpq
+namespace kpqbench
 {
 
 template <class T>

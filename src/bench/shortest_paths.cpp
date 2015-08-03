@@ -337,7 +337,7 @@ main(int argc,
         kpq::clsm<uint32_t, task_t *> pq;
         ret = bench(&pq, s);
     } else if (s.type == PQ_GLOBALLOCK) {
-        kpq::GlobalLock<uint32_t, task_t *> pq;
+        kpqbench::GlobalLock<uint32_t, task_t *> pq;
         ret = bench(&pq, s);
 //    } else if (s.type == PQ_LINDEN) {
 //        kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);

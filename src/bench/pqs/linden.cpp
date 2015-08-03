@@ -5,7 +5,7 @@ extern "C" {
 #include "linden/prioq.h"
 }
 
-namespace kpq
+namespace kpqbench
 {
 
 struct linden_t {

@@ -133,16 +133,16 @@ main(int argc,
 
     settings.type = argv[optind];
     if (settings.type == PQ_GLOBALLOCK) {
-        kpq::GlobalLock<uint32_t, uint32_t> pq;
+        kpqbench::GlobalLock<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SEQUENCE) {
-        kpq::sequence_heap<uint32_t> pq;
+        kpqbench::sequence_heap<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SKIP) {
-        kpq::skip_queue<uint32_t> pq;
+        kpqbench::skip_queue<uint32_t> pq;
         ret = bench(&pq, settings);
     } else {
         usage();

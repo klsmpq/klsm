@@ -22,7 +22,7 @@
 
 #include "knheap.h"
 
-namespace kpq
+namespace kpqbench
 {
 
 template <class T>

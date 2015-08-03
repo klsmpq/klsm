@@ -31,6 +31,7 @@
 #define PQ_SIZE ((1 << 15) - 1)
 
 using namespace kpq;
+using namespace kpqbench;
 
 #define RELAXATION (32)
 

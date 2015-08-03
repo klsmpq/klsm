@@ -23,7 +23,7 @@
 #include <mutex>
 #include <queue>
 
-namespace kpq
+namespace kpqbench
 {
 
 template <class K, class V>

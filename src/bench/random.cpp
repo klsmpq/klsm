@@ -231,26 +231,26 @@ main(int argc,
     settings.type = argv[optind];
 
     if (settings.type == PQ_CHEAP) {
-        kpq::cheap<uint32_t, uint32_t> pq;
+        kpqbench::cheap<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_CLSM) {
         kpq::clsm<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
-        kpq::GlobalLock<uint32_t, uint32_t> pq;
+        kpqbench::GlobalLock<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LINDEN) {
-        kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);
+        kpqbench::Linden pq(kpqbench::Linden::DEFAULT_OFFSET);
         pq.insert(42, 42); /* A hack to avoid segfault on destructor in empty linden queue. */
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SEQUENCE) {
-        kpq::sequence_heap<uint32_t> pq;
+        kpqbench::sequence_heap<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SKIP) {
-        kpq::skip_queue<uint32_t> pq;
+        kpqbench::skip_queue<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SLSM) {
         kpq::shared_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;

@@ -3,7 +3,7 @@
 
 #include <cstdint>
 
-namespace kpq
+namespace kpqbench
 {
 
 struct linden_t;

@@ -22,7 +22,7 @@
 
 #include "skip_list.h"
 
-namespace kpq
+namespace kpqbench
 {
 
 template <class T>

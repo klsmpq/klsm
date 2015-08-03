@@ -19,7 +19,7 @@
 
 #include "skip_queue.h"
 
-namespace kpq
+namespace kpqbench
 {
 
 template <class T>
