@@ -24,7 +24,7 @@
 #include <thread>
 #include <unistd.h>
 
-#include "dist_lsm/clsm.h"
+#include "dist_lsm/dist_lsm.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
 #include "pqs/sequence_heap/sequence_heap.h"
@@ -37,7 +37,7 @@ constexpr int DEFAULT_NTHREADS  = 1;
 constexpr double DEFAULT_EDGE_P = 0.5;
 constexpr int DEFAULT_SEED      = 0;
 
-#define PQ_CLSM       "clsm"
+#define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
 #define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
@@ -100,7 +100,7 @@ usage()
             DEFAULT_NTHREADS,
             DEFAULT_EDGE_P,
             DEFAULT_SEED,
-            PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
+            PQ_DLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
     exit(EXIT_FAILURE);
 }
 
@@ -333,8 +333,8 @@ main(int argc,
 
     s.type = argv[optind];
 
-    if (s.type == PQ_CLSM) {
-        kpq::clsm<uint32_t, task_t *> pq;
+    if (s.type == PQ_DLSM) {
+        kpq::dist_lsm<uint32_t, task_t *> pq;
         ret = bench(&pq, s);
     } else if (s.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, task_t *> pq;

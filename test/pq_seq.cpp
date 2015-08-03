@@ -23,7 +23,7 @@
 #include <thread>
 
 #include "bench/pqs/globallock.h"
-#include "dist_lsm/clsm.h"
+#include "dist_lsm/dist_lsm.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
 
@@ -83,7 +83,7 @@ protected:
 
 typedef ::testing::Types< GlobalLock<uint32_t, uint32_t>
                         , LSM<uint32_t>
-                        , clsm<uint32_t, uint32_t>
+                        , dist_lsm<uint32_t, uint32_t>
                         , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);

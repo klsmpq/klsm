@@ -18,14 +18,14 @@
  */
 
 template <class K, class V>
-clsm_local<K, V>::clsm_local() :
+dist_lsm_local<K, V>::dist_lsm_local() :
     m_head(nullptr),
     m_tail(nullptr)
 {
 }
 
 template <class K, class V>
-clsm_local<K, V>::~clsm_local()
+dist_lsm_local<K, V>::~dist_lsm_local()
 {
     /* Blocks and items are managed by, respectively,
      * block_storage and item_allocator. */
@@ -33,7 +33,7 @@ clsm_local<K, V>::~clsm_local()
 
 template <class K, class V>
 void
-clsm_local<K, V>::insert(const K &key,
+dist_lsm_local<K, V>::insert(const K &key,
                          const V &val)
 {
     item<K, V> *it = m_item_allocator.acquire();
@@ -44,7 +44,7 @@ clsm_local<K, V>::insert(const K &key,
 
 template <class K, class V>
 void
-clsm_local<K, V>::insert(item<K, V> *it,
+dist_lsm_local<K, V>::insert(item<K, V> *it,
                          const version_t version)
 {
     /* If possible, simply append to the current tail block. */
@@ -75,7 +75,7 @@ clsm_local<K, V>::insert(item<K, V> *it,
 
 template <class K, class V>
 void
-clsm_local<K, V>::merge_insert(block<K, V> *const new_block)
+dist_lsm_local<K, V>::merge_insert(block<K, V> *const new_block)
 {
     block<K, V> *insert_block = new_block;
     block<K, V> *other_block  = m_tail;
@@ -118,8 +118,8 @@ clsm_local<K, V>::merge_insert(block<K, V> *const new_block)
 
 template <class K, class V>
 bool
-clsm_local<K, V>::delete_min(clsm<K, V> *parent,
-                             V &val)
+dist_lsm_local<K, V>::delete_min(dist_lsm<K, V> *parent,
+                                 V &val)
 {
     typename block<K, V>::peek_t best;
     peek(best);
@@ -137,7 +137,7 @@ clsm_local<K, V>::delete_min(clsm<K, V> *parent,
 
 template <class K, class V>
 void
-clsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
+dist_lsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
 {
 
     for (auto i = m_head.load(std::memory_order_relaxed);
@@ -227,7 +227,7 @@ clsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
 
 template <class K, class V>
 int
-clsm_local<K, V>::spy(clsm<K, V> *parent)
+dist_lsm_local<K, V>::spy(dist_lsm<K, V> *parent)
 {
     int num_spied = 0;
 
@@ -262,7 +262,7 @@ clsm_local<K, V>::spy(clsm<K, V> *parent)
 
 template <class K, class V>
 void
-clsm_local<K, V>::print() const
+dist_lsm_local<K, V>::print() const
 {
     m_block_storage.print();
 }

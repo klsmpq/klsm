@@ -24,7 +24,7 @@
 #include <thread>
 #include <unistd.h>
 
-#include "dist_lsm/clsm.h"
+#include "dist_lsm/dist_lsm.h"
 #include "pqs/cheap.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
@@ -41,7 +41,7 @@ constexpr int DEFAULT_RELAXATION = 32;
 constexpr int DEFAULT_SLEEP      = 10;
 
 #define PQ_CHEAP      "cheap"
-#define PQ_CLSM       "clsm"
+#define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
 #define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
@@ -75,7 +75,7 @@ usage()
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            PQ_CHEAP, PQ_CLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
+            PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
     exit(EXIT_FAILURE);
 }
 
@@ -94,7 +94,7 @@ bench_thread(T *pq,
 
     hwloc.pin_to_core(thread_id);
 
-    /* Fill up to initial size. Do this per thread in order to build a balanced CLSM
+    /* Fill up to initial size. Do this per thread in order to build a balanced DLSM
      * instead of having one local LSM containing all initial elems. */
 
     const int slice_size = settings.size / settings.nthreads;
@@ -233,8 +233,8 @@ main(int argc,
     if (settings.type == PQ_CHEAP) {
         kpqbench::cheap<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
-    } else if (settings.type == PQ_CLSM) {
-        kpq::clsm<uint32_t, uint32_t> pq;
+    } else if (settings.type == PQ_DLSM) {
+        kpq::dist_lsm<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, uint32_t> pq;

@@ -17,18 +17,18 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CLSM_H
-#define __CLSM_H
+#ifndef __DIST_LSM_H
+#define __DIST_LSM_H
 
-#include "clsm_local.h"
+#include "dist_lsm_local.h"
 
 namespace kpq
 {
 
 template <class K, class V>
-class clsm
+class dist_lsm
 {
-    friend int clsm_local<K, V>::spy(clsm<K, V> *parent);
+    friend int dist_lsm_local<K, V>::spy(dist_lsm<K, V> *parent);
 
 public:
 
@@ -50,11 +50,11 @@ public:
     void print();
 
 private:
-    thread_local_ptr<clsm_local<K, V>> m_local;
+    thread_local_ptr<dist_lsm_local<K, V>> m_local;
 };
 
-#include "clsm_inl.h"
+#include "dist_lsm_inl.h"
 
 }
 
-#endif /* __CLSM_H */
+#endif /* __DIST_LSM_H */

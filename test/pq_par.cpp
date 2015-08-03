@@ -21,7 +21,7 @@
 #include <thread>
 #include <random>
 
-#include "dist_lsm/clsm.h"
+#include "dist_lsm/dist_lsm.h"
 #include "shared_lsm/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
@@ -79,7 +79,7 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types< clsm<uint32_t, uint32_t>
+typedef ::testing::Types< dist_lsm<uint32_t, uint32_t>
                         , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);

@@ -17,8 +17,8 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __CLSM_LOCAL_H
-#define __CLSM_LOCAL_H
+#ifndef __DIST_LSM_LOCAL_H
+#define __DIST_LSM_LOCAL_H
 
 #include <atomic>
 #include <random>
@@ -32,23 +32,23 @@ namespace kpq
 {
 
 template <class K, class V>
-class clsm;
+class dist_lsm;
 
 template <class K, class V>
-class clsm_local
+class dist_lsm_local
 {
 public:
-    clsm_local();
-    virtual ~clsm_local();
+    dist_lsm_local();
+    virtual ~dist_lsm_local();
 
     void insert(const K &key,
                 const V &val);
-    bool delete_min(clsm<K, V> *parent,
+    bool delete_min(dist_lsm<K, V> *parent,
                     V &val);
 
     /** Attempts to copy items from a random other thread's local clsm,
      *  and returns the number of items copied. */
-    int spy(clsm<K, V> *parent);
+    int spy(class dist_lsm<K, V> *parent);
 
     void print() const;
 
@@ -79,8 +79,8 @@ private:
     std::mt19937 m_gen;
 };
 
-#include "clsm_local_inl.h"
+#include "dist_lsm_local_inl.h"
 
 }
 
-#endif /* __CLSM_LOCAL_H */
+#endif /* __DIST_LSM_LOCAL_H */
