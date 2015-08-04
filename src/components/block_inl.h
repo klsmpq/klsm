@@ -185,6 +185,7 @@ block<K, V>::peek()
     for (size_t i = m_first; i < m_last; i++) {
         p.m_item    = m_item_pairs[i].first;
         p.m_key     = m_item_pairs[i].first->key();
+        p.m_index   = i;
         p.m_version = m_item_pairs[i].second;
 
         if (item_owned(m_item_pairs[i])) {
@@ -201,6 +202,26 @@ block<K, V>::peek()
         if (called_by_owner) {
             m_first = i + 1;
         }
+    }
+
+    p.m_item = nullptr;
+    return p;
+}
+
+template <class K, class V>
+typename block<K, V>::peek_t
+block<K, V>::peek_nth(const size_t n)
+{
+    assert(n < m_capacity);
+
+    peek_t p;
+    p.m_key     = m_item_pairs[n].first->key();
+    p.m_item    = m_item_pairs[n].first;
+    p.m_index   = n;
+    p.m_version = m_item_pairs[n].second;
+
+    if (item_owned(m_item_pairs[n])) {
+        return p;
     }
 
     p.m_item = nullptr;
@@ -233,6 +254,13 @@ block<K, V>::iterator()
     it.m_last = m_last;
 
     return it;
+}
+
+template <class K, class V>
+size_t
+block<K, V>::first() const
+{
+    return m_first;
 }
 
 template <class K, class V>

@@ -57,15 +57,25 @@ private:
     void compact(block_pool<K, V> *pool);
     void remove_null_blocks();
 
+    void reset_pivots();
+
 private:
     static constexpr size_t MAX_BLOCKS = 32;
 
     /** Stores block pointers from largest to smallest (to stay consistent with
      *  clsm_local). The usual invariants (block size strictly descending, only
      *  one block of each size in array) are preserved while the block array is
-     *  visible to other threads. */
+     *  visible to other threads.
+     */
     std::vector<block<K, V> *> m_blocks;
     size_t m_size;
+
+    /** For each block in the array, stores an index i such that for all indices j < i,
+     *  block[j] is guaranteed to be within the k smallest keys of the array. These indices
+     *  are called 'pivots and are required to relax the delete_min operation.
+     *  Pivots should be absolute indices (not dependent on block's m_first/m_last).
+     */
+    std::vector<int> m_pivots;
 
     std::atomic<version_t> m_version;
 };

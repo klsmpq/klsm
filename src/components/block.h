@@ -46,11 +46,15 @@ private:
     typedef std::pair<item<K, V> *, version_t> item_pair_t;
 
 public:
+    /** Information about a specific item. A nullptr item denotes failure of the operation. */
     struct peek_t {
         peek_t() : m_item(nullptr), m_version(0) { }
 
+        bool empty() const { return (m_item == nullptr); }
+
         K m_key;
         item<K, V> *m_item;
+        size_t m_index;  /**< The item's index within the block. */
         version_t m_version;
     };
 
@@ -85,8 +89,12 @@ public:
      *  If none are found, returns false. */
     bool peek_tail(K &key);
 
+    /** Returns the n-th item within this block (i.e. items[n]). */
+    peek_t peek_nth(const size_t n);
+
     spying_iterator iterator();
 
+    size_t first() const;
     size_t last() const;
     size_t size() const;
     size_t power_of_2() const;
@@ -112,8 +120,8 @@ private:
     size_t m_first;
 
     /** Points to the highest known filled index + 1.
-     *  Since the CLSM is concurrent and other threads can take items without the owning
-     *  thread knowing about it, size if not an exact value. Instead, it counts the number
+     *  Since the dist LSM is concurrent and other threads can take items without the owning
+     *  thread knowing about it, size is not an exact value. Instead, it counts the number
      *  of elements that were written into the local list of items by the owning thread,
      *  even if those items currently aren't active anymore. */
     size_t m_last;

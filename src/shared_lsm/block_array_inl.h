@@ -17,7 +17,9 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
 #include <limits>
+#include <random>
 
 template <class K, class V>
 block_array<K, V>::block_array() :
@@ -146,12 +148,41 @@ block_array<K, V>::remove_null_blocks() {
         m_blocks[dst++] = b;
 
 #ifndef NDEBUG
-        assert(b->capacity() < prev_capacity), (void)prev_capacity;
+        assert(b->capacity() < prev_capacity);
         prev_capacity = b->capacity();
 #endif
     }
 
     m_size = dst;
+}
+
+template <class K, class V>
+void
+block_array<K, V>::reset_pivots()
+{
+    /* Find the minimal element and initially set pivots s.t. it is the only
+     * element in the pivot set. */
+
+    typename block<K, V>::peek_t best;
+    int best_block_ix = -1;
+    for (size_t i = 0; i < m_size; i++) {
+        auto b = m_blocks[i];
+        auto candidate  = b->peek();
+
+        if ((best.empty() && !candidate.empty()) ||
+                (!candidate.empty() && candidate.m_key < best.m_key)) {
+            best = candidate;
+            best_block_ix = i;
+        }
+    }
+
+    if (best_block_ix == -1) {
+        /* All blocks are empty. */
+        return;
+    }
+
+    m_pivots = std::vector<int>(m_size, 0);
+    m_pivots[best_block_ix] = best.m_index + 1;
 }
 
 template <class K, class V>
@@ -171,21 +202,68 @@ template <class K, class V>
 typename block<K, V>::peek_t
 block_array<K, V>::peek()
 {
-    // TODO: Uniformly random relaxed deletion using pivots.
+    // TODO: On-demand pivot recalculation.
+    reset_pivots();
 
-    typename block<K, V>::peek_t best;
+    /* Random selection of any item within the range given by the pivots.
+     * First, calculate the number of items within the range. We need to store
+     * the encountered values of first here in order to ensure we use the same
+     * values when accessing the selected item below (even though the real value
+     * might have changed in the meantime).
+     */
+
+    std::vector<int> first_in_block;
+    int ncandidates = 0;
     for (size_t i = 0; i < m_size; i++) {
         auto b = m_blocks[i];
-        auto candidate  = b->peek();
 
-        if (best.m_item == nullptr ||
-                (candidate.m_item != nullptr && candidate.m_key < best.m_key)) {
-            best = candidate;
-        }
+        const int first = b->first();
+        first_in_block.push_back(first);
+
+        ncandidates += std::max(0, m_pivots[i] - first);
     }
 
-    return best;
+    /* Select a random element within the range, find it, and return it. */
 
+    typename block<K,  V>::peek_t best;
+    if (ncandidates == 0) {
+        return best;
+    }
+
+    std::default_random_engine gen;
+    std::uniform_int_distribution<int> dist(0, ncandidates - 1);
+
+    int selected_element = dist(gen);
+
+    size_t block_ix;
+    block<K, V> *b = nullptr;
+    for (block_ix = 0; block_ix < m_size; block_ix++) {
+        const int elements_in_range =
+                std::max(0, m_pivots[block_ix] - first_in_block[block_ix]);
+
+        if (selected_element >= elements_in_range) {
+            /* Element not in this block. */
+            selected_element -= elements_in_range;
+            continue;
+        }
+
+        b = m_blocks[block_ix];
+        best = b->peek_nth(first_in_block[block_ix] + selected_element);
+        break;
+    }
+
+    /* The selected item has already been taken, fall back to removing
+     * the minimal item within the same block (possibly the same item). */
+
+    if (best.m_item == nullptr && b != nullptr && block_ix < m_size) {
+        best = b->peek_nth(first_in_block[block_ix]);
+    }
+
+    /* TODO: Further attempts if we still don't have an item. Pheet stores and mutates
+     * first members for each block locally and retries until the range of possible items
+     * is empty, at which point it compacts the global array. */
+
+    return best;
 }
 
 template <class K, class V>
