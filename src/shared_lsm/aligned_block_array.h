@@ -33,6 +33,7 @@ constexpr static int DEFAULT_ALIGNMENT = 2048;
  * This is needed since we partially pack an array's version into its pointer
  * in order to avoid the ABA problem when we compare and swap the global array
  * pointer.
+ * Alignment must be a power of two.
  */
 template <class K, class V, int Alignment = DEFAULT_ALIGNMENT>
 class aligned_block_array {
