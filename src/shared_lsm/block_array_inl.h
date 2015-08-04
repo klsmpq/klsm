@@ -197,6 +197,9 @@ block_array<K, V>::copy_from(const block_array<K, V> *that)
 
         m_size = 0;
 
+        /* TODO: Doing a resize() seems not to be 100% reliable, as we sometimes
+         * run into memory management failures since this change. Difficult to reproduce
+         * though since it only turns up seldomly. Take another look if necessary. */
         const size_t that_size = that->m_size;
         if (that_size > m_size) {
             m_blocks.resize(that_size);
