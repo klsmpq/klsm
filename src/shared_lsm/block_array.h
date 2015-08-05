@@ -58,6 +58,7 @@ private:
     void remove_null_blocks();
 
     void reset_pivots();
+    void improve_pivots();
 
 private:
     static constexpr size_t MAX_BLOCKS = 32;

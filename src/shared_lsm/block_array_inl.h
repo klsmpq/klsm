@@ -183,6 +183,119 @@ block_array<K, V, Rlx>::reset_pivots()
 
     m_pivots = std::vector<int>(m_size, 0);
     m_pivots[best_block_ix] = best.m_index + 1;
+
+    improve_pivots();
+}
+
+template <class K, class V, int Rlx>
+void
+block_array<K, V, Rlx>::improve_pivots()
+{
+    /* During iterative improvement of pivots, we may repeatedly go beyond legal
+     * limits and must backtrack the previous solution. For that purpose, we
+     * create a second pivot vector and pointers to the currently legal solution
+     * and the in-progress solution. */
+    std::vector<int> pivot_store = m_pivots;
+    int *pivots = &m_pivots[0];
+    int *tentative_pivots = &pivot_store[0];
+
+    /* Initially, only the minimal element is within the pivot range. */
+    int elements_in_range = 1;
+
+    /* Once we've found an element that violates relaxation constraints (i.e. which
+     * would cause more than Rlx elements to be within the pivot range), we use an
+     * upper bound to limit the keys which may be added to the pivot range. */
+    K upper_bound = std::numeric_limits<K>::max();
+
+    size_t block_ix = 0;
+    while (block_ix < m_size && elements_in_range < Rlx / 2) {
+        auto b = m_blocks[block_ix];
+
+        // Entire current block in pivot range?
+        if (pivots[block_ix] == (int)b->last()) {
+            tentative_pivots[block_ix] = pivots[block_ix];
+            block_ix++;
+            continue;  // With the next block.
+        }
+
+        // Check the next potential item in range. If it has been taken, the index
+        // range can be enlarged since the taken item may be ignored.
+        auto peeked_item = b->peek_nth(pivots[block_ix]);
+        if (peeked_item.empty()) {
+            pivots[block_ix]++;
+            continue;
+        }
+
+        // If the current item violates constraints, set the upper bound and move
+        // on to the next block.
+        if (Rlx + 1 < elements_in_range) {
+            if (peeked_item.m_key < upper_bound) {
+                upper_bound = peeked_item.m_key;
+            }
+            tentative_pivots[block_ix] = pivots[block_ix];
+            block_ix++;
+            continue;
+        }
+
+        // The current item is above the upper bound, move on to the next block.
+        if (upper_bound <= peeked_item.m_key) {
+            tentative_pivots[block_ix] = pivots[block_ix];
+            block_ix++;
+            continue;
+        }
+
+        /* We've now passed initial checks. The next step is to tentatively add
+         * the current item to the pivot range, and check if our invariant (all pivots
+         * guaranteed to be within the Rlx minimal items) still holds. */
+
+        tentative_pivots[block_ix] = pivots[block_ix] + 1;
+
+        int elements_in_tentative_range = elements_in_range + 1;
+        for (size_t j = block_ix + 1; j < m_size && Rlx + 1 >= elements_in_tentative_range; j++) {
+            // Update the range to include all elements less or equal to the new element.
+            // Note that we do not need to check previous blocks, since the newly added element
+            // must be less or equal to their next element beyond their pivot limit (otherwise
+            // the other block's next element would have been added to the pivot range previously).
+
+            auto b = m_blocks[j];
+
+            for (int i = pivots[j]; i < pivots[j] + Rlx + 1; i++) {
+                if (i >= (int)b->last()) {
+                    break;
+                }
+
+                auto p = b->peek_nth(i);
+                if (!p.empty() && p.m_key > peeked_item.m_key) {
+                    /* Got an item, and it's beyond our range. */
+                    break;
+                } else if (!p.empty()) {
+                    /* Got an item within the range. */
+                    elements_in_tentative_range++;
+                    tentative_pivots[j] = i + 1;
+                } else {
+                    /* Item was already taken, ignore. */
+                    tentative_pivots[j] = i + 1;
+                }
+            }
+        }
+
+        if (Rlx + 1 >= elements_in_tentative_range) {
+            // Adding this iteration's element to the pivot range is legal, commit.
+            elements_in_range = elements_in_tentative_range;
+            std::swap(pivots, tentative_pivots);
+        } else {
+            // New item invalidates invariants, revert and set limit.
+            upper_bound = peeked_item.m_key;
+            tentative_pivots[block_ix] = pivots[block_ix];
+        }
+
+        /* Copy the remaining solution over to the final pivot vector. */
+        if (pivots != &m_pivots[0]) {
+            for (size_t j = block_ix + 1; j < m_size; j++) {
+                m_pivots[j] = pivots[j];
+            }
+        }
+    }
 }
 
 template <class K, class V, int Rlx>
