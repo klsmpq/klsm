@@ -28,7 +28,7 @@
 
 namespace kpq {
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 class block_array {
     /* For access to blocks during publishing. */
     template <class X, class Y, int Z>
@@ -47,7 +47,7 @@ public:
 
     /** Copies the given block array into the current instance.
       * The copy is shallow, i.e. only block pointers are copied. */
-    void copy_from(const block_array<K, V> *that);
+    void copy_from(const block_array<K, V, Relaxation> *that);
 
     version_t version() { return m_version.load(std::memory_order_relaxed); }
     void increment_version() { m_version.fetch_add(1, std::memory_order_relaxed); }

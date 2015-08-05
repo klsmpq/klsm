@@ -35,19 +35,19 @@ constexpr static int DEFAULT_ALIGNMENT = 2048;
  * pointer.
  * Alignment must be a power of two.
  */
-template <class K, class V, int Alignment = DEFAULT_ALIGNMENT>
+template <class K, class V, int Relaxation, int Alignment = DEFAULT_ALIGNMENT>
 class aligned_block_array {
 public:
     aligned_block_array();
     virtual ~aligned_block_array();
 
-    block_array<K, V> *ptr() const { return m_ptr; }
+    block_array<K, V, Relaxation> *ptr() const { return m_ptr; }
 
 private:
-    constexpr static size_t ARRAY_SIZE   = sizeof(block_array<K, V>);
+    constexpr static size_t ARRAY_SIZE   = sizeof(block_array<K, V, Relaxation>);
     constexpr static size_t BUFFER_SIZE = Alignment + ARRAY_SIZE;
 
-    block_array<K, V> *m_ptr;
+    block_array<K, V, Relaxation> *m_ptr;
     uint8_t m_buffer[BUFFER_SIZE];
 };
 

@@ -29,16 +29,19 @@ using namespace kpq;
 
 #define ARRAY_ALIGNMENT (2048)
 #define MASK (ARRAY_ALIGNMENT - 1)
+#define RELAXATION (32)
+
+typedef block_array<uint32_t, uint32_t, RELAXATION> default_block_array;
 
 TEST(BlockArrayTest, SanityCheck)
 {
-    block_array<uint32_t, uint32_t> bs;
+    default_block_array bs;
     aligned_block_array<uint32_t, uint32_t, ARRAY_ALIGNMENT> cs;
 }
 
 TEST(BlockArrayTest, Insert)
 {
-    block_array<uint32_t, uint32_t> bs;
+    default_block_array bs;
 
     auto b = new block<uint32_t, uint32_t>(1);
 
@@ -57,7 +60,7 @@ TEST(BlockArrayTest, Insert)
 
 TEST(BlockArrayTest, Copy)
 {
-    block_array<uint32_t, uint32_t> bs;
+    default_block_array bs;
 
     auto b = new block<uint32_t, uint32_t>(1);
 
@@ -70,7 +73,7 @@ TEST(BlockArrayTest, Copy)
     block_pool<uint32_t, uint32_t> pool;
     bs.insert(b, &pool);
 
-    block_array<uint32_t, uint32_t> cs;
+    default_block_array cs;
     cs.copy_from(&bs);
 
     delete i;
@@ -79,7 +82,7 @@ TEST(BlockArrayTest, Copy)
 
 TEST(BlockArrayTest, DeleteMinEmpty)
 {
-    block_array<uint32_t, uint32_t> bs;
+    default_block_array bs;
 
     uint32_t x;
     ASSERT_FALSE(bs.delete_min(x));
@@ -87,7 +90,7 @@ TEST(BlockArrayTest, DeleteMinEmpty)
 
 TEST(BlockArrayTest, DeleteMin)
 {
-    block_array<uint32_t, uint32_t> bs;
+    default_block_array bs;
 
     auto b = new block<uint32_t, uint32_t>(1);
 

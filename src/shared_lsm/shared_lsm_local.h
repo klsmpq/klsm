@@ -39,20 +39,20 @@ public:
 
     void insert(const K &key,
                 const V &val,
-                versioned_array_ptr<K, V> &global_array);
+                versioned_array_ptr<K, V, Relaxation> &global_array);
     void insert(block<K, V> *b,
-                versioned_array_ptr<K, V> &global_array);
+                versioned_array_ptr<K, V, Relaxation> &global_array);
 
     bool delete_min(V &val,
-                    versioned_array_ptr<K, V> &global_array);
+                    versioned_array_ptr<K, V, Relaxation> &global_array);
 
 private:
     /** Refreshes the local array copy and ensures that it is both up to date
      *  and consistent. observed_packed and observed_version are set to the
      *  corresponding values used to perform the copy. */
-    void refresh_local_array_copy(block_array<K, V> *&observed_packed,
+    void refresh_local_array_copy(block_array<K, V, Relaxation> *&observed_packed,
                                   version_t &observed_version,
-                                  versioned_array_ptr<K, V> &global_array);
+                                  versioned_array_ptr<K, V, Relaxation> &global_array);
 
 private:
     /* ---- Item memory management. ---- */
@@ -66,11 +66,11 @@ private:
     /* ---- Block array memory management. ---- */
 
     /** Contains a copy of the global block array, updated regularly. */
-    block_array<K, V> m_local_array_copy;
+    block_array<K, V, Relaxation> m_local_array_copy;
 
     /** Local memory pools for use by block arrays. */
-    aligned_block_array<K, V> m_array_pool_odds;
-    aligned_block_array<K, V> m_array_pool_evens;
+    aligned_block_array<K, V, Relaxation> m_array_pool_odds;
+    aligned_block_array<K, V, Relaxation> m_array_pool_evens;
 };
 
 #include "shared_lsm_local_inl.h"

@@ -19,62 +19,64 @@
 
 #include <limits>
 
-template <class K, class V, int Alignment>
-versioned_array_ptr<K, V, Alignment>::versioned_array_ptr()
+template <class K, class V, int Relaxation, int Alignment>
+versioned_array_ptr<K, V, Relaxation, Alignment>::versioned_array_ptr()
 {
     m_ptr = packed_ptr(m_initial_value.ptr());
 }
 
-template <class K, class V, int Alignment>
-versioned_array_ptr<K, V, Alignment>::~versioned_array_ptr()
+template <class K, class V, int Relaxation, int Alignment>
+versioned_array_ptr<K, V, Relaxation, Alignment>::~versioned_array_ptr()
 {
 }
 
-template <class K, class V, int Alignment>
+template <class K, class V, int Relaxation, int Alignment>
 bool
-versioned_array_ptr<K, V, Alignment>::matches(
-        block_array<K, V> *ptr,
+versioned_array_ptr<K, V, Relaxation, Alignment>::matches(
+        block_array<K, V, Relaxation> *ptr,
         version_t version)
 {
     return ((intptr_t)ptr & MASK) == (version & MASK);
 }
 
-template <class K, class V, int Alignment>
-block_array<K, V> *
-versioned_array_ptr<K, V, Alignment>::packed_ptr(block_array<K, V> *ptr)
+template <class K, class V, int Relaxation, int Alignment>
+block_array<K, V, Relaxation> *
+versioned_array_ptr<K, V, Relaxation, Alignment>::packed_ptr(
+        block_array<K, V, Relaxation> *ptr)
 {
     const intptr_t intptr = (intptr_t)ptr;
     assert((intptr & MASK) == 0);
-    return (block_array<K, V> *)(intptr | (ptr->version() & MASK));
+    return (block_array<K, V, Relaxation> *)(intptr | (ptr->version() & MASK));
 }
 
-template <class K, class V, int Alignment>
-block_array<K, V> *
-versioned_array_ptr<K, V, Alignment>::unpacked_ptr(block_array<K, V> *ptr)
+template <class K, class V, int Relaxation, int Alignment>
+block_array<K, V, Relaxation> *
+versioned_array_ptr<K, V, Relaxation, Alignment>::unpacked_ptr(
+        block_array<K, V, Relaxation> *ptr)
 {
     const intptr_t intptr = (intptr_t)ptr;
-    return (block_array<K, V> *)(intptr & ~MASK);
+    return (block_array<K, V, Relaxation> *)(intptr & ~MASK);
 }
 
-template <class K, class V, int Alignment>
-block_array<K, V> *
-versioned_array_ptr<K, V, Alignment>::load()
+template <class K, class V, int Relaxation, int Alignment>
+block_array<K, V, Relaxation> *
+versioned_array_ptr<K, V, Relaxation, Alignment>::load()
 {
     return unpacked_ptr(m_ptr.load());
 }
 
-template <class K, class V, int Alignment>
-block_array<K, V> *
-versioned_array_ptr<K, V, Alignment>::load_packed()
+template <class K, class V, int Relaxation, int Alignment>
+block_array<K, V, Relaxation> *
+versioned_array_ptr<K, V, Relaxation, Alignment>::load_packed()
 {
     return m_ptr.load();
 }
 
-template <class K, class V, int Alignment>
+template <class K, class V, int Relaxation, int Alignment>
 bool
-versioned_array_ptr<K, V, Alignment>::compare_exchange_strong(
-        block_array<K, V> *&expected_packed,
-        aligned_block_array<K, V, Alignment> &desired)
+versioned_array_ptr<K, V, Relaxation, Alignment>::compare_exchange_strong(
+        block_array<K, V, Relaxation> *&expected_packed,
+        aligned_block_array<K, V, Relaxation, Alignment> &desired)
 {
     return m_ptr.compare_exchange_strong(expected_packed,
                                          packed_ptr(desired.ptr()));

@@ -29,9 +29,11 @@ using namespace kpq;
 #define ARRAY_ALIGNMENT (2048)
 #define MASK (ARRAY_ALIGNMENT - 1)
 #define NTHREADS (48)
+#define RELAXATION (32)
 
-typedef versioned_array_ptr<uint32_t, uint32_t, ARRAY_ALIGNMENT> vap;
-typedef aligned_block_array<uint32_t, uint32_t, ARRAY_ALIGNMENT> aba;
+typedef block_array<uint32_t, uint32_t, RELAXATION> ba;
+typedef versioned_array_ptr<uint32_t, uint32_t, RELAXATION, ARRAY_ALIGNMENT> vap;
+typedef aligned_block_array<uint32_t, uint32_t, RELAXATION, ARRAY_ALIGNMENT> aba;
 
 TEST(VersionedArrayPtrTest, SanityCheck)
 {
@@ -71,7 +73,7 @@ compare_exchange_local(std::atomic<bool> *can_continue,
     constexpr int N = 1024;
 
     aba new_array;
-    block_array<uint32_t, uint32_t> *old_array;
+    ba *old_array;
 
     while (!can_continue->load()) { }
 

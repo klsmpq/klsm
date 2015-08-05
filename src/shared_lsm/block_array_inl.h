@@ -21,21 +21,21 @@
 #include <limits>
 #include <random>
 
-template <class K, class V>
-block_array<K, V>::block_array() :
+template <class K, class V, int Relaxation>
+block_array<K, V, Relaxation>::block_array() :
     m_size(0),
     m_version(0)
 {
 }
 
-template <class K, class V>
-block_array<K, V>::~block_array()
+template <class K, class V, int Relaxation>
+block_array<K, V, Relaxation>::~block_array()
 {
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-block_array<K, V>::insert(block<K, V> *new_block,
+block_array<K, V, Relaxation>::insert(block<K, V> *new_block,
                           block_pool<K, V> *pool)
 {
     if (m_size == 0) {
@@ -77,9 +77,9 @@ block_array<K, V>::insert(block<K, V> *new_block,
     compact(pool);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-block_array<K, V>::compact(block_pool<K, V> *pool)
+block_array<K, V, Relaxation>::compact(block_pool<K, V> *pool)
 {
     remove_null_blocks();
 
@@ -133,9 +133,9 @@ block_array<K, V>::compact(block_pool<K, V> *pool)
     m_blocks.resize(m_size);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-block_array<K, V>::remove_null_blocks() {
+block_array<K, V, Relaxation>::remove_null_blocks() {
 #ifndef NDEBUG
     size_t prev_capacity = std::numeric_limits<size_t>::max();
 #endif
@@ -156,9 +156,9 @@ block_array<K, V>::remove_null_blocks() {
     m_size = dst;
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-block_array<K, V>::reset_pivots()
+block_array<K, V, Relaxation>::reset_pivots()
 {
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
@@ -185,9 +185,9 @@ block_array<K, V>::reset_pivots()
     m_pivots[best_block_ix] = best.m_index + 1;
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 bool
-block_array<K, V>::delete_min(V &val)
+block_array<K, V, Relaxation>::delete_min(V &val)
 {
     typename block<K, V>::peek_t best = peek();
 
@@ -198,9 +198,9 @@ block_array<K, V>::delete_min(V &val)
     return best.m_item->take(best.m_version, val);
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 typename block<K, V>::peek_t
-block_array<K, V>::peek()
+block_array<K, V, Relaxation>::peek()
 {
     // TODO: On-demand pivot recalculation.
     reset_pivots();
@@ -266,9 +266,9 @@ block_array<K, V>::peek()
     return best;
 }
 
-template <class K, class V>
+template <class K, class V, int Relaxation>
 void
-block_array<K, V>::copy_from(const block_array<K, V> *that)
+block_array<K, V, Relaxation>::copy_from(const block_array<K, V, Relaxation> *that)
 {
     do {
         m_version = that->m_version.load(std::memory_order_acquire);
