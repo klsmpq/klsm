@@ -27,40 +27,40 @@
 
 namespace kpq {
 
-template <class K, class V, int Relaxation, int Alignment = DEFAULT_ALIGNMENT>
+template <class K, class V, int Rlx, int Algn = DEFAULT_ALIGNMENT>
 class versioned_array_ptr {
 public:
     versioned_array_ptr();
     virtual ~versioned_array_ptr();
 
     /* Interface subject to change. */
-    block_array<K, V, Relaxation> *load();
-    block_array<K, V, Relaxation> *load_packed();
+    block_array<K, V, Rlx> *load();
+    block_array<K, V, Rlx> *load_packed();
     bool compare_exchange_strong(
-            block_array<K, V, Relaxation> *&expected_packed,
-            aligned_block_array<K, V, Relaxation, Alignment> &desired);
+            block_array<K, V, Rlx> *&expected_packed,
+            aligned_block_array<K, V, Rlx, Algn> &desired);
 
-    block_array<K, V, Relaxation> *unpack(block_array<K, V, Relaxation> *ptr)
+    block_array<K, V, Rlx> *unpack(block_array<K, V, Rlx> *ptr)
     {
         return unpacked_ptr(ptr);
     }
 
     /** Returns true, iff the packed version in ptr possibly matches the
      *  given version. */
-    static bool matches(block_array<K, V, Relaxation> *ptr,
+    static bool matches(block_array<K, V, Rlx> *ptr,
                         version_t version);
 
 private:
-    static block_array<K, V, Relaxation> *packed_ptr(block_array<K, V, Relaxation> *ptr);
-    static block_array<K, V, Relaxation> *unpacked_ptr(block_array<K, V, Relaxation> *ptr);
+    static block_array<K, V, Rlx> *packed_ptr(block_array<K, V, Rlx> *ptr);
+    static block_array<K, V, Rlx> *unpacked_ptr(block_array<K, V, Rlx> *ptr);
 
 private:
-    constexpr static int MASK = Alignment - 1;
+    constexpr static int MASK = Algn - 1;
 
-    std::atomic<block_array<K, V, Relaxation> *> m_ptr;
+    std::atomic<block_array<K, V, Rlx> *> m_ptr;
 
     /** The block array used to initialize the global pointer. */
-    aligned_block_array<K, V, Relaxation, Alignment> m_initial_value;
+    aligned_block_array<K, V, Rlx, Algn> m_initial_value;
 };
 
 #include "versioned_array_ptr_inl.h"

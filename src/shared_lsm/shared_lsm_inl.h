@@ -17,38 +17,38 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V, int Relaxation>
-shared_lsm<K, V, Relaxation>::shared_lsm()
+template <class K, class V, int Rlx>
+shared_lsm<K, V, Rlx>::shared_lsm()
 {
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm<K, V, Relaxation>::insert(const K &key)
+shared_lsm<K, V, Rlx>::insert(const K &key)
 {
     insert(key, key);
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm<K, V, Relaxation>::insert(const K &key,
+shared_lsm<K, V, Rlx>::insert(const K &key,
                                      const V &val)
 {
     auto local = m_local_component.get();
     local->insert(key, val, m_global_array);
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm<K, V, Relaxation>::insert(block<K, V> *b)
+shared_lsm<K, V, Rlx>::insert(block<K, V> *b)
 {
     auto local = m_local_component.get();
     local->insert(b, m_global_array);
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 bool
-shared_lsm<K, V, Relaxation>::delete_min(V &val)
+shared_lsm<K, V, Rlx>::delete_min(V &val)
 {
     auto local = m_local_component.get();
     return local->delete_min(val, m_global_array);

@@ -111,7 +111,7 @@ TEST(BlockArrayTest, DeleteMin)
     delete b;
 }
 
-TEST(BlockArrayTest, Alignment)
+TEST(BlockArrayTest, Algn)
 {
     aligned_block_array<uint32_t, uint32_t, ARRAY_ALIGNMENT> aligned_bs;
     auto bs = aligned_bs.ptr();

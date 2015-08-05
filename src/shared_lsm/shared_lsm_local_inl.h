@@ -17,17 +17,17 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V, int Relaxation>
-shared_lsm_local<K, V, Relaxation>::shared_lsm_local()
+template <class K, class V, int Rlx>
+shared_lsm_local<K, V, Rlx>::shared_lsm_local()
 {
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm_local<K, V, Relaxation>::insert(
+shared_lsm_local<K, V, Rlx>::insert(
         const K &key,
         const V &val,
-        versioned_array_ptr<K, V, Relaxation> &global_array)
+        versioned_array_ptr<K, V, Rlx> &global_array)
 {
     auto i = m_item_pool.acquire();
     i->initialize(key, val);
@@ -40,16 +40,16 @@ shared_lsm_local<K, V, Relaxation>::insert(
     insert(b, global_array);
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm_local<K, V, Relaxation>::insert(
+shared_lsm_local<K, V, Rlx>::insert(
         block<K, V> *b,
-        versioned_array_ptr<K, V, Relaxation> &global_array)
+        versioned_array_ptr<K, V, Rlx> &global_array)
 {
     while (true) {
         /* Fetch a consistent copy of the global array. */
 
-        block_array<K, V, Relaxation> *observed_packed;
+        block_array<K, V, Rlx> *observed_packed;
         version_t observed_version;
         refresh_local_array_copy(observed_packed, observed_version, global_array);
 
@@ -77,14 +77,14 @@ shared_lsm_local<K, V, Relaxation>::insert(
     }
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 bool
-shared_lsm_local<K, V, Relaxation>::delete_min(
+shared_lsm_local<K, V, Rlx>::delete_min(
         V &val,
-        versioned_array_ptr<K, V, Relaxation> &global_array)
+        versioned_array_ptr<K, V, Rlx> &global_array)
 {
     typename block<K, V>::peek_t best;
-    block_array<K, V, Relaxation> *observed_packed;
+    block_array<K, V, Rlx> *observed_packed;
     version_t observed_version;
 
     do {
@@ -99,12 +99,12 @@ shared_lsm_local<K, V, Relaxation>::delete_min(
     return best.m_item->take(best.m_version, val);
 }
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 void
-shared_lsm_local<K, V, Relaxation>::refresh_local_array_copy(
-        block_array<K, V, Relaxation> *&observed_packed,
+shared_lsm_local<K, V, Rlx>::refresh_local_array_copy(
+        block_array<K, V, Rlx> *&observed_packed,
         version_t &observed_version,
-        versioned_array_ptr<K, V, Relaxation> &global_array)
+        versioned_array_ptr<K, V, Rlx> &global_array)
 {
     observed_packed = global_array.load_packed();
     auto observed_unpacked = global_array.unpack(observed_packed);
@@ -119,7 +119,7 @@ shared_lsm_local<K, V, Relaxation>::refresh_local_array_copy(
         observed_unpacked = global_array.unpack(observed_packed);
         observed_version = observed_unpacked->version();
 
-        if (!versioned_array_ptr<K, V, Relaxation>::matches(observed_packed,
+        if (!versioned_array_ptr<K, V, Rlx>::matches(observed_packed,
                                                             observed_version)) {
             continue;
         }

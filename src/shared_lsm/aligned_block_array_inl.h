@@ -18,20 +18,20 @@
  */
 
 
-template <class K, class V, int Relaxation, int Alignment>
-aligned_block_array<K, V, Relaxation, Alignment>::aligned_block_array()
+template <class K, class V, int Rlx, int Algn>
+aligned_block_array<K, V, Rlx, Algn>::aligned_block_array()
 {
     void *buf_ptr = m_buffer;
     size_t buf_size = BUFFER_SIZE;
 
-    void *aligned_ptr = std::align(Alignment, ARRAY_SIZE, buf_ptr, buf_size);
+    void *aligned_ptr = std::align(Algn, ARRAY_SIZE, buf_ptr, buf_size);
     assert(aligned_ptr != nullptr);
 
-    m_ptr = new (aligned_ptr) block_array<K, V, Relaxation>();
+    m_ptr = new (aligned_ptr) block_array<K, V, Rlx>();
 }
 
-template <class K, class V, int Relaxation, int Alignment>
-aligned_block_array<K, V, Relaxation, Alignment>::~aligned_block_array()
+template <class K, class V, int Rlx, int Algn>
+aligned_block_array<K, V, Rlx, Algn>::~aligned_block_array()
 {
     m_ptr->~block_array();
 }

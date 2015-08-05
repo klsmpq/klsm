@@ -29,7 +29,7 @@
 
 namespace kpq {
 
-template <class K, class V, int Relaxation>
+template <class K, class V, int Rlx>
 class shared_lsm {
 public:
     shared_lsm();
@@ -43,8 +43,8 @@ public:
     bool delete_min(V &val);
 
 private:
-    versioned_array_ptr<K, V, Relaxation> m_global_array;
-    thread_local_ptr<shared_lsm_local<K, V, Relaxation>> m_local_component;
+    versioned_array_ptr<K, V, Rlx> m_global_array;
+    thread_local_ptr<shared_lsm_local<K, V, Rlx>> m_local_component;
 };
 
 #include "shared_lsm_inl.h"
