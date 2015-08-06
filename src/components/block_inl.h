@@ -214,6 +214,10 @@ block<K, V>::peek_nth(const size_t n)
 {
     assert(n < m_capacity);
 
+    if (m_item_pairs[n].first == nullptr) {
+        return peek_t();
+    }
+
     peek_t p;
     p.m_key     = m_item_pairs[n].first->key();
     p.m_item    = m_item_pairs[n].first;
