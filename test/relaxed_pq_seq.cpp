@@ -22,16 +22,12 @@
 #include <vector>
 #include <thread>
 
-#include "bench/pqs/globallock.h"
-#include "dist_lsm/dist_lsm.h"
-#include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
 #define PQ_SIZE ((1 << 15) - 1)
 
 using namespace kpq;
-using namespace kpqbench;
 
 #define RELAXATION (32)
 
@@ -56,16 +52,22 @@ protected:
         delete m_pq;
         m_pq = new T();
 
-        m_min = std::numeric_limits<uint32_t>::max();
-
         m_elements.reserve(n);
         for (int i = 0; i < n; i++) {
             const uint32_t v = rand_int(gen);
 
             m_elements.push_back(v);
             m_pq->insert(v, v);
-            m_min = std::min(m_min, v);
         }
+
+        std::sort(m_elements.begin(), m_elements.end());
+    }
+
+    /** Returns the relaxed upper bound for the key returned by i'th delete_min
+     *  operation. */
+    virtual uint32_t relaxed_upper_bound(const int i)
+    {
+        return m_elements[std::min(i + RELAXATION, (int)m_elements.size() - 1)];
     }
 
     virtual void
@@ -77,13 +79,9 @@ protected:
 protected:
     T *m_pq;
     std::vector<uint32_t> m_elements;
-
-    uint32_t m_min;
 };
 
-typedef ::testing::Types< GlobalLock<uint32_t, uint32_t>
-                        , LSM<uint32_t>
-                        , dist_lsm<uint32_t, uint32_t>
+typedef ::testing::Types<  shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 
@@ -91,30 +89,29 @@ TYPED_TEST(PQTest, SanityCheck)
 {
     uint32_t v;
     EXPECT_TRUE(this->m_pq->delete_min(v));
-    EXPECT_EQ(this->m_min, v);
+    EXPECT_LE(v, this->relaxed_upper_bound(0));
 }
 
 TYPED_TEST(PQTest, NewMinElem)
 {
+    constexpr static int ITERATIONS = 64;
     uint32_t v;
-    for (int i = 0; i < 64; i++) {
+    for (int i = 0; i < ITERATIONS; i++) {
         ASSERT_TRUE(this->m_pq->delete_min(v));
     }
 
     const uint32_t w = v - 1;
     this->m_pq->insert(w, w);
     EXPECT_TRUE(this->m_pq->delete_min(v));
-    EXPECT_EQ(w, v);
+    EXPECT_LE(v, this->relaxed_upper_bound(ITERATIONS));
 }
 
 TYPED_TEST(PQTest, ExtractAll)
 {
-    uint32_t v, w;
-    ASSERT_TRUE(this->m_pq->delete_min(v));
-    for (int i = 1; i < PQ_SIZE; i++) {
-        w = v;
+    uint32_t v;
+    for (int i = 0; i < PQ_SIZE; i++) {
         ASSERT_TRUE(this->m_pq->delete_min(v));
-        ASSERT_LE(w, v);
+        ASSERT_LE(v, this->relaxed_upper_bound(i));
     }
 
     ASSERT_FALSE(this->m_pq->delete_min(v));
@@ -126,12 +123,10 @@ TYPED_TEST(PQTest, ExtractAllDiffSizes)
     for (int size : sizes) {
         this->generate_elements(size);
 
-        uint32_t v, w;
-        ASSERT_TRUE(this->m_pq->delete_min(v));
-        for (int i = 1; i < size; i++) {
-            w = v;
+        uint32_t v;
+        for (int i = 0; i < size; i++) {
             ASSERT_TRUE(this->m_pq->delete_min(v));
-            ASSERT_LE(w, v);
+            ASSERT_LE(v, this->relaxed_upper_bound(i));
         }
 
         ASSERT_FALSE(this->m_pq->delete_min(v));

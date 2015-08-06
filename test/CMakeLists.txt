@@ -20,3 +20,10 @@ target_link_libraries(pq-seq-test
     thread_local_ptr
 )
 add_test(NAME pq-seq-test COMMAND pq-seq-test)
+
+add_executable(relaxed-pq-seq-test relaxed_pq_seq.cpp)
+target_link_libraries(relaxed-pq-seq-test
+    gtest
+    thread_local_ptr
+)
+add_test(NAME relaxed-pq-seq-test COMMAND relaxed-pq-seq-test)
