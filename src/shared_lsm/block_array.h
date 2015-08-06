@@ -63,7 +63,7 @@ private:
     void improve_pivots(const int initial_range_size);
     /** Counts the number of elements within the pivot range. Fills the given int
      *  array with the 'first' element read from each block. */
-    size_t pivot_element_count(int *first_in_block) const;
+    size_t pivot_element_count();
 
 private:
     static constexpr size_t MAX_BLOCKS = 32;
@@ -82,6 +82,7 @@ private:
      *  Pivots should be absolute indices (not dependent on block's m_first/m_last).
      */
     int m_pivots[MAX_BLOCKS];
+    int m_first_in_block[MAX_BLOCKS];
 
     std::atomic<version_t> m_version;
 

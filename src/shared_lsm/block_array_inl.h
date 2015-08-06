@@ -23,7 +23,12 @@
 template <class K, class V, int Rlx>
 block_array<K, V, Rlx>::block_array() :
     m_size(0),
-    m_version(0)
+    m_version(0),
+#ifndef NDEBUG
+    m_gen(0)
+#else
+    m_gen()
+#endif
 {
 }
 
@@ -169,7 +174,7 @@ block_array<K, V, Rlx>::reset_pivots()
         auto b = m_blocks[i];
         auto candidate  = b->peek();
 
-        m_pivots[i] = b->first();
+        m_first_in_block[i] = m_pivots[i] = b->first();
 
         if ((best.empty() && !candidate.empty()) ||
                 (!candidate.empty() && candidate.m_key < best.m_key)) {
@@ -215,7 +220,7 @@ block_array<K, V, Rlx>::improve_pivots(const int initial_range_size)
         auto b = m_blocks[block_ix];
 
         // Entire current block in pivot range?
-        if (pivots[block_ix] == (int)b->last()) {
+        if (pivots[block_ix] >= (int)b->last()) {
             tentative_pivots[block_ix] = pivots[block_ix];
             block_ix++;
             continue;  // With the next block.
@@ -316,18 +321,11 @@ block_array<K, V, Rlx>::delete_min(V &val)
 
 template <class K, class V, int Rlx>
 size_t
-block_array<K, V, Rlx>::pivot_element_count(int *first_in_block) const
+block_array<K, V, Rlx>::pivot_element_count()
 {
-    // TODO: Do not rely on block's first element, instead on the thread-local cached first
-    // which we can safely update.
     int count = 0;
     for (size_t i = 0; i < m_size; i++) {
-        auto b = m_blocks[i];
-
-        const int first = b->first();
-        first_in_block[i] = first;
-
-        count += std::max(0, m_pivots[i] - first);
+        count += std::max(0, m_pivots[i] - m_first_in_block[i]);
     }
     return count;
 }
@@ -343,55 +341,66 @@ block_array<K, V, Rlx>::peek()
      * might have changed in the meantime).
      */
 
-    int first_in_block[MAX_BLOCKS];
-    int ncandidates = pivot_element_count(first_in_block);
+    while (true) {
+        int ncandidates = pivot_element_count();
 
-    /* If the range contains too few items, attempt to improve it. */
+        /* If the range contains too few items, attempt to improve it. */
 
-    if (ncandidates < Rlx / 2) {
-        improve_pivots(ncandidates);
-        ncandidates = pivot_element_count(first_in_block);
-    }
-
-    /* Select a random element within the range, find it, and return it. */
-
-    typename block<K,  V>::peek_t best;
-    if (ncandidates == 0) {
-        return best;
-    }
-
-    std::uniform_int_distribution<int> dist(0, ncandidates - 1);
-    int selected_element = dist(m_gen);
-
-    size_t block_ix;
-    block<K, V> *b = nullptr;
-    for (block_ix = 0; block_ix < m_size; block_ix++) {
-        const int elements_in_range =
-                std::max(0, m_pivots[block_ix] - first_in_block[block_ix]);
-
-        if (selected_element >= elements_in_range) {
-            /* Element not in this block. */
-            selected_element -= elements_in_range;
-            continue;
+        if (ncandidates < Rlx / 2) {
+            improve_pivots(ncandidates);
+            ncandidates = pivot_element_count();
         }
 
-        b = m_blocks[block_ix];
-        best = b->peek_nth(first_in_block[block_ix] + selected_element);
-        break;
+        /* Select a random element within the range, find it, and return it. */
+
+        typename block<K,  V>::peek_t best;
+        if (ncandidates == 0) {
+            return best;
+        }
+
+        std::uniform_int_distribution<int> dist(0, ncandidates - 1);
+        int selected_element = dist(m_gen);
+
+        size_t block_ix;
+        block<K, V> *b = nullptr;
+        for (block_ix = 0; block_ix < m_size; block_ix++) {
+            const int elements_in_range =
+                    std::max(0, m_pivots[block_ix] - m_first_in_block[block_ix]);
+
+            if (selected_element >= elements_in_range) {
+                /* Element not in this block. */
+                selected_element -= elements_in_range;
+                continue;
+            }
+
+            b = m_blocks[block_ix];
+            best = b->peek_nth(m_first_in_block[block_ix] + selected_element);
+
+            // Selected first item in block, we can increment our range boundary.
+            if (selected_element == 0) {
+                m_first_in_block[block_ix]++;
+            }
+
+            break;
+        }
+
+        /* The selected item has already been taken, fall back to removing
+         * the minimal item within the same block (possibly the same item). */
+
+        if (best.empty() && b != nullptr && block_ix < m_size) {
+            while (m_first_in_block[block_ix] < m_pivots[block_ix]) {
+                best = b->peek_nth(m_first_in_block[block_ix]);
+                m_first_in_block[block_ix]++;
+                if (!best.empty()) {
+                    return best;
+                }
+            }
+        }
+
+        if (!best.empty()) {
+            return best;
+        }
     }
-
-    /* The selected item has already been taken, fall back to removing
-     * the minimal item within the same block (possibly the same item). */
-
-    if (best.m_item == nullptr && b != nullptr && block_ix < m_size) {
-        best = b->peek_nth(first_in_block[block_ix]);
-    }
-
-    /* TODO: Further attempts if we still don't have an item. Pheet stores and mutates
-     * first members for each block locally and retries until the range of possible items
-     * is empty, at which point it compacts the global array. */
-
-    return best;
 }
 
 template <class K, class V, int Rlx>
@@ -418,5 +427,6 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
         m_size = i;
 
         memcpy(m_pivots, that->m_pivots, sizeof(m_pivots));
+        memcpy(m_first_in_block, that->m_first_in_block, sizeof(m_first_in_block));
     } while (that->m_version.load(std::memory_order_release) != m_version);
 }
