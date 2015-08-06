@@ -163,8 +163,6 @@ block_array<K, V, Rlx>::reset_pivots()
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
 
-    m_pivots = std::vector<int>(m_size, 0);
-
     typename block<K, V>::peek_t best;
     int best_block_ix = -1;
     for (size_t i = 0; i < m_size; i++) {
@@ -198,9 +196,11 @@ block_array<K, V, Rlx>::improve_pivots()
      * limits and must backtrack the previous solution. For that purpose, we
      * create a second pivot vector and pointers to the currently legal solution
      * and the in-progress solution. */
-    std::vector<int> pivot_store = m_pivots;
-    int *pivots = &m_pivots[0];
-    int *tentative_pivots = &pivot_store[0];
+    int pivot_store[MAX_BLOCKS];
+    int *pivots = m_pivots;
+    int *tentative_pivots = pivot_store;
+
+    memcpy(pivot_store, m_pivots, sizeof(m_pivots));
 
     /* Initially, only the minimal element is within the pivot range. */
     int elements_in_range = 1;
@@ -328,13 +328,13 @@ block_array<K, V, Rlx>::peek()
      * might have changed in the meantime).
      */
 
-    std::vector<int> first_in_block;
+    int first_in_block[MAX_BLOCKS];
     int ncandidates = 0;
     for (size_t i = 0; i < m_size; i++) {
         auto b = m_blocks[i];
 
         const int first = b->first();
-        first_in_block.push_back(first);
+        first_in_block[i] = first;
 
         ncandidates += std::max(0, m_pivots[i] - first);
     }

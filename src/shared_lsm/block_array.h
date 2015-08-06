@@ -21,6 +21,7 @@
 #define __BLOCK_ARRAY_H
 
 #include <atomic>
+#include <cstring>
 #include <vector>
 
 #include "components/block.h"
@@ -76,7 +77,7 @@ private:
      *  are called 'pivots and are required to relax the delete_min operation.
      *  Pivots should be absolute indices (not dependent on block's m_first/m_last).
      */
-    std::vector<int> m_pivots;
+    int m_pivots[MAX_BLOCKS];
 
     std::atomic<version_t> m_version;
 };
