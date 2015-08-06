@@ -163,11 +163,15 @@ block_array<K, V, Rlx>::reset_pivots()
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
 
+    m_pivots = std::vector<int>(m_size, 0);
+
     typename block<K, V>::peek_t best;
     int best_block_ix = -1;
     for (size_t i = 0; i < m_size; i++) {
         auto b = m_blocks[i];
         auto candidate  = b->peek();
+
+        m_pivots[i] = b->first();
 
         if ((best.empty() && !candidate.empty()) ||
                 (!candidate.empty() && candidate.m_key < best.m_key)) {
@@ -181,7 +185,6 @@ block_array<K, V, Rlx>::reset_pivots()
         return;
     }
 
-    m_pivots = std::vector<int>(m_size, 0);
     m_pivots[best_block_ix] = best.m_index + 1;
 
     improve_pivots();
