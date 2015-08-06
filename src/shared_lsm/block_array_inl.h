@@ -19,7 +19,6 @@
 
 #include <algorithm>
 #include <limits>
-#include <random>
 
 template <class K, class V, int Rlx>
 block_array<K, V, Rlx>::block_array() :
@@ -75,6 +74,7 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
 
     m_size++;
     compact(pool);
+    reset_pivots();
 }
 
 template <class K, class V, int Rlx>
@@ -185,12 +185,12 @@ block_array<K, V, Rlx>::reset_pivots()
 
     m_pivots[best_block_ix] = best.m_index + 1;
 
-    improve_pivots();
+    improve_pivots(1);
 }
 
 template <class K, class V, int Rlx>
 void
-block_array<K, V, Rlx>::improve_pivots()
+block_array<K, V, Rlx>::improve_pivots(const int initial_range_size)
 {
     /* During iterative improvement of pivots, we may repeatedly go beyond legal
      * limits and must backtrack the previous solution. For that purpose, we
@@ -203,7 +203,7 @@ block_array<K, V, Rlx>::improve_pivots()
     memcpy(pivot_store, m_pivots, sizeof(m_pivots));
 
     /* Initially, only the minimal element is within the pivot range. */
-    int elements_in_range = 1;
+    int elements_in_range = initial_range_size;
 
     /* Once we've found an element that violates relaxation constraints (i.e. which
      * would cause more than Rlx elements to be within the pivot range), we use an
@@ -315,12 +315,27 @@ block_array<K, V, Rlx>::delete_min(V &val)
 }
 
 template <class K, class V, int Rlx>
+size_t
+block_array<K, V, Rlx>::pivot_element_count(int *first_in_block) const
+{
+    // TODO: Do not rely on block's first element, instead on the thread-local cached first
+    // which we can safely update.
+    int count = 0;
+    for (size_t i = 0; i < m_size; i++) {
+        auto b = m_blocks[i];
+
+        const int first = b->first();
+        first_in_block[i] = first;
+
+        count += std::max(0, m_pivots[i] - first);
+    }
+    return count;
+}
+
+template <class K, class V, int Rlx>
 typename block<K, V>::peek_t
 block_array<K, V, Rlx>::peek()
 {
-    // TODO: On-demand pivot recalculation.
-    reset_pivots();
-
     /* Random selection of any item within the range given by the pivots.
      * First, calculate the number of items within the range. We need to store
      * the encountered values of first here in order to ensure we use the same
@@ -329,14 +344,13 @@ block_array<K, V, Rlx>::peek()
      */
 
     int first_in_block[MAX_BLOCKS];
-    int ncandidates = 0;
-    for (size_t i = 0; i < m_size; i++) {
-        auto b = m_blocks[i];
+    int ncandidates = pivot_element_count(first_in_block);
 
-        const int first = b->first();
-        first_in_block[i] = first;
+    /* If the range contains too few items, attempt to improve it. */
 
-        ncandidates += std::max(0, m_pivots[i] - first);
+    if (ncandidates < Rlx / 2) {
+        improve_pivots(ncandidates);
+        ncandidates = pivot_element_count(first_in_block);
     }
 
     /* Select a random element within the range, find it, and return it. */
@@ -346,10 +360,8 @@ block_array<K, V, Rlx>::peek()
         return best;
     }
 
-    std::default_random_engine gen;
     std::uniform_int_distribution<int> dist(0, ncandidates - 1);
-
-    int selected_element = dist(gen);
+    int selected_element = dist(m_gen);
 
     size_t block_ix;
     block<K, V> *b = nullptr;
@@ -404,5 +416,7 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
             m_blocks[i] = that->m_blocks[i];
         }
         m_size = i;
+
+        memcpy(m_pivots, that->m_pivots, sizeof(m_pivots));
     } while (that->m_version.load(std::memory_order_release) != m_version);
 }

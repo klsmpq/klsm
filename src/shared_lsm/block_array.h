@@ -22,6 +22,7 @@
 
 #include <atomic>
 #include <cstring>
+#include <random>
 #include <vector>
 
 #include "components/block.h"
@@ -59,7 +60,10 @@ private:
     void remove_null_blocks();
 
     void reset_pivots();
-    void improve_pivots();
+    void improve_pivots(const int initial_range_size);
+    /** Counts the number of elements within the pivot range. Fills the given int
+     *  array with the 'first' element read from each block. */
+    size_t pivot_element_count(int *first_in_block) const;
 
 private:
     static constexpr size_t MAX_BLOCKS = 32;
@@ -80,6 +84,8 @@ private:
     int m_pivots[MAX_BLOCKS];
 
     std::atomic<version_t> m_version;
+
+    std::default_random_engine m_gen;
 };
 
 #include "block_array_inl.h"
