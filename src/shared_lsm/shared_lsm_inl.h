@@ -53,3 +53,11 @@ shared_lsm<K, V, Rlx>::delete_min(V &val)
     auto local = m_local_component.get();
     return local->delete_min(val, m_global_array);
 }
+
+template <class K, class V, int Rlx>
+void
+shared_lsm<K, V, Rlx>::find_min(typename block<K, V>::peek_t &best)
+{
+    auto local = m_local_component.get();
+    local->peek(best, m_global_array);
+}

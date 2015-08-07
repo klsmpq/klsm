@@ -51,6 +51,7 @@ public:
         peek_t() : m_item(nullptr), m_version(0) { }
 
         bool empty() const { return (m_item == nullptr); }
+        bool take(V &val) { return m_item->take(m_version, val); }
 
         K m_key;
         item<K, V> *m_item;

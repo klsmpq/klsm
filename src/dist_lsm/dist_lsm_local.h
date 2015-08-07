@@ -46,6 +46,13 @@ public:
     bool delete_min(dist_lsm<K, V> *parent,
                     V &val);
 
+    /** Iterates through local items and returns the best one found.
+     *  In the process of finding the minimal item, unowned items
+     *  in each block are removed and block merges are performed if possible.
+     *  Used internally by delete_min() and by the k-lsm's delete_min()
+     *  operation. */
+    void peek(typename block<K, V>::peek_t &best);
+
     /** Attempts to copy items from a random other thread's local clsm,
      *  and returns the number of items copied. */
     int spy(class dist_lsm<K, V> *parent);
@@ -56,12 +63,6 @@ private:
     /** The internal insertion, used both in the public insert() and in spy(). */
     void insert(item<K, V> *it,
                 const version_t version);
-
-    /** Iterates through local items and returns the best one found.
-     *  In the process of finding the minimal item, unowned items
-     *  in each block are removed and block merges are performed if possible.
-     *  Used internally by delete_min(). */
-    void peek(typename block<K, V>::peek_t &best);
 
     /**
      * Inserts new_block into the linked list of blocks, merging with

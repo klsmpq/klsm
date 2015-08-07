@@ -41,6 +41,20 @@ dist_lsm<K, V>::delete_min(V &val)
 
 template <class K, class V>
 void
+dist_lsm<K, V>::find_min(typename block<K, V>::peek_t &best)
+{
+    m_local.get()->peek(best);
+}
+
+template <class K, class V>
+int
+dist_lsm<K, V>::spy()
+{
+    return m_local.get()->spy(this);
+}
+
+template <class K, class V>
+void
 dist_lsm<K, V>::print()
 {
     for (size_t i = 0; i < m_local.num_threads(); i++) {

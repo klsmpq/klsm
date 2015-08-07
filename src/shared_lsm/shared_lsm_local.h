@@ -45,6 +45,8 @@ public:
 
     bool delete_min(V &val,
                     versioned_array_ptr<K, V, Rlx> &global_array);
+    void peek(typename block<K, V>::peek_t &best,
+              versioned_array_ptr<K, V, Rlx> &global_array);
 
 private:
     /** Refreshes the local array copy and ensures that it is both up to date

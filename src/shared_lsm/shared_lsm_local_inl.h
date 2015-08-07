@@ -84,6 +84,20 @@ shared_lsm_local<K, V, Rlx>::delete_min(
         versioned_array_ptr<K, V, Rlx> &global_array)
 {
     typename block<K, V>::peek_t best;
+    peek(best, global_array);
+
+    if (best.m_item == nullptr) {
+        return false;  /* We did our best, give up. */
+    }
+
+    return best.m_item->take(best.m_version, val);
+}
+
+template <class K, class V, int Rlx>
+void
+shared_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best,
+                                  versioned_array_ptr<K, V, Rlx> &global_array)
+{
     block_array<K, V, Rlx> *observed_packed;
     version_t observed_version;
 
@@ -91,12 +105,6 @@ shared_lsm_local<K, V, Rlx>::delete_min(
         refresh_local_array_copy(observed_packed, observed_version, global_array);
         best = m_local_array_copy.peek();
     } while (global_array.load()->version() != observed_version);
-
-    if (best.m_item == nullptr) {
-        return false;  /* We did our best, give up. */
-    }
-
-    return best.m_item->take(best.m_version, val);
 }
 
 template <class K, class V, int Rlx>

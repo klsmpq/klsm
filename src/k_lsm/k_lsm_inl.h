@@ -97,5 +97,26 @@ k_lsm<K, V, Rlx>::delete_min(V &val)
      * interactions between memory management here.
      */
 
-    return m_dist.delete_min(val);
+    typename block<K, V>::peek_t best_dist, best_shared;
+
+    do {
+        m_dist.find_min(best_dist);
+        m_shared.find_min(best_shared);
+
+        if (!best_dist.empty() && !best_shared.empty()) {
+            return (best_dist.m_key < best_shared.m_key)
+                    ? best_dist.take(val)
+                    : best_shared.take(val);
+        }
+
+        if (!best_dist.empty() /* and best_shared is empty */) {
+            return best_dist.take(val);
+        }
+
+        if (!best_shared.empty() /* and best_dist is empty */) {
+            return best_shared.take(val);
+        }
+    } while (m_dist.spy() > 0);
+
+    return false;
 }

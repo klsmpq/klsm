@@ -49,6 +49,7 @@ public:
     void insert(block<K, V> *b);
 
     bool delete_min(V &val);
+    void find_min(typename block<K, V>::peek_t &best);
 
 private:
     versioned_array_ptr<K, V, Rlx> m_global_array;
