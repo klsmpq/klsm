@@ -131,8 +131,12 @@ public:
         }
     }
 
+    bool contains(const block<K, V> *block) const {
+        return (find(block) != -1);
+    }
+
 private:
-    int find(block<K, V> *block)
+    int find(const block<K, V> *block) const
     {
         const int pow = block->power_of_2();
         for (int j = ix(pow); j < ix(pow + 1); j++) {

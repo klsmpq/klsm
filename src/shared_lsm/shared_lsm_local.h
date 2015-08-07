@@ -49,6 +49,11 @@ public:
               versioned_array_ptr<K, V, Rlx> &global_array);
 
 private:
+    /** The internal function responsible for actual insertion. The given
+     *  block must have been allocated by the shared lsm. */
+    void insert_block(block<K, V> *b,
+                      versioned_array_ptr<K, V, Rlx> &global_array);
+
     /** Refreshes the local array copy and ensures that it is both up to date
      *  and consistent. observed_packed and observed_version are set to the
      *  corresponding values used to perform the copy. */

@@ -32,7 +32,7 @@ shared_lsm<K, V, Rlx>::insert(const K &key)
 template <class K, class V, int Rlx>
 void
 shared_lsm<K, V, Rlx>::insert(const K &key,
-                                     const V &val)
+                              const V &val)
 {
     auto local = m_local_component.get();
     local->insert(key, val, m_global_array);

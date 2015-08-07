@@ -102,14 +102,34 @@ dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block,
         other_block  = other_block->m_prev;
     }
 
-    /* Insert the new block into the list. */
-    insert_block->m_prev = other_block;
-    if (other_block != nullptr) {
-        other_block->m_next.store(insert_block, std::memory_order_relaxed);
+    if (slsm != nullptr && insert_block->capacity() >= (Rlx + 1) / 2) {
+        /* The merged block exceeds relaxation bounds and we have a shared lsm
+         * pointer, insert the new block into the shared lsm instead.
+         * The shared lsm creates a copy of the passed block, and thus we can set
+         * the passed block unused once insertion has completed.
+         *
+         * TODO: Optimize this by allocating the block from the shared lsm
+         * if we are about to merge into a block exceeding the relaxation bound.
+         */
+        slsm->insert(insert_block);
+        insert_block->set_unused();
+
+        if (other_block != nullptr) {
+            other_block->m_next.store(nullptr, std::memory_order_relaxed);
+        } else {
+            m_head.store(nullptr, std::memory_order_relaxed);
+        }
+        m_tail = other_block;
     } else {
-        m_head.store(insert_block, std::memory_order_relaxed);
+        /* Insert the new block into the list. */
+        insert_block->m_prev = other_block;
+        if (other_block != nullptr) {
+            other_block->m_next.store(insert_block, std::memory_order_relaxed);
+        } else {
+            m_head.store(insert_block, std::memory_order_relaxed);
+        }
+        m_tail = insert_block;
     }
-    m_tail = insert_block;
 
     /* Remove merged blocks from the list. */
     while (delete_block != nullptr) {

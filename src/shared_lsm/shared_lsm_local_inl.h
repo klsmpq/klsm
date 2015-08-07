@@ -37,7 +37,7 @@ shared_lsm_local<K, V, Rlx>::insert(
     auto b = m_block_pool.get_block(1);
     b->insert(i, i->version());
 
-    insert(b, global_array);
+    insert_block(b, global_array);
 }
 
 template <class K, class V, int Rlx>
@@ -46,6 +46,22 @@ shared_lsm_local<K, V, Rlx>::insert(
         block<K, V> *b,
         versioned_array_ptr<K, V, Rlx> &global_array)
 {
+    assert(!m_block_pool.contains(b)), "Not called with a dist lsm block";
+
+    auto c = m_block_pool.get_block(b->power_of_2());
+    c->copy(b);
+
+    insert_block(c, global_array);
+}
+
+template <class K, class V, int Rlx>
+void
+shared_lsm_local<K, V, Rlx>::insert_block(
+        block<K, V> *b,
+        versioned_array_ptr<K, V, Rlx> &global_array)
+{
+    assert(m_block_pool.contains(b)), "Given block not allocated by shared lsm";
+
     while (true) {
         /* Fetch a consistent copy of the global array. */
 
