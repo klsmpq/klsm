@@ -22,6 +22,7 @@
 #include <random>
 
 #include "dist_lsm/dist_lsm.h"
+#include "k_lsm/k_lsm.h"
 #include "shared_lsm/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
@@ -80,6 +81,7 @@ protected:
 };
 
 typedef ::testing::Types< dist_lsm<uint32_t, uint32_t>
+                        , k_lsm<uint32_t, uint32_t, RELAXATION>
                         , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > test_types;
 TYPED_TEST_CASE(pq_par_test, test_types);

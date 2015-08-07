@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 #include "dist_lsm/dist_lsm.h"
+#include "k_lsm/k_lsm.h"
 #include "pqs/cheap.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
@@ -43,6 +44,7 @@ constexpr int DEFAULT_SLEEP      = 10;
 #define PQ_CHEAP      "cheap"
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
+#define PQ_KLSM       "klsm"
 #define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
 #define PQ_SEQUENCE   "sequence"
@@ -71,11 +73,12 @@ usage()
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', %s', %s', '%s', '%s', '%s', '%s', '%s')\n",
+            "           (one of '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')\n",
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
+            PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM, PQ_LINDEN,
+            PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
     exit(EXIT_FAILURE);
 }
 
@@ -238,6 +241,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_KLSM) {
+        kpq::k_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LINDEN) {
         kpqbench::Linden pq(kpqbench::Linden::DEFAULT_OFFSET);

@@ -22,6 +22,7 @@
 #include <vector>
 #include <thread>
 
+#include "k_lsm/k_lsm.h"
 #include "shared_lsm/shared_lsm.h"
 
 #define DEFAULT_SEED (0)
@@ -81,7 +82,8 @@ protected:
     std::vector<uint32_t> m_elements;
 };
 
-typedef ::testing::Types<  shared_lsm<uint32_t, uint32_t, RELAXATION>
+typedef ::testing::Types< k_lsm<uint32_t, uint32_t, RELAXATION>
+                        , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 

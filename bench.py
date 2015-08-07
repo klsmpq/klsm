@@ -8,6 +8,7 @@ from optparse import OptionParser
 ALGORITHMS = [ 'cheap'
              , 'dlsm'
              , 'globallock'
+             , 'klsm'
              , 'linden'
              , 'lsm'
              , 'sequence'
