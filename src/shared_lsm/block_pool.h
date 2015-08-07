@@ -30,7 +30,7 @@ template <class K, class V>
 class block_pool {
 private:
     static constexpr int MAX_POWER_OF_2   = 48;
-    static constexpr int BLOCKS_PER_LEVEL = 4;
+    static constexpr int BLOCKS_PER_LEVEL = 5;  // TODO: See if we can't get this down to 4.
     static constexpr int BLOCKS_IN_POOL   = MAX_POWER_OF_2 * BLOCKS_PER_LEVEL;
 
     enum block_status {
