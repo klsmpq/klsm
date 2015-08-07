@@ -25,10 +25,10 @@
 namespace kpq
 {
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 class dist_lsm
 {
-    friend int dist_lsm_local<K, V>::spy(dist_lsm<K, V> *parent);
+    friend int dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent);
 
 public:
 
@@ -53,7 +53,7 @@ public:
     void print();
 
 private:
-    thread_local_ptr<dist_lsm_local<K, V>> m_local;
+    thread_local_ptr<dist_lsm_local<K, V, Rlx>> m_local;
 };
 
 #include "dist_lsm_inl.h"

@@ -80,7 +80,7 @@ protected:
     uint32_t m_min;
 };
 
-typedef ::testing::Types< dist_lsm<uint32_t, uint32_t>
+typedef ::testing::Types< dist_lsm<uint32_t, uint32_t, RELAXATION>
                         , k_lsm<uint32_t, uint32_t, RELAXATION>
                         , shared_lsm<uint32_t, uint32_t, RELAXATION>
                         > test_types;

@@ -32,10 +32,11 @@
 #include "sequential_lsm/lsm.h"
 #include "util.h"
 
-constexpr int DEFAULT_NNODES    = 1 << 10;
-constexpr int DEFAULT_NTHREADS  = 1;
-constexpr double DEFAULT_EDGE_P = 0.5;
-constexpr int DEFAULT_SEED      = 0;
+constexpr int DEFAULT_NNODES     = 1 << 10;
+constexpr int DEFAULT_NTHREADS   = 1;
+constexpr double DEFAULT_EDGE_P  = 0.5;
+constexpr int DEFAULT_RELAXATION = 32;
+constexpr int DEFAULT_SEED       = 0;
 
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
@@ -334,7 +335,7 @@ main(int argc,
     s.type = argv[optind];
 
     if (s.type == PQ_DLSM) {
-        kpq::dist_lsm<uint32_t, task_t *> pq;
+        kpq::dist_lsm<uint32_t, task_t *, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, s);
     } else if (s.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, task_t *> pq;

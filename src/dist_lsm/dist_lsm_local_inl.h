@@ -17,24 +17,24 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V>
-dist_lsm_local<K, V>::dist_lsm_local() :
+template <class K, class V, int Rlx>
+dist_lsm_local<K, V, Rlx>::dist_lsm_local() :
     m_head(nullptr),
     m_tail(nullptr)
 {
 }
 
-template <class K, class V>
-dist_lsm_local<K, V>::~dist_lsm_local()
+template <class K, class V, int Rlx>
+dist_lsm_local<K, V, Rlx>::~dist_lsm_local()
 {
     /* Blocks and items are managed by, respectively,
      * block_storage and item_allocator. */
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V>::insert(const K &key,
-                         const V &val)
+dist_lsm_local<K, V, Rlx>::insert(const K &key,
+                                  const V &val)
 {
     item<K, V> *it = m_item_allocator.acquire();
     it->initialize(key, val);
@@ -42,10 +42,10 @@ dist_lsm_local<K, V>::insert(const K &key,
     insert(it, it->version());
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V>::insert(item<K, V> *it,
-                         const version_t version)
+dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
+                                  const version_t version)
 {
     /* If possible, simply append to the current tail block. */
 
@@ -73,9 +73,9 @@ dist_lsm_local<K, V>::insert(item<K, V> *it,
     merge_insert(new_block);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V>::merge_insert(block<K, V> *const new_block)
+dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block)
 {
     block<K, V> *insert_block = new_block;
     block<K, V> *other_block  = m_tail;
@@ -116,10 +116,10 @@ dist_lsm_local<K, V>::merge_insert(block<K, V> *const new_block)
     }
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 bool
-dist_lsm_local<K, V>::delete_min(dist_lsm<K, V> *parent,
-                                 V &val)
+dist_lsm_local<K, V, Rlx>::delete_min(dist_lsm<K, V, Rlx> *parent,
+                                      V &val)
 {
     typename block<K, V>::peek_t best;
     peek(best);
@@ -135,9 +135,9 @@ dist_lsm_local<K, V>::delete_min(dist_lsm<K, V> *parent,
     return best.m_item->take(best.m_version, val);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
+dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
 {
 
     for (auto i = m_head.load(std::memory_order_relaxed);
@@ -225,9 +225,9 @@ dist_lsm_local<K, V>::peek(typename block<K, V>::peek_t &best)
     }
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 int
-dist_lsm_local<K, V>::spy(dist_lsm<K, V> *parent)
+dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
     int num_spied = 0;
 
@@ -260,9 +260,9 @@ dist_lsm_local<K, V>::spy(dist_lsm<K, V> *parent)
     return num_spied;
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V>::print() const
+dist_lsm_local<K, V, Rlx>::print() const
 {
     m_block_storage.print();
 }

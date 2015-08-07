@@ -17,45 +17,45 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm<K, V>::insert(const K &key)
+dist_lsm<K, V, Rlx>::insert(const K &key)
 {
     insert(key, key);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm<K, V>::insert(const K &key,
+dist_lsm<K, V, Rlx>::insert(const K &key,
                    const V &val)
 {
     m_local.get()->insert(key, val);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 bool
-dist_lsm<K, V>::delete_min(V &val)
+dist_lsm<K, V, Rlx>::delete_min(V &val)
 {
     return m_local.get()->delete_min(this, val);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm<K, V>::find_min(typename block<K, V>::peek_t &best)
+dist_lsm<K, V, Rlx>::find_min(typename block<K, V>::peek_t &best)
 {
     m_local.get()->peek(best);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 int
-dist_lsm<K, V>::spy()
+dist_lsm<K, V, Rlx>::spy()
 {
     return m_local.get()->spy(this);
 }
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 void
-dist_lsm<K, V>::print()
+dist_lsm<K, V, Rlx>::print()
 {
     for (size_t i = 0; i < m_local.num_threads(); i++) {
         m_local.get(i)->print();

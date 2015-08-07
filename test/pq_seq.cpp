@@ -83,7 +83,7 @@ protected:
 
 typedef ::testing::Types< GlobalLock<uint32_t, uint32_t>
                         , LSM<uint32_t>
-                        , dist_lsm<uint32_t, uint32_t>
+                        , dist_lsm<uint32_t, uint32_t, RELAXATION>
                         > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 

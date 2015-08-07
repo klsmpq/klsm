@@ -237,7 +237,7 @@ main(int argc,
         kpqbench::cheap<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_DLSM) {
-        kpq::dist_lsm<uint32_t, uint32_t> pq;
+        kpq::dist_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, uint32_t> pq;

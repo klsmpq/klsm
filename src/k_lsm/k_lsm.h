@@ -49,7 +49,7 @@ public:
     bool delete_min(V &val);
 
 private:
-    dist_lsm<K, V>        m_dist;
+    dist_lsm<K, V, Rlx>   m_dist;
     shared_lsm<K, V, Rlx> m_shared;
 };
 

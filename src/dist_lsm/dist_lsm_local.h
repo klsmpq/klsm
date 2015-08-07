@@ -31,10 +31,10 @@
 namespace kpq
 {
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 class dist_lsm;
 
-template <class K, class V>
+template <class K, class V, int Rlx>
 class dist_lsm_local
 {
 public:
@@ -43,7 +43,7 @@ public:
 
     void insert(const K &key,
                 const V &val);
-    bool delete_min(dist_lsm<K, V> *parent,
+    bool delete_min(dist_lsm<K, V, Rlx> *parent,
                     V &val);
 
     /** Iterates through local items and returns the best one found.
@@ -55,7 +55,7 @@ public:
 
     /** Attempts to copy items from a random other thread's local clsm,
      *  and returns the number of items copied. */
-    int spy(class dist_lsm<K, V> *parent);
+    int spy(class dist_lsm<K, V, Rlx> *parent);
 
     void print() const;
 
