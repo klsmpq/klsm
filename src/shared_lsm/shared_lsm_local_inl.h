@@ -84,6 +84,7 @@ shared_lsm_local<K, V, Rlx>::insert_block(
         if (global_array.compare_exchange_strong(observed_packed,
                                                  new_blocks)) {
             m_block_pool.publish(new_blocks_ptr->m_blocks,
+                                 new_blocks_ptr->m_size,
                                  new_blocks_ptr->version());
             m_block_pool.free_local();
             break;
@@ -157,7 +158,8 @@ shared_lsm_local<K, V, Rlx>::refresh_local_array_copy(
     }
 
 #ifndef NDEBUG
-    for (auto b : m_local_array_copy.m_blocks) {
+    for (size_t i = 0; i < m_local_array_copy.m_size; i++) {
+        auto b = m_local_array_copy.m_blocks[i];
         assert(b != nullptr);
     }
 #endif

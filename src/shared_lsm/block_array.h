@@ -73,7 +73,7 @@ private:
      *  one block of each size in array) are preserved while the block array is
      *  visible to other threads.
      */
-    std::vector<block<K, V> *> m_blocks;
+    block<K, V> * m_blocks[MAX_BLOCKS];
     size_t m_size;
 
     /** For each block in the array, stores an index i such that for all indices j < i,

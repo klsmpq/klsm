@@ -43,8 +43,7 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                           block_pool<K, V> *pool)
 {
     if (m_size == 0) {
-        assert(m_blocks.empty());
-        m_blocks.push_back(new_block);
+        m_blocks[0] = new_block;
     } else {
         size_t i;
         for (i = 0; i < m_size; i++) {
@@ -74,7 +73,8 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                 m_blocks[i - 1] = nullptr;
             }
         }
-        m_blocks.insert(m_blocks.begin() + i, insert_block);
+        memmove(&m_blocks[i + 1], &m_blocks[i], sizeof(block<K, V> *) * (m_size - i));
+        m_blocks[i] = insert_block;
     }
 
     m_size++;
@@ -134,8 +134,6 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
     }
 
     remove_null_blocks();
-
-    m_blocks.resize(m_size);
 }
 
 template <class K, class V, int Rlx>
@@ -409,19 +407,10 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
 {
     do {
         m_version = that->m_version.load(std::memory_order_acquire);
-
         m_size = 0;
 
-        /* TODO: Doing a resize() seems not to be 100% reliable, as we sometimes
-         * run into memory management failures since this change. Difficult to reproduce
-         * though since it only turns up seldomly. Take another look if necessary. */
-        const size_t that_size = that->m_size;
-        if (that_size > m_size) {
-            m_blocks.resize(that_size);
-        }
-
         size_t i;
-        for (i = 0; i < std::min(that->m_size, that_size); i++) {
+        for (i = 0; i < that->m_size; i++) {
             m_blocks[i] = that->m_blocks[i];
         }
         m_size = i;

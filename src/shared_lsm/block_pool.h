@@ -88,20 +88,21 @@ public:
         return nullptr;
     }
 
-    void publish(const std::vector<block<K, V> *> &blocks,
+    void publish(block<K, V> **blocks,
+                 const size_t nblocks,
                  const version_t version)
     {
-        for (const auto block : blocks)
-        {
+        for (size_t i = 0; i < nblocks; i++) {
+            auto block = blocks[i];
             if (block == nullptr) {
                 continue;
             }
 
             /* TODO: Optimize out find(). */
-            int i = find(block);
-            if (i != -1) {
-                m_status[i] = BLOCK_GLOBAL;
-                m_version[i] = version;
+            int ix = find(block);
+            if (ix != -1) {
+                m_status[ix] = BLOCK_GLOBAL;
+                m_version[ix] = version;
             }
         }
     }
