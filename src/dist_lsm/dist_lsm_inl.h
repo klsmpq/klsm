@@ -27,9 +27,18 @@ dist_lsm<K, V, Rlx>::insert(const K &key)
 template <class K, class V, int Rlx>
 void
 dist_lsm<K, V, Rlx>::insert(const K &key,
-                   const V &val)
+                            const V &val)
 {
-    m_local.get()->insert(key, val);
+    m_local.get()->insert(key, val, nullptr);
+}
+
+template <class K, class V, int Rlx>
+void
+dist_lsm<K, V, Rlx>::insert(const K &key,
+                            const V &val,
+                            shared_lsm<K, V, Rlx> *slsm)
+{
+    m_local.get()->insert(key, val, slsm);
 }
 
 template <class K, class V, int Rlx>

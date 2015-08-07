@@ -21,6 +21,7 @@
 #define __DIST_LSM_H
 
 #include "dist_lsm_local.h"
+#include "shared_lsm/shared_lsm.h"
 
 namespace kpq
 {
@@ -38,6 +39,15 @@ public:
     void insert(const K &key);
     void insert(const K &key,
                 const V &val);
+
+    /**
+     * A special version of insert for use by the k-lsm. Acts like a standard
+     * insert until the largest block exceeds the relaxation size limit, at which
+     * point the block is inserted into the shared lsm instead.
+     */
+    void insert(const K &key,
+                const V &val,
+                shared_lsm<K, V, Rlx> *slsm);
 
     /**
      * Attempts to remove the locally (i.e. on the current thread) minimal item.

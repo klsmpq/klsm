@@ -77,7 +77,7 @@ k_lsm<K, V, Rlx>::insert(const K &key,
      * It seems best to start with option 1), optimizing to 1a) in the future.
      */
 
-    m_dist.insert(key, val);
+    m_dist.insert(key, val, &m_shared);
 }
 
 template <class K, class V, int Rlx>

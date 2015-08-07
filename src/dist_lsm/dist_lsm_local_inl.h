@@ -34,18 +34,20 @@ dist_lsm_local<K, V, Rlx>::~dist_lsm_local()
 template <class K, class V, int Rlx>
 void
 dist_lsm_local<K, V, Rlx>::insert(const K &key,
-                                  const V &val)
+                                  const V &val,
+                                  shared_lsm<K, V, Rlx> *slsm)
 {
     item<K, V> *it = m_item_allocator.acquire();
     it->initialize(key, val);
 
-    insert(it, it->version());
+    insert(it, it->version(), slsm);
 }
 
 template <class K, class V, int Rlx>
 void
 dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
-                                  const version_t version)
+                                  const version_t version,
+                                  shared_lsm<K, V, Rlx> *slsm)
 {
     /* If possible, simply append to the current tail block. */
 
@@ -70,12 +72,13 @@ dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
     }
 
     new_block->insert(it, version);
-    merge_insert(new_block);
+    merge_insert(new_block, slsm);
 }
 
 template <class K, class V, int Rlx>
 void
-dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block)
+dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block,
+                                        shared_lsm<K, V, Rlx> *slsm)
 {
     block<K, V> *insert_block = new_block;
     block<K, V> *other_block  = m_tail;
@@ -252,7 +255,11 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 
         auto it = i->iterator();
         for (auto p = it.next(); p.m_item != nullptr; p = it.next()) {
-            insert(p.m_item, p.m_version);
+            /* TODO: Verify that it's actually OK not to pass in the shared_lsm here.
+             * Intuitively, it seems to be fine since other local dist lsm's will preserve
+             * the correct bounds, and spy is only called when the local dist lsm is empty.
+             */
+            insert(p.m_item, p.m_version, nullptr);
             num_spied++;
         }
     }
