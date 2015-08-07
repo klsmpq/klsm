@@ -29,6 +29,14 @@
 
 namespace kpq {
 
+/**
+ * The shared lsm is a relaxed priority queue which is based on maintaining
+ * a single global array of blocks.
+ *
+ * TODO: Local ordering semantics using bloom filters.
+ * TODO: Logical (instead of physical) shrinking of blocks.
+ */
+
 template <class K, class V, int Rlx>
 class shared_lsm {
 public:
