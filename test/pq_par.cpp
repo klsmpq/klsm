@@ -230,7 +230,8 @@ random_ins_del_same_thread(T *pq,
 
 TYPED_TEST(pq_par_test, ConcurrentInsDelSameThread)
 {
-    if (typeid(gtest_TypeParam_) == typeid(shared_lsm<uint32_t, uint32_t, RELAXATION>)) {
+    if (typeid(gtest_TypeParam_) == typeid(shared_lsm<uint32_t, uint32_t, RELAXATION>)
+            || typeid(gtest_TypeParam_) == typeid(k_lsm<uint32_t, uint32_t, RELAXATION>)) {
         return;  // TODO: The shared lsm does not preserve local consistency.
     }
     this->generate_elements(NELEMS);
