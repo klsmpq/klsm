@@ -147,6 +147,8 @@ block<K, V>::merge(const block<K, V> *lhs,
     }
 
     m_last = dst;
+
+    assert(m_last <= m_capacity);
 }
 
 template <class K, class V>

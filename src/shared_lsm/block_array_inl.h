@@ -121,10 +121,7 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
             continue;
         }
 
-        int merge_pow = std::max(big_pow, small_pow);
-        if ((int)(big_block->size() + small_block->size()) > (1 << merge_pow)) {
-            merge_pow++;
-        }
+        int merge_pow = std::max(big_pow, small_pow) + 1;
 
         auto merge_block = pool->get_block(merge_pow);
         merge_block->merge(big_block, small_block);
