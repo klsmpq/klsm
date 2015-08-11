@@ -40,7 +40,7 @@ block_array<K, V, Rlx>::~block_array()
 template <class K, class V, int Rlx>
 void
 block_array<K, V, Rlx>::insert(block<K, V> *new_block,
-                          block_pool<K, V> *pool)
+                               block_pool<K, V> *pool)
 {
     if (m_size == 0) {
         m_blocks[0] = new_block;
@@ -172,7 +172,7 @@ block_array<K, V, Rlx>::reset_pivots()
         m_first_in_block[i] = m_pivots[i] = b->first();
 
         if ((best.empty() && !candidate.empty()) ||
-                (!candidate.empty() && candidate.m_key < best.m_key)) {
+                (!best.empty() && !candidate.empty() && candidate.m_key < best.m_key)) {
             best = candidate;
             best_block_ix = i;
         }

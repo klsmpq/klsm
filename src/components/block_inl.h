@@ -216,21 +216,19 @@ block<K, V>::peek_nth(const size_t n)
 {
     assert(n < m_capacity);
 
+    peek_t p;
+
     if (m_item_pairs[n].first == nullptr) {
-        return peek_t();
+        return p;
+    } else if (!item_owned(m_item_pairs[n])) {
+        return p;
     }
 
-    peek_t p;
     p.m_key     = m_item_pairs[n].first->key();
     p.m_item    = m_item_pairs[n].first;
     p.m_index   = n;
     p.m_version = m_item_pairs[n].second;
 
-    if (item_owned(m_item_pairs[n])) {
-        return p;
-    }
-
-    p.m_item = nullptr;
     return p;
 }
 
