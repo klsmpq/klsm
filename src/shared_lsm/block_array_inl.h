@@ -42,8 +42,11 @@ void
 block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                                block_pool<K, V> *pool)
 {
+    // XXX: Find pivot and first in block for new block.
+
     if (m_size == 0) {
         m_blocks[0] = new_block;
+        // XXX: Simply set pivots[0].
     } else {
         size_t i;
         for (i = 0; i < m_size; i++) {
@@ -71,15 +74,21 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
 
                 insert_block = merged_block;
                 m_blocks[i - 1] = nullptr;
+
+                // XXX: Set new pivot = new pivot + old pivot.
             }
         }
         memmove(&m_blocks[i + 1], &m_blocks[i], sizeof(block<K, V> *) * (m_size - i));
         m_blocks[i] = insert_block;
+
+        // XXX: Set pivots[i] = new pivot.
     }
 
     m_size++;
-    compact(pool);
-    reset_pivots();
+    compact(pool); // XXX: Update pivots for all operations.
+    m_pivots.reset(m_blocks, m_size);
+
+    // XXX: Improve pivots, if the range is smaller than limit.
 }
 
 template <class K, class V, int Rlx>
@@ -157,153 +166,6 @@ block_array<K, V, Rlx>::remove_null_blocks() {
 }
 
 template <class K, class V, int Rlx>
-void
-block_array<K, V, Rlx>::reset_pivots()
-{
-    /* Find the minimal element and initially set pivots s.t. it is the only
-     * element in the pivot set. */
-
-    typename block<K, V>::peek_t best;
-    int best_block_ix = -1;
-    for (size_t i = 0; i < m_size; i++) {
-        auto b = m_blocks[i];
-        auto candidate  = b->peek();
-
-        m_first_in_block[i] = m_pivots[i] = b->first();
-
-        if ((best.empty() && !candidate.empty()) ||
-                (!best.empty() && !candidate.empty() && candidate.m_key < best.m_key)) {
-            best = candidate;
-            best_block_ix = i;
-        }
-    }
-
-    if (best_block_ix == -1) {
-        /* All blocks are empty. */
-        return;
-    }
-
-    m_pivots[best_block_ix] = best.m_index + 1;
-    m_maximal_pivot = best.m_key;
-
-    improve_pivots(1);
-}
-
-template <class K, class V, int Rlx>
-void
-block_array<K, V, Rlx>::improve_pivots(const int initial_range_size)
-{
-    /* During iterative improvement of pivots, we may repeatedly go beyond legal
-     * limits and must backtrack the previous solution. For that purpose, we
-     * create a second pivot vector and pointers to the currently legal solution
-     * and the in-progress solution. */
-    int pivot_store[MAX_BLOCKS];
-    int *pivots = m_pivots;
-    int *tentative_pivots = pivot_store;
-
-    memcpy(pivot_store, m_pivots, sizeof(m_pivots));
-
-    /* Initially, only the minimal element is within the pivot range. */
-    int elements_in_range = initial_range_size;
-
-    /* Once we've found an element that violates relaxation constraints (i.e. which
-     * would cause more than Rlx elements to be within the pivot range), we use an
-     * upper bound to limit the keys which may be added to the pivot range. */
-    K upper_bound = std::numeric_limits<K>::max();
-
-    size_t block_ix = 0;
-    while (block_ix < m_size && elements_in_range < Rlx / 2) {
-        auto b = m_blocks[block_ix];
-
-        // Entire current block in pivot range?
-        if (pivots[block_ix] >= (int)b->last()) {
-            tentative_pivots[block_ix] = pivots[block_ix];
-            block_ix++;
-            continue;  // With the next block.
-        }
-
-        // Check the next potential item in range. If it has been taken, the index
-        // range can be enlarged since the taken item may be ignored.
-        auto peeked_item = b->peek_nth(pivots[block_ix]);
-        if (peeked_item.empty()) {
-            pivots[block_ix]++;
-            continue;
-        }
-
-        // If the current item violates constraints, set the upper bound and move
-        // on to the next block.
-        if (Rlx + 1 < elements_in_range) {
-            if (peeked_item.m_key < upper_bound) {
-                upper_bound = peeked_item.m_key;
-            }
-            tentative_pivots[block_ix] = pivots[block_ix];
-            block_ix++;
-            continue;
-        }
-
-        // The current item is above the upper bound, move on to the next block.
-        if (upper_bound <= peeked_item.m_key) {
-            tentative_pivots[block_ix] = pivots[block_ix];
-            block_ix++;
-            continue;
-        }
-
-        /* We've now passed initial checks. The next step is to tentatively add
-         * the current item to the pivot range, and check if our invariant (all pivots
-         * guaranteed to be within the Rlx minimal items) still holds. */
-
-        tentative_pivots[block_ix] = pivots[block_ix] + 1;
-
-        int elements_in_tentative_range = elements_in_range + 1;
-        for (size_t j = block_ix + 1; j < m_size && Rlx + 1 >= elements_in_tentative_range; j++) {
-            // Update the range to include all elements less or equal to the new element.
-            // Note that we do not need to check previous blocks, since the newly added element
-            // must be less or equal to their next element beyond their pivot limit (otherwise
-            // the other block's next element would have been added to the pivot range previously).
-
-            auto b = m_blocks[j];
-
-            for (int i = pivots[j]; i < pivots[j] + Rlx + 1; i++) {
-                if (i >= (int)b->last()) {
-                    break;
-                }
-
-                auto p = b->peek_nth(i);
-                if (!p.empty() && p.m_key > peeked_item.m_key) {
-                    /* Got an item, and it's beyond our range. */
-                    break;
-                } else if (!p.empty()) {
-                    /* Got an item within the range. */
-                    elements_in_tentative_range++;
-                    tentative_pivots[j] = i + 1;
-                } else {
-                    /* Item was already taken, ignore. */
-                    tentative_pivots[j] = i + 1;
-                }
-            }
-        }
-
-        if (Rlx + 1 >= elements_in_tentative_range) {
-            // Adding this iteration's element to the pivot range is legal, commit.
-            elements_in_range = elements_in_tentative_range;
-            m_maximal_pivot = peeked_item.m_key;
-            std::swap(pivots, tentative_pivots);
-        } else {
-            // New item invalidates invariants, revert and set limit.
-            upper_bound = peeked_item.m_key;
-            tentative_pivots[block_ix] = pivots[block_ix];
-        }
-
-        /* Copy the remaining solution over to the final pivot vector. */
-        if (pivots != &m_pivots[0]) {
-            for (size_t j = block_ix + 1; j < m_size; j++) {
-                m_pivots[j] = pivots[j];
-            }
-        }
-    }
-}
-
-template <class K, class V, int Rlx>
 bool
 block_array<K, V, Rlx>::delete_min(V &val)
 {
@@ -314,17 +176,6 @@ block_array<K, V, Rlx>::delete_min(V &val)
     }
 
     return best.m_item->take(best.m_version, val);
-}
-
-template <class K, class V, int Rlx>
-size_t
-block_array<K, V, Rlx>::pivot_element_count()
-{
-    int count = 0;
-    for (size_t i = 0; i < m_size; i++) {
-        count += std::max(0, m_pivots[i] - m_first_in_block[i]);
-    }
-    return count;
 }
 
 template <class K, class V, int Rlx>
@@ -339,13 +190,13 @@ block_array<K, V, Rlx>::peek()
      */
 
     while (true) {
-        int ncandidates = pivot_element_count();
+        int ncandidates = m_pivots.count(m_size);
 
         /* If the range contains too few items, attempt to improve it. */
 
         if (ncandidates < Rlx / 2) {
-            improve_pivots(ncandidates);
-            ncandidates = pivot_element_count();
+            m_pivots.improve(ncandidates, m_blocks, m_size);
+            ncandidates = m_pivots.count(m_size);
         }
 
         /* Select a random element within the range, find it, and return it. */
@@ -361,8 +212,7 @@ block_array<K, V, Rlx>::peek()
         size_t block_ix;
         block<K, V> *b = nullptr;
         for (block_ix = 0; block_ix < m_size; block_ix++) {
-            const int elements_in_range =
-                    std::max(0, m_pivots[block_ix] - m_first_in_block[block_ix]);
+            const int elements_in_range = m_pivots.count_in(block_ix);
 
             if (selected_element >= elements_in_range) {
                 /* Element not in this block. */
@@ -371,11 +221,11 @@ block_array<K, V, Rlx>::peek()
             }
 
             b = m_blocks[block_ix];
-            best = b->peek_nth(m_first_in_block[block_ix] + selected_element);
+            best = b->peek_nth(m_pivots.nth_ix_in(selected_element, block_ix));
 
             // Selected first item in block, we can increment our range boundary.
             if (selected_element == 0) {
-                m_first_in_block[block_ix]++;
+                m_pivots.take_first_in(block_ix);
             }
 
             break;
@@ -385,9 +235,9 @@ block_array<K, V, Rlx>::peek()
          * the minimal item within the same block (possibly the same item). */
 
         if (best.empty() && b != nullptr && block_ix < m_size) {
-            while (m_first_in_block[block_ix] < m_pivots[block_ix]) {
-                best = b->peek_nth(m_first_in_block[block_ix]);
-                m_first_in_block[block_ix]++;
+            while (m_pivots.count_in(block_ix) > 0) {
+                best = b->peek_nth(m_pivots.nth_ix_in(0, block_ix));
+                m_pivots.take_first_in(block_ix);
                 if (!best.empty()) {
                     return best;
                 }
@@ -414,8 +264,6 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
         }
         m_size = i;
 
-        memcpy(m_pivots, that->m_pivots, sizeof(m_pivots));
-        memcpy(m_first_in_block, that->m_first_in_block, sizeof(m_first_in_block));
-        m_maximal_pivot = that->m_maximal_pivot;
+        m_pivots = that->m_pivots;
     } while (that->m_version.load(std::memory_order_release) != m_version);
 }
