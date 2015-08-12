@@ -184,6 +184,7 @@ block_array<K, V, Rlx>::reset_pivots()
     }
 
     m_pivots[best_block_ix] = best.m_index + 1;
+    m_maximal_pivot = best.m_key;
 
     improve_pivots(1);
 }
@@ -285,6 +286,7 @@ block_array<K, V, Rlx>::improve_pivots(const int initial_range_size)
         if (Rlx + 1 >= elements_in_tentative_range) {
             // Adding this iteration's element to the pivot range is legal, commit.
             elements_in_range = elements_in_tentative_range;
+            m_maximal_pivot = peeked_item.m_key;
             std::swap(pivots, tentative_pivots);
         } else {
             // New item invalidates invariants, revert and set limit.
@@ -414,5 +416,6 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
 
         memcpy(m_pivots, that->m_pivots, sizeof(m_pivots));
         memcpy(m_first_in_block, that->m_first_in_block, sizeof(m_first_in_block));
+        m_maximal_pivot = that->m_maximal_pivot;
     } while (that->m_version.load(std::memory_order_release) != m_version);
 }

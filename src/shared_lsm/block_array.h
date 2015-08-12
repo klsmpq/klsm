@@ -83,6 +83,7 @@ private:
      */
     int m_pivots[MAX_BLOCKS];
     int m_first_in_block[MAX_BLOCKS];
+    K m_pivot_upper_bound;
 
     std::atomic<version_t> m_version;
 
