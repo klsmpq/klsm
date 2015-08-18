@@ -46,6 +46,15 @@ public:
 
     void take_first_in(const size_t block_ix);
 
+    int pivot_of(block<K, V> *block) const;
+
+    void insert(const size_t block_ix,
+                const size_t size,
+                const int first_in_block,
+                const int pivot);
+    void set(const size_t block_ix, const int first_in_block, const int pivot);
+    void copy(const size_t src_ix, const size_t dst_ix);
+
 private:
     /**
      * For each block in the array, stores an index i such that for all indices j < i,

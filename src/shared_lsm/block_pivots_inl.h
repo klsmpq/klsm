@@ -228,3 +228,57 @@ block_pivots<K, V, Rlx, MaxBlocks>::take_first_in(const size_t block_ix)
     assert(block_ix < MaxBlocks);
     m_first_in_block[block_ix]++;
 }
+
+template <class K, class V, int Rlx, int MaxBlocks>
+int
+block_pivots<K, V, Rlx, MaxBlocks>::pivot_of(block<K, V> *block) const
+{
+    const size_t first = block->first();
+    const size_t upper_bound = std::min(first + Rlx + 1, block->last());
+    for (size_t i = first; i < upper_bound; i++) {
+        auto p = block->peek_nth(i);
+        if (!p.empty() && p.m_key > m_maximal_pivot) {
+            return i;
+        }
+    }
+    return upper_bound;
+}
+
+template <class K, class V, int Rlx, int MaxBlocks>
+void
+block_pivots<K, V, Rlx, MaxBlocks>::insert(const size_t block_ix,
+                                           const size_t size,
+                                           const int first_in_block,
+                                           const int pivot)
+{
+    memmove(&m_pivots[block_ix + 1],
+            &m_pivots[block_ix],
+            sizeof(m_pivots[0]) * (size - block_ix));
+    memmove(&m_first_in_block[block_ix + 1],
+            &m_first_in_block[block_ix],
+            sizeof(m_first_in_block[0]) * (size - block_ix));
+    set(block_ix, first_in_block, pivot);
+}
+
+template <class K, class V, int Rlx, int MaxBlocks>
+void
+block_pivots<K, V, Rlx, MaxBlocks>::set(const size_t block_ix,
+                                        const int first_in_block,
+                                        const int pivot)
+{
+    m_first_in_block[block_ix] = first_in_block;
+    m_pivots[block_ix] = pivot;
+}
+
+template <class K, class V, int Rlx, int MaxBlocks>
+void
+block_pivots<K, V, Rlx, MaxBlocks>::copy(const size_t src_ix,
+                                         const size_t dst_ix)
+{
+    if (src_ix == dst_ix) {
+        return;
+    }
+
+    m_first_in_block[dst_ix] = m_first_in_block[src_ix];
+    m_pivots[dst_ix] = m_pivots[src_ix];
+}

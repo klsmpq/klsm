@@ -42,11 +42,9 @@ void
 block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                                block_pool<K, V> *pool)
 {
-    // XXX: Find pivot and first in block for new block.
-
     if (m_size == 0) {
         m_blocks[0] = new_block;
-        // XXX: Simply set pivots[0].
+        m_pivots.set(0, new_block->first(), m_pivots.pivot_of(new_block));
     } else {
         size_t i;
         for (i = 0; i < m_size; i++) {
@@ -74,21 +72,27 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
 
                 insert_block = merged_block;
                 m_blocks[i - 1] = nullptr;
-
-                // XXX: Set new pivot = new pivot + old pivot.
             }
         }
         memmove(&m_blocks[i + 1], &m_blocks[i], sizeof(block<K, V> *) * (m_size - i));
         m_blocks[i] = insert_block;
-
-        // XXX: Set pivots[i] = new pivot.
+        m_pivots.insert(i, m_size, insert_block->first(), m_pivots.pivot_of(insert_block));
     }
 
     m_size++;
-    compact(pool); // XXX: Update pivots for all operations.
-    m_pivots.reset(m_blocks, m_size);
+    compact(pool);
 
-    // XXX: Improve pivots, if the range is smaller than limit.
+    /* If the number of elements within the pivot range is smaller than our lower bound,
+     * attempt to improve pivots. */
+
+    const size_t ncandidates = m_pivots.count(m_size);
+    if (ncandidates > Rlx + 1) {
+        // TODO: Possibly a more efficient reset mechanism which uses knowledge of existing
+        // pivots.
+        m_pivots.reset(m_blocks, m_size);
+    } else if (ncandidates < Rlx / 2) {
+        m_pivots.improve(ncandidates, m_blocks, m_size);
+    }
 }
 
 template <class K, class V, int Rlx>
@@ -113,7 +117,9 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
 
             auto shrunk = pool->get_block(shrunk_power_of_2);
             shrunk->copy(b);
-            b = m_blocks[i] = shrunk;
+            m_blocks[i] = shrunk;
+            // TODO: More efficient pivot recalculation.
+            m_pivots.set(i, shrunk->first(), m_pivots.pivot_of(shrunk));
         }
     }
 
@@ -137,6 +143,8 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
 
         m_blocks[i + 1] = nullptr;
         m_blocks[i] = merge_block;
+        // TODO: More efficient pivot recalculation.
+        m_pivots.set(i, merge_block->first(), m_pivots.pivot_of(merge_block));
     }
 
     remove_null_blocks();
@@ -154,7 +162,9 @@ block_array<K, V, Rlx>::remove_null_blocks() {
         if (b == nullptr) {
             continue;
         }
-        m_blocks[dst++] = b;
+        m_blocks[dst] = b;
+        m_pivots.copy(src, dst);
+        dst++;
 
 #ifndef NDEBUG
         assert(b->capacity() < prev_capacity);
