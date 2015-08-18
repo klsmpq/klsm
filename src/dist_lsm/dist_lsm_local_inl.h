@@ -102,7 +102,7 @@ dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block,
         other_block  = other_block->m_prev;
     }
 
-    if (slsm != nullptr && insert_block->capacity() >= (Rlx + 1) / 2) {
+    if (slsm != nullptr && insert_block->size() >= (Rlx + 1) / 2) {
         /* The merged block exceeds relaxation bounds and we have a shared lsm
          * pointer, insert the new block into the shared lsm instead.
          * The shared lsm creates a copy of the passed block, and thus we can set
