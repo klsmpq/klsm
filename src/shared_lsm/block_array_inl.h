@@ -248,11 +248,6 @@ block_array<K, V, Rlx>::peek()
             b = m_blocks[block_ix];
             best = b->peek_nth(m_pivots.nth_ix_in(selected_element, block_ix));
 
-            // Selected first item in block, we can increment our range boundary.
-            if (selected_element == 0) {
-                m_pivots.take_first_in(block_ix);
-            }
-
             break;
         }
 
@@ -262,9 +257,10 @@ block_array<K, V, Rlx>::peek()
         if (best.empty() && b != nullptr && block_ix < m_size) {
             while (m_pivots.count_in(block_ix) > 0) {
                 best = b->peek_nth(m_pivots.nth_ix_in(0, block_ix));
-                m_pivots.take_first_in(block_ix);
                 if (!best.empty()) {
                     return best;
+                } else {
+                    m_pivots.take_first_in(block_ix);
                 }
             }
         }
