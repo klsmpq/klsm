@@ -62,6 +62,10 @@ private:
     void compact(block_pool<K, V> *pool);
     void remove_null_blocks();
 
+    /** Utility functions for mutating blocks together with pivots. */
+    void block_insert(const size_t block_ix, block<K, V> *block);
+    void block_set(const size_t block_ix, block<K, V> *block);
+
 private:
 
     /** Stores block pointers from largest to smallest (to stay consistent with

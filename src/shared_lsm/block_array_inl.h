@@ -39,12 +39,33 @@ block_array<K, V, Rlx>::~block_array()
 
 template <class K, class V, int Rlx>
 void
+block_array<K, V, Rlx>::block_insert(const size_t block_ix,
+                                     block<K, V> *block)
+{
+    memmove(&m_blocks[block_ix + 1],
+            &m_blocks[block_ix],
+            sizeof(m_blocks[0]) * (m_size - block_ix));
+    m_blocks[block_ix] = block;
+    m_pivots.insert(block_ix, m_size, block->first(), m_pivots.pivot_of(block));
+}
+
+template <class K, class V, int Rlx>
+void
+block_array<K, V, Rlx>::block_set(const size_t block_ix,
+                                  block<K, V> *block)
+{
+    // TODO: More efficient pivot recalculation.
+    m_blocks[block_ix] = block;
+    m_pivots.set(block_ix, block->first(), m_pivots.pivot_of(block));
+}
+
+template <class K, class V, int Rlx>
+void
 block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                                block_pool<K, V> *pool)
 {
     if (m_size == 0) {
-        m_blocks[0] = new_block;
-        m_pivots.set(0, new_block->first(), m_pivots.pivot_of(new_block));
+        block_set(0, new_block);
     } else {
         size_t i;
         for (i = 0; i < m_size; i++) {
@@ -74,9 +95,7 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                 m_blocks[i - 1] = nullptr;
             }
         }
-        memmove(&m_blocks[i + 1], &m_blocks[i], sizeof(block<K, V> *) * (m_size - i));
-        m_blocks[i] = insert_block;
-        m_pivots.insert(i, m_size, insert_block->first(), m_pivots.pivot_of(insert_block));
+        block_insert(i, insert_block);
     }
 
     m_size++;
@@ -117,9 +136,7 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
 
             auto shrunk = pool->get_block(shrunk_power_of_2);
             shrunk->copy(b);
-            m_blocks[i] = shrunk;
-            // TODO: More efficient pivot recalculation.
-            m_pivots.set(i, shrunk->first(), m_pivots.pivot_of(shrunk));
+            block_set(i, shrunk);
         }
     }
 
@@ -142,9 +159,7 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
         merge_block->merge(big_block, small_block);
 
         m_blocks[i + 1] = nullptr;
-        m_blocks[i] = merge_block;
-        // TODO: More efficient pivot recalculation.
-        m_pivots.set(i, merge_block->first(), m_pivots.pivot_of(merge_block));
+        block_set(i, merge_block);
     }
 
     remove_null_blocks();
