@@ -44,7 +44,7 @@ public:
     size_t nth_ix_in(const size_t relative_element_ix,
                      const size_t block_ix) const;
 
-    void take_first_in(const size_t block_ix);
+    void mark_first_taken_in(const size_t block_ix);
 
     int pivot_of(block<K, V> *block) const;
 

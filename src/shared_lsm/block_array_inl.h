@@ -260,7 +260,7 @@ block_array<K, V, Rlx>::peek()
                 if (!best.empty()) {
                     return best;
                 } else {
-                    m_pivots.take_first_in(block_ix);
+                    m_pivots.mark_first_taken_in(block_ix);
                 }
             }
         }

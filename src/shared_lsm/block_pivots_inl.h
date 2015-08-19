@@ -223,7 +223,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::nth_ix_in(const size_t relative_element_ix,
 
 template <class K, class V, int Rlx, int MaxBlocks>
 void
-block_pivots<K, V, Rlx, MaxBlocks>::take_first_in(const size_t block_ix)
+block_pivots<K, V, Rlx, MaxBlocks>::mark_first_taken_in(const size_t block_ix)
 {
     assert(block_ix < MaxBlocks);
     m_first_in_block[block_ix]++;
