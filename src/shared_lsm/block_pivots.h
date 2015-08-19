@@ -24,6 +24,8 @@ namespace kpq {
 
 // TODO: Better naming, pivots is very undescriptive to me. Item range? Index boundaries
 // could then be called lower and upper bounds?
+// TODO: Store first and #elems per block to avoid having to recalculate it all the time.
+// Possibly maintain a count of all elems in the range.
 template <class K, class V, int Rlx, int MaxBlocks>
 class block_pivots {
 public:
