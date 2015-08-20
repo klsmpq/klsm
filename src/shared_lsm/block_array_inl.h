@@ -292,5 +292,5 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
         m_size = i;
 
         m_pivots = that->m_pivots;
-    } while (that->m_version.load(std::memory_order_release) != m_version);
+    } while (that->m_version.load() != m_version);
 }
