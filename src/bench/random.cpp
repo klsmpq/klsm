@@ -36,9 +36,9 @@
 #include "util.h"
 
 constexpr int DEFAULT_SEED       = 0;
-constexpr int DEFAULT_SIZE       = 1 << 7;
+constexpr int DEFAULT_SIZE       = 1000000;  // Matches benchmarks from klsm paper.
 constexpr int DEFAULT_NTHREADS   = 1;
-constexpr int DEFAULT_RELAXATION = 32;
+constexpr int DEFAULT_RELAXATION = 256;
 constexpr int DEFAULT_SLEEP      = 10;
 
 #define PQ_CHEAP      "cheap"
@@ -63,6 +63,33 @@ static hwloc_wrapper hwloc;
 static std::atomic<int> fill_barrier;
 static std::atomic<bool> start_barrier(false);
 static std::atomic<bool> end_barrier(false);
+
+class packed_uniform_bool_distribution {
+public:
+    packed_uniform_bool_distribution() :
+        m_iteration(0)
+    {
+    }
+
+    bool operator()(std::mt19937 &gen) {
+        if (m_iteration == 0) {
+            m_packed = m_rand_int(gen);
+        }
+
+        const bool ret = (m_packed >> m_iteration) & 1;
+        m_iteration = (m_iteration + 1) & MASK;
+        return ret;
+    }
+
+private:
+    std::uniform_int_distribution<int64_t> m_rand_int;
+
+    constexpr static int ITERATIONS = 64;
+    constexpr static int MASK = ITERATIONS - 1;
+
+    int m_iteration;
+    int64_t m_packed;
+};
 
 static void
 usage()
@@ -93,7 +120,7 @@ bench_thread(T *pq,
 
     std::mt19937 gen(settings.seed + thread_id);
     std::uniform_int_distribution<> rand_int;
-    std::uniform_int_distribution<> rand_bool(0, 1);
+    packed_uniform_bool_distribution rand_bool;
 
     hwloc.pin_to_core(thread_id);
 
@@ -114,16 +141,15 @@ bench_thread(T *pq,
         /* Wait. */
     }
 
+    uint32_t v;
     while (!end_barrier.load(std::memory_order_relaxed)) {
         if (rand_bool(gen)) {
-            uint32_t v = rand_int(gen);
+            v = rand_int(gen);
             pq->insert(v, v);
             nops++;
         } else {
-            uint32_t v;
-            if (pq->delete_min(v)) {
-                nops++;
-            }
+            pq->delete_min(v);  // TODO: Metric for failed delete_mins.
+            nops++;
         }
     }
 
