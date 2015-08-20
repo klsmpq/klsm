@@ -47,15 +47,17 @@ write_local(kpq::thread_local_ptr<uint32_t> *p,
 
 TEST(ThreadLocalPtrTest, ManyThreads)
 {
+    constexpr static int NTHREADS = 1024;
+
     kpq::thread_local_ptr<uint32_t> p;
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
-    uint32_t *results[1024];
+    uint32_t *results[NTHREADS];
 
-    for (int i = 0; i < 1024; i++) {
-        threads.push_back(std::thread(write_local, &p, i, &can_continue, &results[i]));
+    for (int i = 0; i < NTHREADS; i++) {
+        threads[i] = std::thread(write_local, &p, i, &can_continue, &results[i]);
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -64,7 +66,7 @@ TEST(ThreadLocalPtrTest, ManyThreads)
         thread.join();
     }
 
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < NTHREADS; i++) {
         ASSERT_EQ(*results[i], i);
     }
 }

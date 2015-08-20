@@ -95,15 +95,15 @@ TEST(VersionedArrayPtrTest, ParallelReuse)
 {
     vap ptr;
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
     std::atomic<int> num_done(0);
 
     for (int i = 0; i < NTHREADS; i++) {
-        threads.push_back(std::thread(compare_exchange_local,
-                                      &can_continue,
-                                      &num_done,
-                                      &ptr));
+        threads[i] = std::thread(compare_exchange_local,
+                                 &can_continue,
+                                 &num_done,
+                                 &ptr);
     }
 
     can_continue.store(true, std::memory_order_relaxed);

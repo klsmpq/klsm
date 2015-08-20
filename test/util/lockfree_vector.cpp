@@ -113,12 +113,14 @@ alloc_bucket(kpq::lockfree_vector<uint32_t> *v,
 
 TEST(LockfreeVectorTest, AllocConcurrent)
 {
+    constexpr static int NTHREADS = 1024;
+
     kpq::lockfree_vector<uint32_t> v;
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
-    for (int i = 0; i < 1024; i++) {
-        threads.push_back(std::thread(alloc_bucket, &v, i, &can_continue));
+    for (int i = 0; i < NTHREADS; i++) {
+        threads[i] = std::thread(alloc_bucket, &v, i, &can_continue);
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -127,7 +129,7 @@ TEST(LockfreeVectorTest, AllocConcurrent)
         thread.join();
     }
 
-    for (int i = 0; i < 1024; i++) {
+    for (int i = 0; i < NTHREADS; i++) {
         ASSERT_EQ(*v.get(i), i);
     }
 }

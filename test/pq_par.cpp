@@ -113,14 +113,14 @@ TYPED_TEST(pq_par_test, ConcurrentInsert)
 {
     this->generate_elements(42);
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
     for (int i = 0; i < NTHREADS; i++) {
-        threads.push_back(std::thread(random_insert<gtest_TypeParam_>,
-                                      this->m_pq,
-                                      i,
-                                      NELEMS));
+        threads[i] = std::thread(random_insert<gtest_TypeParam_>,
+                                 this->m_pq,
+                                 i,
+                                 NELEMS);
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -147,13 +147,13 @@ TYPED_TEST(pq_par_test, ConcurrentDelete)
 {
     this->generate_elements(NELEMS * NTHREADS);
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
     for (int i = 0; i < NTHREADS; i++) {
-        threads.push_back(std::thread(random_delete<gtest_TypeParam_>,
-                                      this->m_pq,
-                                      NELEMS));
+        threads[i] = std::thread(random_delete<gtest_TypeParam_>,
+                                 this->m_pq,
+                                 NELEMS);
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -187,14 +187,14 @@ TYPED_TEST(pq_par_test, ConcurrentInsDel)
 {
     this->generate_elements(NTHREADS);
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
     for (int i = 0; i < NTHREADS; i++) {
-        threads.push_back(std::thread(random_ins_del<gtest_TypeParam_>,
-                                      this->m_pq,
-                                      i,
-                                      NELEMS));
+        threads[i] = std::thread(random_ins_del<gtest_TypeParam_>,
+                                 this->m_pq,
+                                 i,
+                                 NELEMS);
     }
 
     can_continue.store(true, std::memory_order_relaxed);
@@ -236,14 +236,14 @@ TYPED_TEST(pq_par_test, ConcurrentInsDelSameThread)
     }
     this->generate_elements(NELEMS);
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(NTHREADS);
     std::atomic<bool> can_continue(false);
 
     for (int i = 0; i < NTHREADS; i++) {
-        threads.push_back(std::thread(random_ins_del_same_thread<gtest_TypeParam_>,
-                                      this->m_pq,
-                                      i,
-                                      NELEMS));
+        threads[i] = std::thread(random_ins_del_same_thread<gtest_TypeParam_>,
+                                 this->m_pq,
+                                 i,
+                                 NELEMS);
     }
 
     can_continue.store(true, std::memory_order_relaxed);

@@ -168,11 +168,11 @@ bench(T *pq,
     /* Start all threads. */
 
     std::vector<std::future<size_t>> futures;
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(settings.nthreads);
     for (int i = 0; i < settings.nthreads; i++) {
         std::promise<size_t> p;
         futures.push_back(p.get_future());
-        threads.push_back(std::thread(bench_thread<T>, pq, i, settings, std::move(p)));
+        threads[i] = std::thread(bench_thread<T>, pq, i, settings, std::move(p));
     }
 
     /* Wait until threads are done filling their queue. */

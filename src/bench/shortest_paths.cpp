@@ -245,9 +245,9 @@ bench(T *pq,
 
     /* Start all threads. */
 
-    std::vector<std::thread> threads;
+    std::vector<std::thread> threads(settings.num_threads);
     for (int i = 0; i < settings.num_threads; i++) {
-        threads.push_back(std::thread(bench_thread<T>, pq, i, graph));
+        threads[i] = std::thread(bench_thread<T>, pq, i, graph);
     }
 
     /* Begin benchmark. */
