@@ -80,6 +80,10 @@ public:
                      const version_t version);
     void merge(const block<K, V> *lhs,
                const block<K, V> *rhs);
+    void merge(const block<K, V> *lhs,
+               const size_t lhs_first,
+               const block<K, V> *rhs,
+               const size_t rhs_first);
     void copy(const block<K, V> *that);
 
     /** Returns null if the block is empty, and a peek_t struct of the minimal item

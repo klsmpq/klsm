@@ -88,8 +88,11 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                 break;
             } else {
                 assert(other_block->capacity() == insert_block->capacity());
+                const size_t other_first = m_pivots.nth_ix_in(0, i - 1);
+
                 auto merged_block = pool->get_block(insert_block->power_of_2() + 1);
-                merged_block->merge(insert_block, other_block);
+                merged_block->merge(insert_block, insert_block->first(),
+                                    other_block, other_first);
 
                 insert_block = merged_block;
                 m_blocks[i - 1] = nullptr;
@@ -146,8 +149,11 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
         auto big_block = m_blocks[i];
         auto small_block = m_blocks[i + 1];
 
-        size_t big_pow = big_block->power_of_2();
-        size_t small_pow = small_block->power_of_2();
+        const size_t big_first = m_pivots.nth_ix_in(0, i);
+        const size_t small_first = m_pivots.nth_ix_in(0, i + 1);
+
+        const size_t big_pow = big_block->power_of_2();
+        const size_t small_pow = small_block->power_of_2();
 
         if (big_pow > small_pow) {
             continue;
@@ -156,7 +162,7 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
         int merge_pow = std::max(big_pow, small_pow) + 1;
 
         auto merge_block = pool->get_block(merge_pow);
-        merge_block->merge(big_block, small_block);
+        merge_block->merge(big_block, big_first, small_block, small_first);
 
         m_blocks[i + 1] = nullptr;
         block_set(i, merge_block);

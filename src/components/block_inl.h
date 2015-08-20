@@ -90,6 +90,16 @@ void
 block<K, V>::merge(const block<K, V> *lhs,
                    const block<K, V> *rhs)
 {
+    merge(lhs, lhs->m_first, rhs, rhs->m_first);
+}
+
+template <class K, class V>
+void
+block<K, V>::merge(const block<K, V> *lhs,
+                   const size_t lhs_first,
+                   const block<K, V> *rhs,
+                   const size_t rhs_first)
+{
     /* The following assertions are no longer valid since we now sometimes merge blocks
      * of different capacities.
     assert(m_power_of_2 == lhs->power_of_2() + 1);
@@ -101,7 +111,7 @@ block<K, V>::merge(const block<K, V> *lhs,
 
     /* Merge. */
 
-    size_t l = lhs->m_first, r = rhs->m_first, dst = 0;
+    size_t l = lhs_first, r = rhs_first, dst = 0;
 
     while (l < lhs->m_last && r < rhs->m_last) {
         auto &lelem = lhs->m_item_pairs[l];
