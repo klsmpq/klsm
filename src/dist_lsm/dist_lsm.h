@@ -62,6 +62,8 @@ public:
 
     void print();
 
+    constexpr static bool supports_concurrency() { return true; }
+
 private:
     thread_local_ptr<dist_lsm_local<K, V, Rlx>> m_local;
 };

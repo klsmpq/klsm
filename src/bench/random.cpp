@@ -161,6 +161,11 @@ static int
 bench(T *pq,
       const struct settings &settings)
 {
+    if (settings.nthreads > 1 && !pq->supports_concurrency()) {
+        fprintf(stderr, "The given data structure does not support concurrency.\n");
+        return -1;
+    }
+
     int ret = 0;
 
     fill_barrier.store(settings.nthreads, std::memory_order_relaxed);

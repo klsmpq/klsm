@@ -48,6 +48,8 @@ public:
 
     bool delete_min(V &val);
 
+    constexpr static bool supports_concurrency() { return true; }
+
 private:
     dist_lsm<K, V, Rlx>   m_dist;
     shared_lsm<K, V, Rlx> m_shared;

@@ -17,6 +17,8 @@ public:
     void insert(const uint32_t &key, const uint32_t &value);
     bool delete_min(uint32_t &v);
 
+    constexpr static bool supports_concurrency() { return true; }
+
     constexpr static int DEFAULT_OFFSET = 32;
 
 private:

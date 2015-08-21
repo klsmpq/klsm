@@ -51,6 +51,8 @@ public:
     bool delete_min(V &val);
     void find_min(typename block<K, V>::peek_t &best);
 
+    constexpr static bool supports_concurrency() { return true; }
+
 private:
     versioned_array_ptr<K, V, Rlx> m_global_array;
     thread_local_ptr<shared_lsm_local<K, V, Rlx>> m_local_component;

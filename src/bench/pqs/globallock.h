@@ -65,6 +65,8 @@ public:
 
     void print() const;
 
+    constexpr static bool supports_concurrency() { return true; }
+
 private:
     void grow();
     void bubble_up(const size_t ix);

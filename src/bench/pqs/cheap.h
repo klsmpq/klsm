@@ -56,6 +56,8 @@ public:
 
     void print() const;
 
+    constexpr static bool supports_concurrency() { return true; }
+
 private:
     typedef std::priority_queue<entry_t, std::vector<entry_t>, std::greater<entry_t>> pq_t;
 

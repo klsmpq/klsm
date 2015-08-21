@@ -35,6 +35,8 @@ public:
     bool delete_min(T &v);
     void clear();
 
+    constexpr static bool supports_concurrency() { return false; }
+
 private:
     KNHeap<T, T> *m_pq;
 };

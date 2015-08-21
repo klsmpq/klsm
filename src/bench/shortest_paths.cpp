@@ -236,6 +236,11 @@ static int
 bench(T *pq,
       const struct settings &settings)
 {
+    if (settings.num_threads > 1 && !pq->supports_concurrency()) {
+        fprintf(stderr, "The given data structure does not support concurrency.\n");
+        return -1;
+    }
+
     int ret = 0;
     vertex_t *graph = generate_graph(settings.num_nodes, settings.seed, settings.edge_probability);
 

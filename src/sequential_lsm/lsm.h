@@ -42,6 +42,8 @@ public:
 
     void print() const;
 
+    constexpr static bool supports_concurrency() { return false; }
+
 private:
     /** Returns an unused block of size n == 2^i. */
     LSMBlock<T> *unused_block(const int n);

@@ -33,6 +33,8 @@ public:
     bool delete_min(T &v);
     void clear();
 
+    constexpr static bool supports_concurrency() { return false; }
+
 private:
     goodliffe::multi_skip_list<T> m_pq;
 };
