@@ -33,7 +33,6 @@
 
 #include "pqs/cheap.h"
 #include "pqs/globallock.h"
-#include "pqs/linden.h"
 #include "pqs/multiq.h"
 #include "pqs/sequence_heap.h"
 #include "pqs/skip_queue.h"
@@ -855,10 +854,6 @@ main(int argc,
         kpq::k_lsm<KEY_TYPE, VAL_TYPE, 4096> pq;
         ret = bench(&pq, settings);
 #ifndef ENABLE_QUALITY
-    } else if (settings.type == PQ_LINDEN) {
-        kpqbench::Linden pq(kpqbench::Linden::DEFAULT_OFFSET);
-        pq.insert(42, 42); /* A hack to avoid segfault on destructor in empty linden queue. */
-        ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<KEY_TYPE> pq;
         ret = bench(&pq, settings);
@@ -881,9 +876,6 @@ main(int argc,
         kpq::shared_lsm<KEY_TYPE, VAL_TYPE, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
 #ifndef ENABLE_QUALITY
-    } else if (settings.type == PQ_SPRAY) {
-        kpqbench::spraylist pq;
-        ret = bench(&pq, settings);
 #endif
     } else {
         usage();

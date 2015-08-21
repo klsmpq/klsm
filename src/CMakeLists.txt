@@ -4,6 +4,8 @@ add_subdirectory(util)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
+    /opt/gsl/include/
+    /opt/hwloc/include/
 )
 
 # A silly hack to make all files (including headers) show up in QtCreator.

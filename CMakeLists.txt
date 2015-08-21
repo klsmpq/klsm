@@ -5,17 +5,15 @@ find_package(Doxygen)
 find_package(Threads REQUIRED)
 
 include(FindPkgConfig)
-pkg_search_module(GSL REQUIRED gsl)
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/gsl/lib/pkgconfig")
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/hwloc/lib/pkgconfig")
 pkg_search_module(HWLOC REQUIRED hwloc)
 pkg_search_module(VALGRIND valgrind)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_definitions("-Wall -Wextra -pedantic -std=c++11")
+    add_definitions("-Wall -Wextra -pedantic -std=c++11 -m64")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m64")
 endif()
-
-# Hacks needed for link-time optimizations (-flto) on mars / debian.
-set(CMAKE_AR "gcc-ar")
-set(CMAKE_RANLIB "gcc-ranlib")
 
 if(DOXYGEN_FOUND)
     add_subdirectory(doc)

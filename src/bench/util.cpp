@@ -21,7 +21,7 @@
 
 #include <hwloc.h>
 #include <random>
-#include <x86intrin.h>
+#include <sys/time.h>
 
 class hwloc_wrapper_private
 {
@@ -80,7 +80,7 @@ timediff_in_s(const struct timespec &start,
 uint64_t
 rdtsc()
 {
-    return __rdtsc();
+    return (uint64_t)gethrtime();
 }
 
 std::vector<uint32_t>

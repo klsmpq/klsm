@@ -13,9 +13,6 @@ extern "C" {
 
 #include "getticks.h"
 
-// TODO
-#define LAPTOP
-
 #ifndef REF_SPEED_GHZ
 #  if defined(PLATFORM_MCORE) | defined(XEON) | defined(OPTERON)
 #    define REF_SPEED_GHZ           2.1

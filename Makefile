@@ -2,11 +2,11 @@ all: release
 
 debug:
 	mkdir -p build
-	cd build && cmake -DCMAKE_BUILD_TYPE="Debug" .. && make -j6
+	cd build && cmake -DCMAKE_BUILD_TYPE="Debug" .. && make
 
 release:
 	mkdir -p build
-	cd build && cmake -DCMAKE_BUILD_TYPE="Release" .. && make -j6
+	cd build && cmake -DCMAKE_BUILD_TYPE="Release" .. && make
 
 check: debug
 	cd build && ctest --output-on-failure
