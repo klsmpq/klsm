@@ -93,6 +93,7 @@ TYPED_TEST(pq_par_test, SanityCheck)
     uint32_t v;
     EXPECT_TRUE(this->m_pq->delete_min(v));
     EXPECT_EQ(this->m_min, v);
+    ASSERT_TRUE(this->m_pq->supports_concurrency());
 }
 
 template <class T>

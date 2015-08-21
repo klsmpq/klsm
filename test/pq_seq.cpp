@@ -23,6 +23,8 @@
 #include <thread>
 
 #include "bench/pqs/globallock.h"
+#include "bench/pqs/sequence_heap/sequence_heap.h"
+#include "bench/pqs/skip_list/skip_queue.h"
 #include "dist_lsm/dist_lsm.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
@@ -81,9 +83,15 @@ protected:
     uint32_t m_min;
 };
 
+/* The Linden queue is not tested since it does not distinguish between
+ * successful and unsuccessful delete_mins.
+ */
+
 typedef ::testing::Types< GlobalLock<uint32_t, uint32_t>
                         , LSM<uint32_t>
                         , dist_lsm<uint32_t, uint32_t, RELAXATION>
+                        , sequence_heap<uint32_t>
+                        , skip_queue<uint32_t>
                         > TestTypes;
 TYPED_TEST_CASE(PQTest, TestTypes);
 

@@ -11,15 +11,15 @@ struct linden_t;
 class Linden
 {
 public:
-    Linden(const int max_offset);
+    constexpr static int DEFAULT_OFFSET = 32;
+
+    Linden(const int max_offset = DEFAULT_OFFSET);
     virtual ~Linden();
 
     void insert(const uint32_t &key, const uint32_t &value);
     bool delete_min(uint32_t &v);
 
     constexpr static bool supports_concurrency() { return true; }
-
-    constexpr static int DEFAULT_OFFSET = 32;
 
 private:
     linden_t *m_q;
