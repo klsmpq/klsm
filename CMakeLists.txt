@@ -5,6 +5,7 @@ find_package(Doxygen)
 find_package(Threads)
 
 include(FindPkgConfig)
+pkg_search_module(GSL REQUIRED gsl)
 pkg_search_module(HWLOC REQUIRED hwloc)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
