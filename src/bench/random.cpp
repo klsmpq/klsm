@@ -291,7 +291,7 @@ main(int argc,
         kpq::LSM<uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_MULTIQ) {
-        kpqbench::multiq<uint32_t, uint32_t> pq;
+        kpqbench::multiq<uint32_t, uint32_t> pq(settings.nthreads);
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SEQUENCE) {
         kpqbench::sequence_heap<uint32_t> pq;
