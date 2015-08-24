@@ -23,8 +23,8 @@
 #include <thread>
 
 #include "bench/pqs/globallock.h"
-#include "bench/pqs/sequence_heap/sequence_heap.h"
-#include "bench/pqs/skip_list/skip_queue.h"
+#include "bench/pqs/sequence_heap.h"
+#include "bench/pqs/skip_queue.h"
 #include "dist_lsm/dist_lsm.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"

@@ -27,8 +27,8 @@
 #include "dist_lsm/dist_lsm.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
-#include "pqs/sequence_heap/sequence_heap.h"
-#include "pqs/skip_list/skip_queue.h"
+#include "pqs/sequence_heap.h"
+#include "pqs/skip_queue.h"
 #include "sequential_lsm/lsm.h"
 #include "util.h"
 
