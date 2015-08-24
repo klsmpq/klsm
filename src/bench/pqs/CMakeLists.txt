@@ -1,11 +1,6 @@
 add_subdirectory(sequence_heap)
 add_subdirectory(skip_list)
 
-set(CFLAGS_NO_WARNINGS "-Wno-unused-parameter -Wno-type-limits -Wno-overflow -Wno-format -Wno-pedantic")
-set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-sign-compare -Wno-unused-but-set-variable -Wno-long-long")
-set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-unused-function -Wno-strict-aliasing")
-set(CFLAGS_NO_WARNINGS "${CFLAGS_NO_WARNINGS} -Wno-implicit-function-declaration -Wno-unused-variable")
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
@@ -19,7 +14,7 @@ add_library(linden STATIC
 )
 execute_process(COMMAND getconf LEVEL1_DCACHE_LINESIZE OUTPUT_VARIABLE CACHE_LINE_SIZE)
 set_target_properties(linden PROPERTIES COMPILE_FLAGS
-    "-std=c99 ${CFLAGS_NO_WARNINGS} -DINTEL -DCACHE_LINE_SIZE=${CACHE_LINE_SIZE}"
+    "-w -std=c99 -DINTEL -DCACHE_LINE_SIZE=${CACHE_LINE_SIZE}"
 )
 target_include_directories(linden PUBLIC
     ${CMAKE_SOURCE_DIR}/lib
