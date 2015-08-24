@@ -76,7 +76,8 @@ sl_new_simple_node(val_t val, int toplevel, int transactional)
 	{
 	  ns += 64 - ns_rm;
 	}
-      node = (sl_node_t *)ssalloc_alloc(1, ns);
+      // TODO: This is a quick hack in order to use more available allocators.
+      node = (sl_node_t *)ssalloc_alloc((val % (SSALLOC_NUM_ALLOCATORS - 1)) + 1, ns);
     }
 
   if (node == NULL)

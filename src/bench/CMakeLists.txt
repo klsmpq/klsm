@@ -20,6 +20,7 @@ target_link_libraries(random
     sequence_heap
     sequential_lsm
     skip_queue
+    spraylist
     thread_local_ptr
 )
 

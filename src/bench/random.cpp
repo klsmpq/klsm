@@ -31,6 +31,7 @@
 #include "pqs/linden.h"
 #include "pqs/sequence_heap/sequence_heap.h"
 #include "pqs/skip_list/skip_queue.h"
+#include "pqs/spraylist.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
 #include "util.h"
@@ -50,6 +51,7 @@ constexpr int DEFAULT_SLEEP      = 10;
 #define PQ_SEQUENCE   "sequence"
 #define PQ_SKIP       "skip"
 #define PQ_SLSM       "slsm"
+#define PQ_SPRAY      "spray"
 
 struct settings {
     int nthreads;
@@ -291,6 +293,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SLSM) {
         kpq::shared_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_SPRAY) {
+        kpqbench::spraylist pq;
         ret = bench(&pq, settings);
     } else {
         usage();

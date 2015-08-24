@@ -91,7 +91,7 @@ int sl_contains(sl_intset_t *set, val_t val, int transactional)
 	return result;
 }
 
-inline int sl_seq_add(sl_intset_t *set, val_t val) {
+int sl_seq_add(sl_intset_t *set, val_t val) {
 	int i, l, result;
 	sl_node_t *node, *next;
 	sl_node_t *preds[MAXLEVEL], *succs[MAXLEVEL];

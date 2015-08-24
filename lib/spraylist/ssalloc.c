@@ -97,6 +97,7 @@ ssalloc_alloc(unsigned int allocator, size_t size)
 #if defined(SSALLOC_USE_MALLOC)
   ret = (void*) malloc(size);
 #else
+  assert(allocator < SSALLOC_NUM_ALLOCATORS);
   if (ssalloc_free_num[allocator] > 2)
     {
       uint8_t spot = ssalloc_free_cur[allocator] - ssalloc_free_num[allocator];
@@ -107,10 +108,9 @@ ssalloc_alloc(unsigned int allocator, size_t size)
     {
       ret = ssalloc_app_mem[allocator] + alloc_next[allocator];
       alloc_next[allocator] += size;
-      if (alloc_next[allocator] > SSALLOC_SIZE)
-	{
-	  fprintf(stderr, "*** warning: allocator %2d : out of bounds alloc\n", allocator);
-	}
+
+      assert(alloc_next[allocator] <= SSALLOC_SIZE),
+              "out of bounds alloc";
     }
 #endif
   /* PRINT("[lib] allocated %p [offs: %lu]", ret, ssalloc_app_addr_offs(ret)); */
@@ -136,6 +136,7 @@ ssfree_alloc(unsigned int allocator, void* ptr)
 #if defined(SSALLOC_USE_MALLOC)
   free(ptr);
 #else
+  assert(allocator < SSALLOC_NUM_ALLOCATORS);
   ssalloc_free_num[allocator]++;
   /* PRINT("free %3d (num_free after: %3d)", ssalloc_free_cur, ssalloc_free_num); */
   ssalloc_free_list[allocator][ssalloc_free_cur[allocator]++] = ptr;

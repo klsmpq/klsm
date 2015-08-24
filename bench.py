@@ -14,6 +14,7 @@ ALGORITHMS = [ 'cheap'
              , 'sequence'
              , 'skip'
              , 'slsm'
+             , 'spray'
              ]
 
 NELEMS = [ 50000, 66666, 100000, 131072, 500000, 524288
