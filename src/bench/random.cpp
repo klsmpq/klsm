@@ -29,6 +29,7 @@
 #include "pqs/cheap.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
+#include "pqs/multiq.h"
 #include "pqs/sequence_heap.h"
 #include "pqs/skip_queue.h"
 #include "pqs/spraylist.h"
@@ -48,6 +49,7 @@ constexpr int DEFAULT_SLEEP      = 10;
 #define PQ_KLSM       "klsm"
 #define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
+#define PQ_MULTIQ     "multiq"
 #define PQ_SEQUENCE   "sequence"
 #define PQ_SKIP       "skip"
 #define PQ_SLSM       "slsm"
@@ -102,12 +104,12 @@ usage()
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')\n",
+            "           (one of '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s')\n",
             DEFAULT_SIZE,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
             PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM, PQ_LINDEN,
-            PQ_LSM, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM);
+            PQ_LSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
     exit(EXIT_FAILURE);
 }
 
@@ -287,6 +289,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_MULTIQ) {
+        kpqbench::multiq<uint32_t, uint32_t> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SEQUENCE) {
         kpqbench::sequence_heap<uint32_t> pq;
