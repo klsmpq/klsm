@@ -51,6 +51,7 @@ public:
     bool delete_min(V &val);
     void find_min(typename block<K, V>::peek_t &best);
 
+    void init_thread(const size_t) const { }
     constexpr static bool supports_concurrency() { return true; }
 
 private:

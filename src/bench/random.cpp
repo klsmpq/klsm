@@ -126,6 +126,9 @@ bench_thread(T *pq,
 
     hwloc.pin_to_core(thread_id);
 
+    /* The spraylist requires per-thread initialization. */
+    pq->init_thread(settings.nthreads);
+
     /* Fill up to initial size. Do this per thread in order to build a balanced DLSM
      * instead of having one local LSM containing all initial elems. */
 

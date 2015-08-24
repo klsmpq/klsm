@@ -33,6 +33,7 @@ public:
     bool delete_min(T &v);
     void clear();
 
+    void init_thread(const size_t) const { }
     constexpr static bool supports_concurrency() { return false; }
 
 private:

@@ -20,6 +20,7 @@
 #ifndef __LSM_H
 #define __LSM_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -42,6 +43,7 @@ public:
 
     void print() const;
 
+    void init_thread(const size_t) const { }
     constexpr static bool supports_concurrency() { return false; }
 
 private:

@@ -65,6 +65,7 @@ public:
 
     void print() const;
 
+    void init_thread(const size_t) const { }
     constexpr static bool supports_concurrency() { return true; }
 
 private:

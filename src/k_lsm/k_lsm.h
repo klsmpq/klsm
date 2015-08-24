@@ -48,6 +48,7 @@ public:
 
     bool delete_min(V &val);
 
+    void init_thread(const size_t) const { }
     constexpr static bool supports_concurrency() { return true; }
 
 private:
