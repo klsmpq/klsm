@@ -36,9 +36,9 @@ public:
 
     void reset(block<K, V> **blocks,
                const size_t size);
-    void improve(const int initial_range_size,
-                 block<K, V> **blocks,
-                 const size_t size);
+    size_t improve(const int initial_range_size,
+                   block<K, V> **blocks,
+                   const size_t size);
     /** Counts the number of elements within the pivot range. */
     size_t count(const size_t size) const;
     size_t count_in(const size_t block_ix) const;

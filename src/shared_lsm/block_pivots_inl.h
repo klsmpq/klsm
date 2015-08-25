@@ -78,7 +78,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::reset(block<K, V> **blocks,
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
-void
+size_t
 block_pivots<K, V, Rlx, MaxBlocks>::improve(const int initial_range_size,
                                             block<K, V> **blocks,
                                             const size_t size)
@@ -191,6 +191,8 @@ block_pivots<K, V, Rlx, MaxBlocks>::improve(const int initial_range_size,
             }
         }
     }
+
+    return elements_in_range;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>

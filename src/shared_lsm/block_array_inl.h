@@ -226,8 +226,7 @@ block_array<K, V, Rlx>::peek()
         /* If the range contains too few items, attempt to improve it. */
 
         if (ncandidates < Rlx / 2) {
-            m_pivots.improve(ncandidates, m_blocks, m_size);
-            ncandidates = m_pivots.count(m_size);
+            ncandidates = m_pivots.improve(ncandidates, m_blocks, m_size);
         }
 
         /* Select a random element within the range, find it, and return it. */
