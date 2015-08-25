@@ -209,7 +209,8 @@ size_t
 block_pivots<K, V, Rlx, MaxBlocks>::count_in(const size_t block_ix) const
 {
     assert(block_ix < MaxBlocks);
-    return std::max(0, m_pivots[block_ix] - m_first_in_block[block_ix]);
+    assert(m_first_in_block[block_ix] <= m_pivots[block_ix]);
+    return m_pivots[block_ix] - m_first_in_block[block_ix];
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
