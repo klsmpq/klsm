@@ -345,5 +345,6 @@ template <class K, class V>
 bool
 block<K, V>::item_owned(const item_pair_t &item_pair)
 {
-    return (item_pair.first != nullptr && item_pair.first->version() == item_pair.second);
+    const auto *item_ptr = item_pair.first;
+    return (item_ptr != nullptr && item_ptr->version() == item_pair.second);
 }
