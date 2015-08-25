@@ -24,6 +24,10 @@
 #include <thread>
 #include <unistd.h>
 
+#ifdef HAVE_VALGRIND
+#include <valgrind/callgrind.h>
+#endif
+
 #include "dist_lsm/dist_lsm.h"
 #include "k_lsm/k_lsm.h"
 #include "pqs/cheap.h"
@@ -122,6 +126,10 @@ bench_thread(T *pq,
 {
     size_t nops = 0;
 
+#ifdef HAVE_VALGRIND
+    CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+
     std::mt19937 gen(settings.seed + thread_id);
     std::uniform_int_distribution<> rand_int;
     packed_uniform_bool_distribution rand_bool;
@@ -144,9 +152,17 @@ bench_thread(T *pq,
     }
     fill_barrier.fetch_sub(1, std::memory_order_relaxed);
 
+#ifdef HAVE_VALGRIND
+    CALLGRIND_START_INSTRUMENTATION;
+#endif
+
     while (!start_barrier.load(std::memory_order_relaxed)) {
         /* Wait. */
     }
+
+#ifdef HAVE_VALGRIND
+    CALLGRIND_ZERO_STATS;
+#endif
 
     uint32_t v;
     while (!end_barrier.load(std::memory_order_relaxed)) {
