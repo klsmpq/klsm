@@ -21,6 +21,8 @@
 
 #include <limits>
 
+#include "knheap.h"
+
 namespace kpqbench
 {
 

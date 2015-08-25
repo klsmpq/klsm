@@ -20,7 +20,10 @@
 #ifndef __SEQUENCE_HEAP_H
 #define __SEQUENCE_HEAP_H
 
-#include "knheap.h"
+#include <cstddef>
+
+template <class K, class V>
+class KNHeap;
 
 namespace kpqbench
 {
