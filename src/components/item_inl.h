@@ -68,7 +68,7 @@ template <class K, class V>
 version_t
 item<K, V>::version() const
 {
-    return m_version;
+    return m_version.load(std::memory_order_relaxed);
 }
 
 template <class K, class V>
