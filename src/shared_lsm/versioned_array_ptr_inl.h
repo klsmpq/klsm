@@ -62,14 +62,14 @@ template <class K, class V, int Rlx, int Algn>
 block_array<K, V, Rlx> *
 versioned_array_ptr<K, V, Rlx, Algn>::load()
 {
-    return unpacked_ptr(m_ptr.load());
+    return unpacked_ptr(load_packed());
 }
 
 template <class K, class V, int Rlx, int Algn>
 block_array<K, V, Rlx> *
 versioned_array_ptr<K, V, Rlx, Algn>::load_packed()
 {
-    return m_ptr.load();
+    return m_ptr.load(std::memory_order_relaxed);
 }
 
 template <class K, class V, int Rlx, int Algn>
@@ -79,5 +79,6 @@ versioned_array_ptr<K, V, Rlx, Algn>::compare_exchange_strong(
         aligned_block_array<K, V, Rlx, Algn> &desired)
 {
     return m_ptr.compare_exchange_strong(expected_packed,
-                                         packed_ptr(desired.ptr()));
+                                         packed_ptr(desired.ptr()),
+                                         std::memory_order_relaxed);
 }
