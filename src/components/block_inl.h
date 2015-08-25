@@ -109,6 +109,9 @@ block<K, V>::merge(const block<K, V> *lhs,
     assert(m_first == 0);
     assert(m_last == 0);
 
+    // TODO: There is potential for optimization here, but simply doing a 2-pass std::merge
+    // + prune unowned items strategy introduces race conditions.
+
     /* Merge. */
 
     size_t l = lhs_first, r = rhs_first, dst = 0;
