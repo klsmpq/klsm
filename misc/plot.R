@@ -6,7 +6,7 @@ library(scales)
 pqplot <- function(csvfile) {
     # install.packages(c("Rmisc", "ggplot2", "plyr"))
 
-    df <- read.csv(csvfile)
+    df <- read.csv(csvfile, header = FALSE)
     colnames(df) <- c("kernel", "p", "throughput")
 
     df$throughput <- df$throughput/1E6
@@ -26,7 +26,7 @@ pqplot <- function(csvfile) {
     p <- ggplot(df2, aes(x = p, y = mean, color = kernel, shape = kernel)) +
                 geom_line() +
                 geom_point(size = 4) +
-    #            geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.3) +
+                geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.3) +
                 ylab("throughput in Mops/s") +
                 xlab("number of threads") +
     # Themes
