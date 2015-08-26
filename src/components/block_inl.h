@@ -100,6 +100,10 @@ block<K, V>::merge(const block<K, V> *lhs,
                    const block<K, V> *rhs,
                    const size_t rhs_first)
 {
+    constexpr static int NONE = 0;
+    constexpr static int L = 1;
+    constexpr static int R = 2;
+
     /* The following assertions are no longer valid since we now sometimes merge blocks
      * of different capacities.
     assert(m_power_of_2 == lhs->power_of_2() + 1);
@@ -115,27 +119,36 @@ block<K, V>::merge(const block<K, V> *lhs,
     /* Merge. */
 
     size_t l = lhs_first, r = rhs_first, dst = 0;
+    int last_updated = NONE;
 
     while (l < lhs->m_last && r < rhs->m_last) {
+        if (last_updated != L) {
+            while (l < lhs->m_last && !item_owned(lhs->m_item_pairs[l])) {
+                l++;
+            }
+        }
+
+        if (last_updated != R) {
+            while (r < rhs->m_last && !item_owned(rhs->m_item_pairs[r])) {
+                r++;
+            }
+        }
+
+        if (l >= lhs->m_last || r >= rhs->m_last) {
+            break;
+        }
+
         auto &lelem = lhs->m_item_pairs[l];
         auto &relem = rhs->m_item_pairs[r];
-
-        if (!item_owned(lelem)) {
-            l++;
-            continue;
-        }
-
-        if (!item_owned(relem)) {
-            r++;
-            continue;
-        }
 
         if (lelem.first->key() < relem.first->key()) {
             m_item_pairs[dst++] = lelem;
             l++;
+            last_updated = L;
         } else {
             m_item_pairs[dst++] = relem;
             r++;
+            last_updated = R;
         }
     }
 
