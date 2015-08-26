@@ -51,5 +51,6 @@ set_target_properties(spraylist PROPERTIES COMPILE_FLAGS
 )
 target_include_directories(spraylist PUBLIC
     ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_SOURCE_DIR}/lib/spraylist/atomic_ops
     ${CMAKE_SOURCE_DIR}/lib/spraylist/include
 )
