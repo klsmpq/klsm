@@ -176,6 +176,10 @@ bench_thread(T *pq,
         }
     }
 
+#ifdef HAVE_VALGRIND
+    CALLGRIND_STOP_INSTRUMENTATION;
+#endif
+
     result.set_value(nops);
 }
 
