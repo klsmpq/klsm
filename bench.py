@@ -38,9 +38,10 @@ REPS = 5
 
 BIN = 'build/src/bench/random'
 
-def bench(algorithm, nthreads, outfile):
+def bench(algorithm, nthreads, seed, outfile):
     output = subprocess.check_output([ BIN
                                      , '-p', str(nthreads)
+                                     , '-s', str(seed)
                                      , algorithm
                                      ])
 
@@ -77,4 +78,4 @@ if __name__ == '__main__':
         for a in algorithms:
             for n in nthreads:
                 for r in xrange(options.reps):
-                    bench(a, n, f)
+                    bench(a, n, r, f)
