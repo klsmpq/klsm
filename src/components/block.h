@@ -50,6 +50,7 @@ public:
     struct peek_t {
         peek_t() : m_item(nullptr), m_version(0) { }
 
+        bool taken() const { return m_item->version() != m_version; }
         bool empty() const { return (m_item == nullptr); }
         bool take(V &val) { return m_item->take(m_version, val); }
 

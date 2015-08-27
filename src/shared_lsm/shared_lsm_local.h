@@ -61,7 +61,13 @@ private:
                                   version_t &observed_version,
                                   versioned_array_ptr<K, V, Rlx> &global_array);
 
+    bool local_array_copy_is_fresh(versioned_array_ptr<K, V, Rlx> &global_array) const;
+
 private:
+    /** Caches the previously peeked item in case we can short-circuit and simply
+     *  return it. */
+    typename block<K, V>::peek_t m_cached_best;
+
     /* ---- Item memory management. ---- */
 
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_pool;

@@ -54,7 +54,7 @@ public:
       * The copy is shallow, i.e. only block pointers are copied. */
     void copy_from(const block_array<K, V, Rlx> *that);
 
-    version_t version() { return m_version.load(std::memory_order_relaxed); }
+    version_t version() const { return m_version.load(std::memory_order_relaxed); }
     void increment_version() { m_version.fetch_add(1, std::memory_order_relaxed); }
 
 private:

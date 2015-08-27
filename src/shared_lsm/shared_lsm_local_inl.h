@@ -115,13 +115,28 @@ void
 shared_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best,
                                   versioned_array_ptr<K, V, Rlx> &global_array)
 {
+    if (local_array_copy_is_fresh(global_array)
+            && !m_cached_best.empty()
+            && !m_cached_best.taken()) {
+        best = m_cached_best;
+        return;
+    }
+
     block_array<K, V, Rlx> *observed_packed;
     version_t observed_version;
 
     do {
         refresh_local_array_copy(observed_packed, observed_version, global_array);
-        best = m_local_array_copy.peek();
+        best = m_cached_best = m_local_array_copy.peek();
     } while (global_array.load()->version() != observed_version);
+}
+
+template <class K, class V, int Rlx>
+bool
+shared_lsm_local<K, V, Rlx>::local_array_copy_is_fresh(
+        versioned_array_ptr<K, V, Rlx> &global_array) const
+{
+    return (m_local_array_copy.version() == global_array.load()->version());
 }
 
 template <class K, class V, int Rlx>
@@ -135,7 +150,7 @@ shared_lsm_local<K, V, Rlx>::refresh_local_array_copy(
     auto observed_unpacked = global_array.unpack(observed_packed);
     observed_version = observed_unpacked->version();
 
-    if (m_local_array_copy.version() == global_array.load()->version()) {
+    if (local_array_copy_is_fresh(global_array)) {
         return;
     }
 
