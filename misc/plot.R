@@ -40,7 +40,7 @@ pqplot <- function(csvfile) {
                       legend.background = element_rect(fill = alpha("black", 0)))
 
     figfile <- "fig.png"
-    png(filename = figfile, width = 800, height = 600)
+    png(filename = figfile, width = 1024, height = 768)
     plot(p)
     invisible(dev.off())
 }
