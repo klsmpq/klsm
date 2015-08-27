@@ -49,11 +49,24 @@ dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
                                   const version_t version,
                                   shared_lsm<K, V, Rlx> *slsm)
 {
+    const K it_key = it->key();
+
+    /* Update the cached best item if necessary. */
+
+    if (m_cached_best.empty() || it_key < m_cached_best.m_key) {
+        m_cached_best.m_key     = it_key;
+        m_cached_best.m_item    = it;
+        m_cached_best.m_index   = 0; /* Dummy value. */
+        m_cached_best.m_version = version;
+    } else if (m_cached_best.taken()) {
+        m_cached_best.m_item    = nullptr;
+    }
+
     /* If possible, simply append to the current tail block. */
 
     if (m_tail != nullptr && m_tail->last() < m_tail->capacity()) {
         K tail_key;
-        if (m_tail->peek_tail(tail_key) && tail_key <= it->key()) {
+        if (m_tail->peek_tail(tail_key) && tail_key <= it_key) {
             m_tail->insert_tail(it, version);
             return;
         }
@@ -162,6 +175,11 @@ template <class K, class V, int Rlx>
 void
 dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
 {
+    /* Short-circuit. */
+    if (!m_cached_best.empty() && !m_cached_best.taken()) {
+        best = m_cached_best;
+        return;
+    }
 
     for (auto i = m_head.load(std::memory_order_relaxed);
             i != nullptr;
@@ -246,6 +264,8 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
             best = candidate;
         }
     }
+
+    m_cached_best = best;
 }
 
 template <class K, class V, int Rlx>

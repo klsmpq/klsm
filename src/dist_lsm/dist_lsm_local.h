@@ -83,6 +83,10 @@ private:
     block_storage<K, V, 3> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
 
+    /** Caches the previously peeked item in case we can short-circuit and simply
+     *  return it. */
+    typename block<K, V>::peek_t m_cached_best;
+
     std::mt19937 m_gen;
 };
 
