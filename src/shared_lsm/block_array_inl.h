@@ -111,9 +111,9 @@ block_array<K, V, Rlx>::insert(block<K, V> *new_block,
     if (ncandidates > Rlx + 1) {
         // TODO: Possibly a more efficient reset mechanism which uses knowledge of existing
         // pivots.
-        m_pivots.reset(m_blocks, m_size);
+        m_pivots.shrink(m_blocks, m_size);
     } else if (ncandidates < Rlx / 2) {
-        m_pivots.improve(ncandidates, m_blocks, m_size);
+        m_pivots.grow(ncandidates, m_blocks, m_size);
     }
 }
 
@@ -226,7 +226,7 @@ block_array<K, V, Rlx>::peek()
         /* If the range contains too few items, attempt to improve it. */
 
         if (ncandidates < Rlx / 2) {
-            ncandidates = m_pivots.improve(ncandidates, m_blocks, m_size);
+            ncandidates = m_pivots.grow(ncandidates, m_blocks, m_size);
         }
 
         /* Select a random element within the range, find it, and return it. */

@@ -44,9 +44,9 @@ block_pivots<K, V, Rlx, MaxBlocks>::operator=(const block_pivots<K, V, Rlx, MaxB
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
-void
-block_pivots<K, V, Rlx, MaxBlocks>::reset(block<K, V> **blocks,
-                                          const size_t size)
+size_t
+block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
+                                           const size_t size)
 {
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
@@ -68,20 +68,38 @@ block_pivots<K, V, Rlx, MaxBlocks>::reset(block<K, V> **blocks,
 
     if (best_block_ix == -1) {
         /* All blocks are empty. */
-        return;
+        return 0;
     }
 
     m_pivots[best_block_ix] = best.m_index + 1;
-    m_maximal_pivot = best.m_key;
 
-    improve(1, blocks, size);
+    return resize(1,
+                  best.m_key,
+                  m_maximal_pivot,
+                  blocks,
+                  size);
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
 size_t
-block_pivots<K, V, Rlx, MaxBlocks>::improve(const int initial_range_size,
-                                            block<K, V> **blocks,
-                                            const size_t size)
+block_pivots<K, V, Rlx, MaxBlocks>::grow(const int initial_range_size,
+                                         block<K, V> **blocks,
+                                         const size_t size)
+{
+    return resize(initial_range_size,
+                  m_maximal_pivot,
+                  std::numeric_limits<K>::max(),
+                  blocks,
+                  size);
+}
+
+template <class K, class V, int Rlx, int MaxBlocks>
+size_t
+block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
+                                           const K initial_lower_bound,
+                                           const K initial_upper_bound,
+                                           block<K, V> **blocks,
+                                           const size_t size)
 {
     /* During iterative improvement of pivots, we may repeatedly go beyond legal
      * limits and must backtrack the previous solution. For that purpose, we
@@ -91,21 +109,14 @@ block_pivots<K, V, Rlx, MaxBlocks>::improve(const int initial_range_size,
     int *pivots = m_pivots;
     int *tentative_pivots = temp_array;
 
-    // IDEAS: Instead of a full reset, we could immediately set the upper bound to
-    // the previous value.
-    // If we want to grow the range, set lower bound to previous pivot; if we want to
-    // shrink it, set upper bound to previous pivot.
     // We could skip owned() checks by keeping a bitmap around - once an item is taken,
     // it is taken forever.
 
     /* Initially, only the minimal element is within the pivot range. */
     int elements_in_range = initial_range_size;
 
-    /* If we are trying to grow the range, set our previous maximal pivot as lower bound.
-     * Use INT_MAX as initial upper bound for now since it might be more efficient than actually
-     * checking all items. */
-    K lower_bound = m_maximal_pivot;
-    K upper_bound = std::numeric_limits<K>::max();
+    K lower_bound = initial_lower_bound;
+    K upper_bound = initial_upper_bound;
     K mid;
 
     int elements_in_tentative_range;

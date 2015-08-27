@@ -34,11 +34,12 @@ public:
 
     block_pivots &operator=(const block_pivots<K, V, Rlx, MaxBlocks> &that);
 
-    void reset(block<K, V> **blocks,
-               const size_t size);
-    size_t improve(const int initial_range_size,
-                   block<K, V> **blocks,
-                   const size_t size);
+    size_t shrink(block<K, V> **blocks,
+                  const size_t size);
+    size_t grow(const int initial_range_size,
+                block<K, V> **blocks,
+                const size_t size);
+
     /** Counts the number of elements within the pivot range. */
     size_t count(const size_t size) const;
     size_t count_in(const size_t block_ix) const;
@@ -56,6 +57,13 @@ public:
                 const int pivot);
     void set(const size_t block_ix, const int first_in_block, const int pivot);
     void copy(const size_t src_ix, const size_t dst_ix);
+
+private:
+    size_t resize(const int initial_range_size,
+                  const K initial_lower_bound,
+                  const K initial_upper_bound,
+                  block<K, V> **blocks,
+                  const size_t size);
 
 private:
     /**
