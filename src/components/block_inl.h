@@ -113,45 +113,48 @@ block<K, V>::merge(const block<K, V> *lhs,
     assert(m_first == 0);
     assert(m_last == 0);
 
-    // TODO: There is potential for optimization here, but simply doing a 2-pass std::merge
-    // + prune unowned items strategy introduces race conditions.
-
     /* Merge. */
 
     size_t l = lhs_first, r = rhs_first, dst = 0;
     int last_updated = NONE;
+    K lhs_key, rhs_key;
+    lhs_key = rhs_key = std::numeric_limits<K>::min();
 
     while (l < lhs->m_last && r < rhs->m_last) {
         if (last_updated != L) {
-            while (l < lhs->m_last && !item_owned(lhs->m_item_pairs[l])) {
+            rhs_key = rhs->m_item_pairs[r].first->key();
+            while (!item_owned(lhs->m_item_pairs[l])) {
                 l++;
+                if (l >= lhs->m_last) {
+                    goto outer;
+                }
+                lhs_key = lhs->m_item_pairs[l].first->key();
             }
         }
 
         if (last_updated != R) {
-            while (r < rhs->m_last && !item_owned(rhs->m_item_pairs[r])) {
+            lhs_key = lhs->m_item_pairs[l].first->key();
+            while (!item_owned(rhs->m_item_pairs[r])) {
                 r++;
+                if (r >= rhs->m_last) {
+                    goto outer;
+                }
+                rhs_key = rhs->m_item_pairs[r].first->key();
             }
         }
 
-        if (l >= lhs->m_last || r >= rhs->m_last) {
-            break;
-        }
-
-        auto &lelem = lhs->m_item_pairs[l];
-        auto &relem = rhs->m_item_pairs[r];
-
-        if (lelem.first->key() < relem.first->key()) {
-            m_item_pairs[dst++] = lelem;
+        if (lhs_key < rhs_key) {
+            m_item_pairs[dst++] = lhs->m_item_pairs[l];
             l++;
             last_updated = L;
         } else {
-            m_item_pairs[dst++] = relem;
+            m_item_pairs[dst++] = rhs->m_item_pairs[r];
             r++;
             last_updated = R;
         }
     }
 
+outer:
     while (l < lhs->m_last) {
         auto &lelem = lhs->m_item_pairs[l];
         if (!item_owned(lelem)) {
