@@ -43,7 +43,11 @@ template <class K, class V>
 class block
 {
 private:
-    typedef std::pair<item<K, V> *, version_t> item_pair_t;
+    typedef struct {
+        item<K, V> *first;
+        version_t second;
+        K key;
+    } item_pair_t;
 
 public:
     /** Information about a specific item. A nullptr item denotes failure of the operation. */

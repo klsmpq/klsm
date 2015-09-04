@@ -81,6 +81,7 @@ block<K, V>::insert_tail(item<K, V> *it,
 
     m_item_pairs[m_last].first  = it;
     m_item_pairs[m_last].second = version;
+    m_item_pairs[m_last].key = it->key();
 
     m_last++;
 }
@@ -122,24 +123,24 @@ block<K, V>::merge(const block<K, V> *lhs,
 
     while (l < lhs->m_last && r < rhs->m_last) {
         if (last_updated != L) {
-            rhs_key = rhs->m_item_pairs[r].first->key();
+            rhs_key = rhs->m_item_pairs[r].key;
             while (!item_owned(rhs->m_item_pairs[r])) {
                 r++;
                 if (r >= rhs->m_last) {
                     goto outer;
                 }
-                rhs_key = rhs->m_item_pairs[r].first->key();
+                rhs_key = rhs->m_item_pairs[r].key;
             }
         }
 
         if (last_updated != R) {
-            lhs_key = lhs->m_item_pairs[l].first->key();
+            lhs_key = lhs->m_item_pairs[l].key;
             while (!item_owned(lhs->m_item_pairs[l])) {
                 l++;
                 if (l >= lhs->m_last) {
                     goto outer;
                 }
-                lhs_key = lhs->m_item_pairs[l].first->key();
+                lhs_key = lhs->m_item_pairs[l].key;
             }
         }
 
@@ -215,7 +216,7 @@ block<K, V>::peek()
     peek_t p;
     for (size_t i = m_first; i < m_last; i++) {
         p.m_item    = m_item_pairs[i].first;
-        p.m_key     = m_item_pairs[i].first->key();
+        p.m_key     = m_item_pairs[i].key;
         p.m_index   = i;
         p.m_version = m_item_pairs[i].second;
 
@@ -253,7 +254,7 @@ block<K, V>::peek_nth(const size_t n)
         return p;
     }
 
-    p.m_key     = m_item_pairs[n].first->key();
+    p.m_key     = m_item_pairs[n].key;
     p.m_item    = m_item_pairs[n].first;
     p.m_index   = n;
     p.m_version = m_item_pairs[n].second;
@@ -266,7 +267,7 @@ bool
 block<K, V>::peek_tail(K &key)
 {
     for (int i = (int)m_last - 1; i >= (int)m_first; i--) {
-        key = m_item_pairs[i].first->key();
+        key = m_item_pairs[i].key;
         if (item_owned(m_item_pairs[i])) {
             return true;
         }
