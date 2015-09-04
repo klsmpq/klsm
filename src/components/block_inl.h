@@ -123,23 +123,23 @@ block<K, V>::merge(const block<K, V> *lhs,
     while (l < lhs->m_last && r < rhs->m_last) {
         if (last_updated != L) {
             rhs_key = rhs->m_item_pairs[r].first->key();
-            while (!item_owned(lhs->m_item_pairs[l])) {
-                l++;
-                if (l >= lhs->m_last) {
-                    goto outer;
-                }
-                lhs_key = lhs->m_item_pairs[l].first->key();
-            }
-        }
-
-        if (last_updated != R) {
-            lhs_key = lhs->m_item_pairs[l].first->key();
             while (!item_owned(rhs->m_item_pairs[r])) {
                 r++;
                 if (r >= rhs->m_last) {
                     goto outer;
                 }
                 rhs_key = rhs->m_item_pairs[r].first->key();
+            }
+        }
+
+        if (last_updated != R) {
+            lhs_key = lhs->m_item_pairs[l].first->key();
+            while (!item_owned(lhs->m_item_pairs[l])) {
+                l++;
+                if (l >= lhs->m_last) {
+                    goto outer;
+                }
+                lhs_key = lhs->m_item_pairs[l].first->key();
             }
         }
 
