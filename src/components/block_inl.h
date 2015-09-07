@@ -124,24 +124,10 @@ block<K, V>::merge(const block<K, V> *lhs,
     while (l < lhs->m_last && r < rhs->m_last) {
         if (last_updated != L) {
             rhs_key = rhs->m_block_items[r].m_key;
-            while (!item_owned(rhs->m_block_items[r])) {
-                r++;
-                if (r >= rhs->m_last) {
-                    goto outer;
-                }
-                rhs_key = rhs->m_block_items[r].m_key;
-            }
         }
 
         if (last_updated != R) {
             lhs_key = lhs->m_block_items[l].m_key;
-            while (!item_owned(lhs->m_block_items[l])) {
-                l++;
-                if (l >= lhs->m_last) {
-                    goto outer;
-                }
-                lhs_key = lhs->m_block_items[l].m_key;
-            }
         }
 
         if (lhs_key < rhs_key) {
@@ -155,25 +141,36 @@ block<K, V>::merge(const block<K, V> *lhs,
         }
     }
 
-outer:
     while (l < lhs->m_last) {
         auto &lelem = lhs->m_block_items[l];
-        if (!item_owned(lelem)) {
-            l++;
-            continue;
-        }
         m_block_items[dst++] = lelem;
         l++;
     }
 
     while (r < rhs->m_last) {
         auto &relem = rhs->m_block_items[r];
-        if (!item_owned(relem)) {
-            r++;
-            continue;
-        }
         m_block_items[dst++] = relem;
         r++;
+    }
+
+    const size_t size = lhs->m_last + rhs->m_last - lhs_first - rhs_first;
+    const size_t skipped_prunes = std::max(lhs->m_skipped_prunes, rhs->m_skipped_prunes);
+    if (skipped_prunes > MAX_SKIPPED_PRUNES) {
+        size_t dst = 0;
+        for (size_t src = 0; src < size; src++) {
+            if (!item_owned(m_block_items[src])) {
+                continue;
+            } else if (src != dst) {
+                m_block_items[dst] = m_block_items[src];
+            }
+            dst++;
+        }
+
+        m_last = dst;
+        m_skipped_prunes = 0;
+    } else {
+        m_last = size;
+        m_skipped_prunes = skipped_prunes + 1;
     }
 
     m_last = dst;

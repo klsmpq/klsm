@@ -141,6 +141,9 @@ private:
 
     /** Specifies whether the block is currently in use. */
     bool m_used;
+
+    static constexpr size_t MAX_SKIPPED_PRUNES = 16;
+    size_t m_skipped_prunes;
 };
 
 #include "block_inl.h"
