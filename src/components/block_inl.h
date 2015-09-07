@@ -101,10 +101,6 @@ block<K, V>::merge(const block<K, V> *lhs,
                    const block<K, V> *rhs,
                    const size_t rhs_first)
 {
-    constexpr static int NONE = 0;
-    constexpr static int L = 1;
-    constexpr static int R = 2;
-
     /* The following assertions are no longer valid since we now sometimes merge blocks
      * of different capacities.
     assert(m_power_of_2 == lhs->power_of_2() + 1);
@@ -116,44 +112,42 @@ block<K, V>::merge(const block<K, V> *lhs,
 
     /* Merge. */
 
+    const size_t lhs_last = lhs->m_last;
+    const size_t rhs_last = rhs->m_last;
+
     size_t l = lhs_first, r = rhs_first, dst = 0;
-    int last_updated = NONE;
-    K lhs_key, rhs_key;
-    lhs_key = rhs_key = std::numeric_limits<K>::min();
+    K lhs_key = lhs->m_block_items[l].m_key;
+    K rhs_key = rhs->m_block_items[r].m_key;
 
-    while (l < lhs->m_last && r < rhs->m_last) {
-        if (last_updated != L) {
-            rhs_key = rhs->m_block_items[r].m_key;
-        }
-
-        if (last_updated != R) {
-            lhs_key = lhs->m_block_items[l].m_key;
-        }
-
+    while (l < lhs_last && r < rhs_last) {
         if (lhs_key < rhs_key) {
             m_block_items[dst++] = lhs->m_block_items[l];
             l++;
-            last_updated = L;
+            if (l < lhs_last) {
+                lhs_key = lhs->m_block_items[l].m_key;
+            }
         } else {
             m_block_items[dst++] = rhs->m_block_items[r];
             r++;
-            last_updated = R;
+            if (r < rhs_last) {
+                rhs_key = rhs->m_block_items[r].m_key;
+            }
         }
     }
 
-    while (l < lhs->m_last) {
+    while (l < lhs_last) {
         auto &lelem = lhs->m_block_items[l];
         m_block_items[dst++] = lelem;
         l++;
     }
 
-    while (r < rhs->m_last) {
+    while (r < rhs_last) {
         auto &relem = rhs->m_block_items[r];
         m_block_items[dst++] = relem;
         r++;
     }
 
-    const size_t size = lhs->m_last + rhs->m_last - lhs_first - rhs_first;
+    const size_t size = lhs_last + rhs_last - lhs_first - rhs_first;
     const size_t skipped_prunes = std::max(lhs->m_skipped_prunes, rhs->m_skipped_prunes);
     if (skipped_prunes > MAX_SKIPPED_PRUNES) {
         size_t dst = 0;
