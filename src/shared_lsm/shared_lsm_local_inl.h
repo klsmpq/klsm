@@ -18,7 +18,8 @@
  */
 
 template <class K, class V, int Rlx>
-shared_lsm_local<K, V, Rlx>::shared_lsm_local()
+shared_lsm_local<K, V, Rlx>::shared_lsm_local() :
+    m_cached_best(block<K, V>::peek_t::EMPTY())
 {
 }
 
@@ -100,7 +101,7 @@ shared_lsm_local<K, V, Rlx>::delete_min(
         V &val,
         versioned_array_ptr<K, V, Rlx> &global_array)
 {
-    typename block<K, V>::peek_t best;
+    typename block<K, V>::peek_t best = block<K, V>::peek_t::EMPTY();
     peek(best, global_array);
 
     if (best.m_item == nullptr) {

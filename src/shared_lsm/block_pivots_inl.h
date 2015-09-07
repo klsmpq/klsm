@@ -56,11 +56,13 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
 
-    typename block<K, V>::peek_t best;
+    typename block<K, V>::peek_t best = block<K, V>::peek_t::EMPTY();
     int best_block_ix = -1;
+    int best_item_ix = -1;
     for (size_t i = 0; i < size; i++) {
         auto b = blocks[i];
-        auto candidate  = b->peek();
+        size_t candidate_ix;
+        auto candidate  = b->peek(candidate_ix);
 
         m_first_in_block[i] = m_pivots[i] = b->first();
 
@@ -68,6 +70,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
                 (!best.empty() && !candidate.empty() && candidate.m_key < best.m_key)) {
             best = candidate;
             best_block_ix = i;
+            best_item_ix = candidate_ix;
         }
     }
 
@@ -76,7 +79,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
         return 0;
     }
 
-    m_pivots[best_block_ix] = best.m_index + 1;
+    m_pivots[best_block_ix] = best_item_ix + 1;
 
     m_count = 1;
     m_count_for_size = size;

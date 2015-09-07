@@ -20,7 +20,8 @@
 template <class K, class V, int Rlx>
 dist_lsm_local<K, V, Rlx>::dist_lsm_local() :
     m_head(nullptr),
-    m_tail(nullptr)
+    m_tail(nullptr),
+    m_cached_best(block<K, V>::peek_t::EMPTY())
 {
 }
 
@@ -56,7 +57,6 @@ dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
     if (m_cached_best.empty() || it_key < m_cached_best.m_key) {
         m_cached_best.m_key     = it_key;
         m_cached_best.m_item    = it;
-        m_cached_best.m_index   = 0; /* Dummy value. */
         m_cached_best.m_version = version;
     } else if (m_cached_best.taken()) {
         m_cached_best.m_item    = nullptr;
@@ -157,7 +157,7 @@ bool
 dist_lsm_local<K, V, Rlx>::delete_min(dist_lsm<K, V, Rlx> *parent,
                                       V &val)
 {
-    typename block<K, V>::peek_t best;
+    typename block<K, V>::peek_t best = block<K, V>::peek_t::EMPTY();
     peek(best);
 
     if (best.m_item == nullptr && spy(parent) > 0) {

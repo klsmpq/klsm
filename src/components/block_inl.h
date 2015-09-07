@@ -21,7 +21,7 @@ template <class K, class V>
 typename block<K, V>::peek_t
 block<K, V>::spying_iterator::next()
 {
-    peek_t p;
+    peek_t p = peek_t::EMPTY();
 
     while (m_next < m_last) {
         const auto &item = m_block_items[m_next++];
@@ -212,15 +212,22 @@ template <class K, class V>
 typename block<K, V>::peek_t
 block<K, V>::peek()
 {
-    const bool called_by_owner = (tid() == m_owner_tid);
-    peek_t p;
-    for (size_t i = m_first; i < m_last; i++) {
-        p.m_item    = m_block_items[i].m_item;
-        p.m_key     = m_block_items[i].m_key;
-        p.m_index   = i;
-        p.m_version = m_block_items[i].m_version;
+    size_t ix;
+    return peek(ix);
+}
 
-        if (item_owned(m_block_items[i])) {
+template <class K, class V>
+typename block<K, V>::peek_t
+block<K, V>::peek(size_t &ix)
+{
+    const bool called_by_owner = (tid() == m_owner_tid);
+    peek_t p = peek_t::EMPTY();
+    for (ix = m_first; ix < m_last; ix++) {
+        p.m_item    = m_block_items[ix].m_item;
+        p.m_key     = m_block_items[ix].m_key;
+        p.m_version = m_block_items[ix].m_version;
+
+        if (item_owned(m_block_items[ix])) {
             return p;
         }
 
@@ -232,7 +239,7 @@ block<K, V>::peek()
          * called by the owning thread, we potentially need to check every
          * item in the block before returning the last one. */
         if (called_by_owner) {
-            m_first = i + 1;
+            m_first = ix + 1;
         }
     }
 
@@ -246,7 +253,7 @@ block<K, V>::peek_nth(const size_t n)
 {
     assert(n < m_capacity);
 
-    peek_t p;
+    peek_t p = peek_t::EMPTY();
 
     if (m_block_items[n].m_item == nullptr) {
         return p;
@@ -256,7 +263,6 @@ block<K, V>::peek_nth(const size_t n)
 
     p.m_key     = m_block_items[n].m_key;
     p.m_item    = m_block_items[n].m_item;
-    p.m_index   = n;
     p.m_version = m_block_items[n].m_version;
 
     return p;

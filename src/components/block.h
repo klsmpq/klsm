@@ -43,20 +43,6 @@ template <class K, class V>
 class block
 {
 public:
-    /** Information about a specific item. A nullptr item denotes failure of the operation. */
-    struct peek_t {
-        peek_t() : m_item(nullptr), m_version(0) { }
-
-        bool taken() const { return m_item->version() != m_version; }
-        bool empty() const { return (m_item == nullptr); }
-        bool take(V &val) { return m_item->take(m_version, val); }
-
-        K m_key;
-        item<K, V> *m_item;
-        size_t m_index;  /**< The item's index within the block. */
-        version_t m_version;
-    };
-
     struct block_item {
         static block_item EMPTY() { return { K(), nullptr, 0 }; }
 
@@ -67,8 +53,10 @@ public:
         K m_key;
         item<K, V> *m_item;
         version_t m_version;
-
     };
+
+    /** Information about a specific item. A nullptr item denotes failure of the operation. */
+    typedef struct block_item peek_t;
 
     class spying_iterator
     {
@@ -100,6 +88,7 @@ public:
     /** Returns null if the block is empty, and a peek_t struct of the minimal item
      *  otherwise. Removes observed unowned items from the current block. */
     peek_t peek();
+    peek_t peek(size_t &ix);
 
     /** Iterates the block from last to first and sets key to the first key it finds.
      *  If none are found, returns false. */

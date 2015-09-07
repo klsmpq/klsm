@@ -231,7 +231,7 @@ block_array<K, V, Rlx>::peek()
 
         /* Select a random element within the range, find it, and return it. */
 
-        typename block<K,  V>::peek_t best;
+        typename block<K,  V>::peek_t best = block<K, V>::peek_t::EMPTY();
         if (ncandidates == 0) {
             return best;
         }

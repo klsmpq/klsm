@@ -97,7 +97,9 @@ k_lsm<K, V, Rlx>::delete_min(V &val)
      * interactions between memory management here.
      */
 
-    typename block<K, V>::peek_t best_dist, best_shared;
+    typename block<K, V>::peek_t
+            best_dist = block<K, V>::peek_t::EMPTY(),
+            best_shared = block<K, V>::peek_t::EMPTY();
 
     do {
         m_dist.find_min(best_dist);
