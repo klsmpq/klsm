@@ -220,6 +220,7 @@ block_array<K, V, Rlx>::peek()
      * might have changed in the meantime).
      */
 
+    typename block<K, V>::peek_t ret = block<K, V>::peek_t::EMPTY();
     while (true) {
         int ncandidates = m_pivots.count(m_size);
 
@@ -231,9 +232,8 @@ block_array<K, V, Rlx>::peek()
 
         /* Select a random element within the range, find it, and return it. */
 
-        typename block<K,  V>::peek_t best = block<K, V>::peek_t::EMPTY();
         if (ncandidates == 0) {
-            return best;
+            return ret;
         }
 
         std::uniform_int_distribution<int> dist(0, ncandidates - 1);
@@ -241,6 +241,7 @@ block_array<K, V, Rlx>::peek()
 
         size_t block_ix;
         block<K, V> *b = nullptr;
+        const typename block<K,  V>::block_item *best = nullptr;
         for (block_ix = 0; block_ix < m_size; block_ix++) {
             const int elements_in_range = m_pivots.count_in(block_ix);
 
@@ -259,19 +260,21 @@ block_array<K, V, Rlx>::peek()
         /* The selected item has already been taken, fall back to removing
          * the minimal item within the same block (possibly the same item). */
 
-        if (best.empty() && b != nullptr && block_ix < m_size) {
+        if (best != nullptr && best->taken() && block_ix < m_size) {
             while (m_pivots.count_in(block_ix) > 0) {
                 best = b->peek_nth(m_pivots.nth_ix_in(0, block_ix));
-                if (!best.empty()) {
-                    return best;
+                if (!best->taken()) {
+                    ret = *best;
+                    return ret;
                 } else {
                     m_pivots.mark_first_taken_in(block_ix);
                 }
             }
         }
 
-        if (!best.empty()) {
-            return best;
+        if (best != nullptr && !best->taken()) {
+            ret = *best;
+            return ret;
         }
     }
 }

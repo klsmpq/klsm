@@ -150,13 +150,13 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
                  tentative_pivots[block_ix] < last;
                  tentative_pivots[block_ix]++) {
                 auto peeked_item = b->peek_nth(tentative_pivots[block_ix]);
-                if (peeked_item.empty()) {
+                if (peeked_item->taken()) {
                     continue;
-                } else if (peeked_item.m_key > mid) {
+                } else if (peeked_item->m_key > mid) {
                     break;
                 } else {
                     elements_in_tentative_range++;
-                    maximal_key = std::max(maximal_key, peeked_item.m_key);
+                    maximal_key = std::max(maximal_key, peeked_item->m_key);
                 }
 
                 if (elements_in_tentative_range > Rlx + 1) {
@@ -251,7 +251,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::pivot_of(block<K, V> *block) const
     const size_t upper_bound = std::min(first + Rlx + 1, block->last());
     for (size_t i = first; i < upper_bound; i++) {
         auto p = block->peek_nth(i);
-        if (!p.empty() && p.m_key > m_maximal_pivot) {
+        if (!p->taken() && p->m_key > m_maximal_pivot) {
             return i;
         }
     }

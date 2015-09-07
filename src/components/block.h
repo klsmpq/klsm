@@ -94,8 +94,8 @@ public:
      *  If none are found, returns false. */
     bool peek_tail(K &key);
 
-    /** Returns the n-th item within this block (i.e. items[n]). */
-    peek_t peek_nth(const size_t n);
+    /** Returns a pointer to the n-th item within this block (i.e. &items[n]). */
+    const block_item *peek_nth(const size_t n) const;
 
     spying_iterator iterator();
 

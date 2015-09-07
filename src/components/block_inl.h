@@ -245,24 +245,11 @@ block<K, V>::peek(size_t &ix)
 }
 
 template <class K, class V>
-typename block<K, V>::peek_t
-block<K, V>::peek_nth(const size_t n)
+const typename block<K, V>::block_item *
+block<K, V>::peek_nth(const size_t n) const
 {
     assert(n < m_capacity);
-
-    peek_t p = peek_t::EMPTY();
-
-    if (m_block_items[n].m_item == nullptr) {
-        return p;
-    } else if (!item_owned(m_block_items[n])) {
-        return p;
-    }
-
-    p.m_key     = m_block_items[n].m_key;
-    p.m_item    = m_block_items[n].m_item;
-    p.m_version = m_block_items[n].m_version;
-
-    return p;
+    return &m_block_items[n];
 }
 
 template <class K, class V>
