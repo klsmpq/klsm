@@ -114,60 +114,47 @@ block<K, V>::merge(const block<K, V> *lhs,
 
     const size_t lhs_last = lhs->m_last;
     const size_t rhs_last = rhs->m_last;
-
-    size_t l = lhs_first, r = rhs_first, dst = 0;
-    K lhs_key = lhs->m_block_items[l].m_key;
-    K rhs_key = rhs->m_block_items[r].m_key;
-
-    while (l < lhs_last && r < rhs_last) {
-        if (lhs_key < rhs_key) {
-            m_block_items[dst++] = lhs->m_block_items[l];
-            l++;
-            if (l < lhs_last) {
-                lhs_key = lhs->m_block_items[l].m_key;
-            }
-        } else {
-            m_block_items[dst++] = rhs->m_block_items[r];
-            r++;
-            if (r < rhs_last) {
-                rhs_key = rhs->m_block_items[r].m_key;
-            }
-        }
-    }
-
-    while (l < lhs_last) {
-        auto &lelem = lhs->m_block_items[l];
-        m_block_items[dst++] = lelem;
-        l++;
-    }
-
-    while (r < rhs_last) {
-        auto &relem = rhs->m_block_items[r];
-        m_block_items[dst++] = relem;
-        r++;
-    }
-
     const size_t size = lhs_last + rhs_last - lhs_first - rhs_first;
+    if (size > m_capacity) {
+        /* A source block has been reused, exit early and fail when verifying
+         * the local array copy later. */
+        return;
+    }
+
+    auto l = lhs->m_block_items + lhs_first;
+    auto r = rhs->m_block_items + rhs_first;
+    const auto lend = lhs->m_block_items + lhs_last;
+    const auto rend = rhs->m_block_items + rhs_last;
+
+    auto dst = m_block_items;
+    while (l < lend && r < rend) {
+        *dst++ = (l->m_key < r->m_key) ? *l++ : *r++;
+    }
+
+    while (l < lend) *dst++ = *l++;
+    while (r < rend) *dst++ = *r++;
+
+    /* Prune. */
+
     const size_t skipped_prunes = std::max(lhs->m_skipped_prunes, rhs->m_skipped_prunes);
     if (skipped_prunes > MAX_SKIPPED_PRUNES) {
-        size_t dst = 0;
-        for (size_t src = 0; src < size; src++) {
-            if (!item_owned(m_block_items[src])) {
+        const auto end = dst;
+        dst = m_block_items;
+        for (auto src = dst; src < end; src++) {
+            if (src->taken()) {
                 continue;
             } else if (src != dst) {
-                m_block_items[dst] = m_block_items[src];
+                *dst = *src;
             }
             dst++;
         }
 
-        m_last = dst;
+        m_last = dst - m_block_items;
         m_skipped_prunes = 0;
     } else {
         m_last = size;
         m_skipped_prunes = skipped_prunes + 1;
     }
-
-    m_last = dst;
 
     assert(m_last <= m_capacity);
 }
