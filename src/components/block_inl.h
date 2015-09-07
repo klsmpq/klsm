@@ -24,13 +24,13 @@ block<K, V>::spying_iterator::next()
     peek_t p;
 
     while (m_next < m_last) {
-        const auto &item = m_item_pairs[m_next++];
+        const auto &item = m_block_items[m_next++];
 
-        p.m_version = item.second;
-        p.m_item    = item.first;
-        p.m_key     = item.first->key();
+        p.m_version = item.m_version;
+        p.m_item    = item.m_item;
+        p.m_key     = item.m_item->key();
 
-        if (item.second != p.m_version) {
+        if (item.m_version != p.m_version) {
             p.m_item = nullptr;
         } else {
             break;
@@ -49,7 +49,7 @@ block<K, V>::block(const size_t power_of_2) :
     m_power_of_2(power_of_2),
     m_capacity(1 << power_of_2),
     m_owner_tid(tid()),
-    m_item_pairs(new item_pair_t[m_capacity]),
+    m_block_items(new block_item[m_capacity]),
     m_used(false)
 {
 }
@@ -57,7 +57,7 @@ block<K, V>::block(const size_t power_of_2) :
 template <class K, class V>
 block<K, V>::~block()
 {
-    delete[] m_item_pairs;
+    delete[] m_block_items;
 }
 
 template <class K, class V>
@@ -79,9 +79,9 @@ block<K, V>::insert_tail(item<K, V> *it,
     assert(m_used);
     assert(m_last < m_capacity);
 
-    m_item_pairs[m_last].first  = it;
-    m_item_pairs[m_last].second = version;
-    m_item_pairs[m_last].key = it->key();
+    m_block_items[m_last].m_item  = it;
+    m_block_items[m_last].m_version = version;
+    m_block_items[m_last].m_key = it->key();
 
     m_last++;
 }
@@ -123,33 +123,33 @@ block<K, V>::merge(const block<K, V> *lhs,
 
     while (l < lhs->m_last && r < rhs->m_last) {
         if (last_updated != L) {
-            rhs_key = rhs->m_item_pairs[r].key;
-            while (!item_owned(rhs->m_item_pairs[r])) {
+            rhs_key = rhs->m_block_items[r].m_key;
+            while (!item_owned(rhs->m_block_items[r])) {
                 r++;
                 if (r >= rhs->m_last) {
                     goto outer;
                 }
-                rhs_key = rhs->m_item_pairs[r].key;
+                rhs_key = rhs->m_block_items[r].m_key;
             }
         }
 
         if (last_updated != R) {
-            lhs_key = lhs->m_item_pairs[l].key;
-            while (!item_owned(lhs->m_item_pairs[l])) {
+            lhs_key = lhs->m_block_items[l].m_key;
+            while (!item_owned(lhs->m_block_items[l])) {
                 l++;
                 if (l >= lhs->m_last) {
                     goto outer;
                 }
-                lhs_key = lhs->m_item_pairs[l].key;
+                lhs_key = lhs->m_block_items[l].m_key;
             }
         }
 
         if (lhs_key < rhs_key) {
-            m_item_pairs[dst++] = lhs->m_item_pairs[l];
+            m_block_items[dst++] = lhs->m_block_items[l];
             l++;
             last_updated = L;
         } else {
-            m_item_pairs[dst++] = rhs->m_item_pairs[r];
+            m_block_items[dst++] = rhs->m_block_items[r];
             r++;
             last_updated = R;
         }
@@ -157,22 +157,22 @@ block<K, V>::merge(const block<K, V> *lhs,
 
 outer:
     while (l < lhs->m_last) {
-        auto &lelem = lhs->m_item_pairs[l];
+        auto &lelem = lhs->m_block_items[l];
         if (!item_owned(lelem)) {
             l++;
             continue;
         }
-        m_item_pairs[dst++] = lelem;
+        m_block_items[dst++] = lelem;
         l++;
     }
 
     while (r < rhs->m_last) {
-        auto &relem = rhs->m_item_pairs[r];
+        auto &relem = rhs->m_block_items[r];
         if (!item_owned(relem)) {
             r++;
             continue;
         }
-        m_item_pairs[dst++] = relem;
+        m_block_items[dst++] = relem;
         r++;
     }
 
@@ -197,12 +197,12 @@ block<K, V>::copy(const block<K, V> *that)
              * will fail once this thread tries to publish it's array. */
             return;
         }
-        auto &elem = that->m_item_pairs[i];
+        auto &elem = that->m_block_items[i];
         if (!item_owned(elem)) {
             continue;
         }
 
-        m_item_pairs[dst++] = elem;
+        m_block_items[dst++] = elem;
     }
 
     m_last = dst;
@@ -215,12 +215,12 @@ block<K, V>::peek()
     const bool called_by_owner = (tid() == m_owner_tid);
     peek_t p;
     for (size_t i = m_first; i < m_last; i++) {
-        p.m_item    = m_item_pairs[i].first;
-        p.m_key     = m_item_pairs[i].key;
+        p.m_item    = m_block_items[i].m_item;
+        p.m_key     = m_block_items[i].m_key;
         p.m_index   = i;
-        p.m_version = m_item_pairs[i].second;
+        p.m_version = m_block_items[i].m_version;
 
-        if (item_owned(m_item_pairs[i])) {
+        if (item_owned(m_block_items[i])) {
             return p;
         }
 
@@ -248,16 +248,16 @@ block<K, V>::peek_nth(const size_t n)
 
     peek_t p;
 
-    if (m_item_pairs[n].first == nullptr) {
+    if (m_block_items[n].m_item == nullptr) {
         return p;
-    } else if (!item_owned(m_item_pairs[n])) {
+    } else if (!item_owned(m_block_items[n])) {
         return p;
     }
 
-    p.m_key     = m_item_pairs[n].key;
-    p.m_item    = m_item_pairs[n].first;
+    p.m_key     = m_block_items[n].m_key;
+    p.m_item    = m_block_items[n].m_item;
     p.m_index   = n;
-    p.m_version = m_item_pairs[n].second;
+    p.m_version = m_block_items[n].m_version;
 
     return p;
 }
@@ -267,8 +267,8 @@ bool
 block<K, V>::peek_tail(K &key)
 {
     for (int i = (int)m_last - 1; i >= (int)m_first; i--) {
-        key = m_item_pairs[i].key;
-        if (item_owned(m_item_pairs[i])) {
+        key = m_block_items[i].m_key;
+        if (item_owned(m_block_items[i])) {
             return true;
         }
         /* Last item is not owned by us anymore, clean it up. */
@@ -283,7 +283,7 @@ block<K, V>::iterator()
 {
     typename block<K, V>::spying_iterator it;
 
-    it.m_item_pairs = m_item_pairs;
+    it.m_block_items = m_block_items;
     it.m_next = m_first;
     it.m_last = m_last;
 
@@ -363,8 +363,8 @@ block<K, V>::set_used()
 
 template <class K, class V>
 bool
-block<K, V>::item_owned(const item_pair_t &item_pair)
+block<K, V>::item_owned(const block_item &block_item)
 {
-    const auto *item_ptr = item_pair.first;
-    return (item_ptr != nullptr && item_ptr->version() == item_pair.second);
+    const auto *item_ptr = block_item.m_item;
+    return (item_ptr != nullptr && item_ptr->version() == block_item.m_version);
 }

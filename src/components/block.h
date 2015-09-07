@@ -42,13 +42,6 @@ namespace kpq
 template <class K, class V>
 class block
 {
-private:
-    typedef struct {
-        item<K, V> *first;
-        version_t second;
-        K key;
-    } item_pair_t;
-
 public:
     /** Information about a specific item. A nullptr item denotes failure of the operation. */
     struct peek_t {
@@ -64,6 +57,19 @@ public:
         version_t m_version;
     };
 
+    struct block_item {
+        static block_item EMPTY() { return { K(), nullptr, 0 }; }
+
+        bool taken() const { return m_item->version() != m_version; }
+        bool empty() const { return (m_item == nullptr); }
+        bool take(V &val) { return m_item->take(m_version, val); }
+
+        K m_key;
+        item<K, V> *m_item;
+        version_t m_version;
+
+    };
+
     class spying_iterator
     {
         friend class block<K, V>;
@@ -71,7 +77,7 @@ public:
         peek_t next();
 
     private:
-        item_pair_t *m_item_pairs;
+        block_item *m_block_items;
         size_t m_last, m_next;
     };
 
@@ -123,7 +129,7 @@ public:
     block<K, V> *m_prev;
 
 private:
-    static bool item_owned(const item_pair_t &item_pair);
+    static bool item_owned(const block_item &block_item);
 
 private:
     /** Points to the lowest known filled index. */
@@ -142,7 +148,7 @@ private:
 
     const int32_t m_owner_tid;
 
-    item_pair_t *m_item_pairs;
+    block_item *m_block_items;
 
     /** Specifies whether the block is currently in use. */
     bool m_used;
