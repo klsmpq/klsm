@@ -41,7 +41,7 @@ public:
                 const size_t size);
 
     /** Counts the number of elements within the pivot range. */
-    size_t count(const size_t size) const;
+    size_t count(const size_t size);
     size_t count_in(const size_t block_ix) const;
 
     size_t nth_ix_in(const size_t relative_element_ix,
@@ -66,6 +66,8 @@ private:
                   const size_t size);
 
 private:
+    static constexpr size_t INVALID_COUNT_FOR_SIZE = MaxBlocks + 1;
+
     /**
      * For each block in the array, stores an index i such that for all indices j < i,
      * block[j] is guaranteed to be within the k smallest keys of the array. These indices
@@ -75,6 +77,14 @@ private:
     int m_pivots[MaxBlocks];
     int m_first_in_block[MaxBlocks];
     K m_maximal_pivot;
+
+    /**
+     * A cache used to reduce the number of required count recalculations. m_count_for_size
+     * denotes which block count size was previously cached for. Setting it to MaxBlocks forces
+     * a recalculation of size.
+     */
+    size_t m_count;
+    size_t m_count_for_size;
 };
 
 #include "block_pivots_inl.h"

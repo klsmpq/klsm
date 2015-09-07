@@ -23,7 +23,9 @@ template <class K, class V, int Rlx, int MaxBlocks>
 block_pivots<K, V, Rlx, MaxBlocks>::block_pivots() :
     m_pivots { 0 },
     m_first_in_block { 0 },
-    m_maximal_pivot(std::numeric_limits<K>::min())
+    m_maximal_pivot(std::numeric_limits<K>::min()),
+    m_count { 0 },
+    m_count_for_size { INVALID_COUNT_FOR_SIZE }
 {
 }
 
@@ -39,6 +41,9 @@ block_pivots<K, V, Rlx, MaxBlocks>::operator=(const block_pivots<K, V, Rlx, MaxB
     memcpy(m_pivots, that.m_pivots, sizeof(m_pivots));
     memcpy(m_first_in_block, that.m_first_in_block, sizeof(m_first_in_block));
     m_maximal_pivot = that.m_maximal_pivot;
+
+    m_count = that.m_count;
+    m_count_for_size = that.m_count_for_size;
 
     return *this;
 }
@@ -72,6 +77,9 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
     }
 
     m_pivots[best_block_ix] = best.m_index + 1;
+
+    m_count = 1;
+    m_count_for_size = size;
 
     return resize(1,
                   best.m_key,
@@ -181,18 +189,26 @@ outer:
     if (m_pivots != tentative_pivots) {
         memcpy(m_pivots, tentative_pivots, sizeof(m_pivots));
     }
+
+    m_count_for_size = INVALID_COUNT_FOR_SIZE;
+    m_count = count(size);
+
     return elements_in_tentative_range;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
 size_t
-block_pivots<K, V, Rlx, MaxBlocks>::count(const size_t size) const
+block_pivots<K, V, Rlx, MaxBlocks>::count(const size_t size)
 {
-    int count = 0;
-    for (size_t i = 0; i < size; i++) {
-        count += count_in(i);
+    if (m_count_for_size == size) {
+        return m_count;
     }
-    return count;
+
+    m_count = 0;
+    for (m_count_for_size = 0; m_count_for_size < size; m_count_for_size++) {
+        m_count += count_in(m_count_for_size);
+    }
+    return m_count;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
@@ -219,6 +235,9 @@ block_pivots<K, V, Rlx, MaxBlocks>::mark_first_taken_in(const size_t block_ix)
 {
     assert(block_ix < MaxBlocks);
     m_first_in_block[block_ix]++;
+    if (block_ix < m_count_for_size) {
+        m_count--;
+    }
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
@@ -260,6 +279,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::set(const size_t block_ix,
 {
     m_first_in_block[block_ix] = first_in_block;
     m_pivots[block_ix] = pivot;
+    m_count_for_size = INVALID_COUNT_FOR_SIZE;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
@@ -273,4 +293,5 @@ block_pivots<K, V, Rlx, MaxBlocks>::copy(const size_t src_ix,
 
     m_first_in_block[dst_ix] = m_first_in_block[src_ix];
     m_pivots[dst_ix] = m_pivots[src_ix];
+    m_count_for_size = INVALID_COUNT_FOR_SIZE;
 }
