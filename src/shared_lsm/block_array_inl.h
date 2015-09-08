@@ -236,8 +236,7 @@ block_array<K, V, Rlx>::peek()
             return ret;
         }
 
-        std::uniform_int_distribution<int> dist(0, ncandidates - 1);
-        int selected_element = dist(m_gen);
+        int selected_element = m_gen() % ncandidates;
 
         size_t block_ix;
         block<K, V> *b = nullptr;

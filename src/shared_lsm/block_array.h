@@ -22,10 +22,10 @@
 
 #include <atomic>
 #include <cstring>
-#include <random>
 #include <vector>
 
 #include "components/block.h"
+#include "util/xorshf96.h"
 #include "block_pivots.h"
 #include "block_pool.h"
 
@@ -80,7 +80,7 @@ private:
 
     std::atomic<version_t> m_version;
 
-    std::default_random_engine m_gen;
+    xorshf96 m_gen;
 };
 
 #include "block_array_inl.h"
