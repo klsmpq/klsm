@@ -287,11 +287,8 @@ block_array<K, V, Rlx>::copy_from(const block_array<K, V, Rlx> *that)
         m_version = that->m_version.load(std::memory_order_acquire);
         m_size = 0;
 
-        size_t i;
-        for (i = 0; i < that->m_size; i++) {
-            m_blocks[i] = that->m_blocks[i];
-        }
-        m_size = i;
+        m_size = that->m_size;
+        memcpy(m_blocks, that->m_blocks, sizeof(m_blocks[0]) * m_size);
 
         m_pivots = that->m_pivots;
     } while (that->m_version.load() != m_version);
