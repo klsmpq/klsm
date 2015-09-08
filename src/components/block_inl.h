@@ -340,6 +340,5 @@ template <class K, class V>
 bool
 block<K, V>::item_owned(const block_item &block_item)
 {
-    const auto *item_ptr = block_item.m_item;
-    return (item_ptr != nullptr && item_ptr->version() == block_item.m_version);
+    return (block_item.m_item->version() == block_item.m_version);
 }
