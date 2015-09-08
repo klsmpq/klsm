@@ -24,26 +24,22 @@
 #include <thread>
 #include <unistd.h>
 
-#include "dist_lsm/dist_lsm.h"
 #include "pqs/globallock.h"
-#include "pqs/linden.h"
-#include "pqs/sequence_heap.h"
-#include "pqs/skip_queue.h"
-#include "sequential_lsm/lsm.h"
+#include "pqs/multiq.h"
+#include "dist_lsm/dist_lsm.h"
+#include "k_lsm/k_lsm.h"
 #include "util.h"
 
-constexpr int DEFAULT_NNODES     = 1 << 10;
+constexpr int DEFAULT_NNODES     = 8192;
 constexpr int DEFAULT_NTHREADS   = 1;
 constexpr double DEFAULT_EDGE_P  = 0.5;
-constexpr int DEFAULT_RELAXATION = 32;
+constexpr int DEFAULT_RELAXATION = 256;
 constexpr int DEFAULT_SEED       = 0;
 
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
-#define PQ_LINDEN     "linden"
-#define PQ_LSM        "lsm"
-#define PQ_SEQUENCE   "sequence"
-#define PQ_SKIP       "skip"
+#define PQ_KLSM       "klsm"
+#define PQ_MULTIQ     "multiq"
 
 static hwloc_wrapper hwloc; /**< Thread pinning functionality. */
 
@@ -96,12 +92,12 @@ usage()
             "       -p: The probability of an edge between two nodes (default = %f)\n"
             "       -s: The random number generator seed (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
-            "           (one of '%s', %s', '%s', '%s', '%s', '%s')\n",
+            "           (one of '%s', %s', '%s', '%s')\n",
             DEFAULT_NNODES,
             DEFAULT_NTHREADS,
             DEFAULT_EDGE_P,
             DEFAULT_SEED,
-            PQ_DLSM, PQ_GLOBALLOCK, PQ_LINDEN, PQ_LSM, PQ_SEQUENCE, PQ_SKIP);
+            PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM, PQ_MULTIQ);
     exit(EXIT_FAILURE);
 }
 
@@ -342,22 +338,15 @@ main(int argc,
     if (s.type == PQ_DLSM) {
         kpq::dist_lsm<uint32_t, task_t *, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, s);
+    } else if (s.type == PQ_KLSM) {
+        kpq::k_lsm<uint32_t, task_t *, DEFAULT_RELAXATION> pq;
+        ret = bench(&pq, s);
     } else if (s.type == PQ_GLOBALLOCK) {
         kpqbench::GlobalLock<uint32_t, task_t *> pq;
         ret = bench(&pq, s);
-//    } else if (s.type == PQ_LINDEN) {
-//        kpq::Linden pq(kpq::Linden::DEFAULT_OFFSET);
-//        pq.insert(42); /* A hack to avoid segfault on destructor in empty linden queue. */
-//        ret = bench(&pq, s);
-//    } else if (s.type == PQ_LSM) {
-//        kpq::LSM<uint32_t> pq;
-//        ret = bench(&pq, s);
-//    } else if (s.type == PQ_SEQUENCE) {
-//        kpq::sequence_heap<uint32_t> pq;
-//        ret = bench(&pq, s);
-//    } else if (s.type == PQ_SKIP) {
-//        kpq::skip_queue<uint32_t> pq;
-//        ret = bench(&pq, s);
+    } else if (s.type == PQ_MULTIQ) {
+        kpqbench::multiq<uint32_t, task_t *> pq(s.num_threads);
+        ret = bench(&pq, s);
     } else {
         usage();
     }
