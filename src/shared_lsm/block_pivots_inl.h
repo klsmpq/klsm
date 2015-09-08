@@ -146,23 +146,29 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
             auto b = blocks[block_ix];
             const int last = b->last();
 
-            for (tentative_pivots[block_ix] = pivots[block_ix];
-                 tentative_pivots[block_ix] < last;
-                 tentative_pivots[block_ix]++) {
-                auto peeked_item = b->peek_nth(tentative_pivots[block_ix]);
-                if (peeked_item->taken()) {
+            int pivot = tentative_pivots[block_ix] = pivots[block_ix];
+            if (pivot >= last) {
+                continue;
+            }
+
+            auto it = b->peek_nth(pivot);
+            const auto end = it + last - pivot;
+            for (; it < end; it++, pivot++) {
+                if (it->taken()) {
                     continue;
-                } else if (peeked_item->m_key > mid) {
+                } else if (it->m_key > mid) {
                     break;
                 } else {
                     elements_in_tentative_range++;
-                    maximal_key = std::max(maximal_key, peeked_item->m_key);
+                    maximal_key = std::max(maximal_key, it->m_key);
                 }
 
                 if (elements_in_tentative_range > Rlx + 1) {
+                    tentative_pivots[block_ix] = pivot;
                     goto outer;
                 }
             }
+            tentative_pivots[block_ix] = pivot;
         }
 
 outer:
