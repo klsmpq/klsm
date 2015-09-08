@@ -167,23 +167,26 @@ block<K, V>::copy(const block<K, V> *that)
     assert(m_first == 0);
     assert(m_last == 0);
 
-    size_t dst = 0;
-    for (size_t i = that->m_first; i < that->m_last; i++) {
-        if (dst >= m_capacity) {
+    size_t last = 0;
+    auto dst = m_block_items;
+    auto src = that->m_block_items + that->m_first;
+    const auto end = that->m_block_items + that->m_last;
+    for (; src < end; src++) {
+        if (last >= m_capacity) {
             /* Can happen when a block is reused during the shared lsm's
              * insert(). In that case simply abort, the version compare exchange
              * will fail once this thread tries to publish it's array. */
             return;
         }
-        auto &elem = that->m_block_items[i];
-        if (!item_owned(elem)) {
+        if (src->taken()) {
             continue;
         }
 
-        m_block_items[dst++] = elem;
+        *dst++ = *src;
+        last++;
     }
 
-    m_last = dst;
+    m_last = last;
 }
 
 template <class K, class V>
@@ -200,12 +203,13 @@ block<K, V>::peek(size_t &ix)
 {
     const bool called_by_owner = (tid() == m_owner_tid);
     peek_t p = peek_t::EMPTY();
-    for (ix = m_first; ix < m_last; ix++) {
-        p.m_item    = m_block_items[ix].m_item;
-        p.m_key     = m_block_items[ix].m_key;
-        p.m_version = m_block_items[ix].m_version;
+    ix = m_first;
+    for (auto it = m_block_items + ix; it < m_block_items + m_last; it++, ix++) {
+        p.m_version = it->m_version;
 
-        if (item_owned(m_block_items[ix])) {
+        if (!it->taken()) {
+            p.m_item    = it->m_item;
+            p.m_key     = it->m_key;
             return p;
         }
 
