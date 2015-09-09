@@ -194,16 +194,18 @@ typename block<K, V>::peek_t
 block<K, V>::peek()
 {
     size_t ix;
-    return peek(ix);
+    return peek(ix, m_first);
 }
 
 template <class K, class V>
 typename block<K, V>::peek_t
-block<K, V>::peek(size_t &ix)
+block<K, V>::peek(size_t &ix, const size_t first)
 {
     const bool called_by_owner = (tid() == m_owner_tid);
-    peek_t p = peek_t::EMPTY();
-    ix = m_first;
+
+    ix = first;
+
+    peek_t p;
     for (auto it = m_block_items + ix; it < m_block_items + m_last; it++, ix++) {
         p.m_version = it->m_version;
 

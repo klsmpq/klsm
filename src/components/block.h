@@ -88,7 +88,7 @@ public:
     /** Returns null if the block is empty, and a peek_t struct of the minimal item
      *  otherwise. Removes observed unowned items from the current block. */
     peek_t peek();
-    peek_t peek(size_t &ix);
+    peek_t peek(size_t &ix, const size_t first);
 
     /** Iterates the block from last to first and sets key to the first key it finds.
      *  If none are found, returns false. */
