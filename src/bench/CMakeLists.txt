@@ -4,6 +4,10 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/src
 )
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+    add_definitions("-flto")
+endif()
+
 add_executable(heapsort heapsort.cpp util.cpp)
 target_link_libraries(heapsort
     ${HWLOC_LIBRARIES}
