@@ -220,7 +220,7 @@ block_array<K, V, Rlx>::peek()
      * might have changed in the meantime).
      */
 
-    typename block<K, V>::peek_t ret = block<K, V>::peek_t::EMPTY();
+    typename block<K, V>::peek_t ret;
     while (true) {
         int ncandidates = m_pivots.count(m_size);
 
@@ -233,7 +233,7 @@ block_array<K, V, Rlx>::peek()
         /* Select a random element within the range, find it, and return it. */
 
         if (ncandidates == 0) {
-            return ret;
+            return block<K, V>::peek_t::EMPTY();
         }
 
         int selected_element = m_gen() % ncandidates;
@@ -256,12 +256,23 @@ block_array<K, V, Rlx>::peek()
             break;
         }
 
-        /* The selected item has already been taken, fall back to removing
-         * the minimal item within the same block (possibly the same item). */
+        if (best == nullptr) {
+            continue;
+        } else if (!best->taken()) {
+            /* Found a valid element, return it. */
+            ret = *best;
+            return ret;
+        } else if (block_ix < m_size) {
+            /* The selected item has already been taken, fall back to removing
+             * the minimal item within the same block (possibly the same item). */
 
-        if (best != nullptr && best->taken() && block_ix < m_size) {
-            while (m_pivots.count_in(block_ix) > 0) {
-                best = b->peek_nth(m_pivots.nth_ix_in(0, block_ix));
+            const size_t count_in_block = m_pivots.count_in(block_ix);
+            assert(count_in_block > 0);
+
+            const size_t first_in_block = m_pivots.nth_ix_in(0, block_ix);
+            best = b->peek_nth(first_in_block);
+
+            for (size_t i = 0; i < count_in_block; i++, best++) {
                 if (!best->taken()) {
                     ret = *best;
                     return ret;
@@ -269,11 +280,6 @@ block_array<K, V, Rlx>::peek()
                     m_pivots.mark_first_taken_in(block_ix);
                 }
             }
-        }
-
-        if (best != nullptr && !best->taken()) {
-            ret = *best;
-            return ret;
         }
     }
 }
