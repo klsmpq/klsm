@@ -79,9 +79,10 @@ block<K, V>::insert_tail(item<K, V> *it,
     assert(m_used);
     assert(m_last < m_capacity);
 
-    m_block_items[m_last].m_item  = it;
-    m_block_items[m_last].m_version = version;
-    m_block_items[m_last].m_key = it->key();
+    auto &block_it = m_block_items[m_last];
+    block_it.m_item    = it;
+    block_it.m_version = version;
+    block_it.m_key     = it->key();
 
     m_last++;
 }
@@ -244,8 +245,9 @@ bool
 block<K, V>::peek_tail(K &key)
 {
     for (int i = (int)m_last - 1; i >= (int)m_first; i--) {
-        key = m_block_items[i].m_key;
-        if (item_owned(m_block_items[i])) {
+        auto it = &m_block_items[i];
+        key = it->m_key;
+        if (!it->taken()) {
             return true;
         }
         /* Last item is not owned by us anymore, clean it up. */
