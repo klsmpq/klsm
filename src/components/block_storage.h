@@ -21,7 +21,6 @@
 #define __BLOCK_STORAGE_H
 
 #include <cassert>
-#include <vector>
 
 #include "block.h"
 
@@ -36,11 +35,14 @@ template <class K, class V, int N>
 class block_storage
 {
 private:
+    static constexpr size_t MAX_BLOCKS = 32;  // TODO: Global setting.
+
     struct block_tuple {
         block<K, V> *xs[N];
     };
 
 public:
+    block_storage() : m_blocks { { nullptr } }, m_size(0) { }
     virtual ~block_storage();
 
     /**
@@ -54,7 +56,8 @@ public:
     void print() const;
 
 private:
-    std::vector<block_tuple> m_blocks;
+    block_tuple m_blocks[MAX_BLOCKS];
+    size_t m_size;
 };
 
 #include "block_storage_inl.h"
