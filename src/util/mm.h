@@ -29,17 +29,18 @@ namespace kpq
  * The wait-free memory management scheme by Wimmer (www.pheet.org).
  */
 
-template <class T>
+template <class T, size_t BlockSize>
 class item_allocator_item
 {
 public:
-    T m_item;
-    item_allocator_item<T> *m_next;
+    T m_items[BlockSize];
+    item_allocator_item<T, BlockSize> *m_next;
 };
 
-template <class T, class ReuseCheck>
+template <class T, class ReuseCheck, size_t BlockSize = 1024>
 class item_allocator
 {
+    static constexpr size_t AMORTIZATION = 1;
 public:
     typedef T              value_type;
     typedef T             *pointer;
@@ -50,49 +51,62 @@ public:
     typedef std::ptrdiff_t difference_type;
 
     item_allocator() :
+        m_offset(0),
+        m_amortized(0),
+        m_total_size(BlockSize),
+        m_new_block(true),
         is_reusable()
     {
-        m_head = m_tail = new item_allocator_item<T>();
+        m_head = new item_allocator_item<T, BlockSize>();
         m_head->m_next = m_head;
     }
 
     virtual ~item_allocator()
     {
-        const auto tail = m_head;
-        do {
-            auto next = m_head->m_next;
-            delete m_head;
-            m_head = next;
-        } while (m_head != tail);
+        auto next = m_head->m_next;
+        while (next != m_head) {
+            auto nnext = next->m_next;
+            delete next;
+            next = nnext;
+        }
+        delete m_head;
     }
 
     pointer acquire()
     {
-        while (m_head->m_next != m_tail) {
-            if (is_reusable(m_head->m_next->m_item)) {
-                m_head = m_head->m_next;
-
-                m_tail = m_tail->m_next;
-                if (m_tail != m_head) {
-                    m_tail = m_tail->m_next;
+        while (true) {
+            while (m_offset < BlockSize) {
+                auto item = &m_head->m_items[m_offset++];
+                if (m_new_block || is_reusable(*item)) {
+                    m_amortized += 1 + AMORTIZATION;
+                    return item;
                 }
-
-                return &m_head->m_item;
             }
-            m_head = m_head->m_next;
+
+            if (m_amortized < BlockSize) {
+                auto new_block = new item_allocator_item<T, BlockSize>();
+                new_block->m_next = m_head->m_next;
+                m_head->m_next = new_block;
+                m_head = new_block;
+                m_total_size += BlockSize;
+                m_new_block = true;
+            } else {
+                m_amortized = std::min(m_amortized, m_total_size * AMORTIZATION);
+                m_amortized -= BlockSize;
+                m_head = m_head->m_next;
+                m_new_block = false;
+            }
+            m_offset = 0;
         }
-
-        m_head->m_next = new item_allocator_item<T>();
-        m_head->m_next->m_next = m_tail;
-        m_head = m_head->m_next;
-        m_tail = m_tail->m_next;
-
-        return &m_head->m_item;
     }
 
 private:
-    item_allocator_item<T> *m_head;
-    item_allocator_item<T> *m_tail;
+    item_allocator_item<T, BlockSize> *m_head;
+
+    size_t m_offset;
+    size_t m_amortized;
+    size_t m_total_size;
+    bool m_new_block;
 
     const ReuseCheck is_reusable;
 };
