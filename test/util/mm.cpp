@@ -54,18 +54,25 @@ TEST(MMTest, AllocMany)
     }
 }
 
+/**
+ * Verifies that a reusable item is actually reused, and non-reusable items
+ * aren't. The block size is set to ITERATIONS, which should ensure that
+ * the reusable item (in this case marked as usable by having a value
+ * greater than 42) is reused.
+ */
 TEST(MMTest, ReuseCheck)
 {
-    kpq::item_allocator<uint32_t, reuse_above_42> alloc;
+    static constexpr size_t ITERATIONS = 42;
+    kpq::item_allocator<uint32_t, reuse_above_42, ITERATIONS> alloc;
 
     std::vector<uint32_t *> xs;
 
-    for (int i = 0; i < 42; i++) {
+    for (size_t i = 0; i < ITERATIONS; i++) {
         uint32_t *x = alloc.acquire();
         *x = i;
 
         /* No reuse below 42. */
-        for (int j = 0; j < i; j++) {
+        for (size_t j = 0; j < i; j++) {
             ASSERT_NE(x, xs[j]);
         }
 
@@ -76,14 +83,19 @@ TEST(MMTest, ReuseCheck)
     *y = 66;
 
     bool reused = false;
-    for (int i = 0; i < 44; i++) {
+    for (size_t i = 0; i < ITERATIONS + 1; i++) {
         uint32_t *x = alloc.acquire();
-        *x = i;
+        *x = 0;
 
         if (x == y) {
             reused = true;
             break;
         }
+    }
+
+    /* No reuse below 42. */
+    for (size_t i = 0; i < ITERATIONS; i++) {
+        ASSERT_EQ(i, *xs[i]);
     }
 
     ASSERT_TRUE(reused);
