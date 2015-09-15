@@ -171,8 +171,12 @@ bench_thread(T *pq,
             pq->insert(v, v);
             nops++;
         } else {
-            pq->delete_min(v);  // TODO: Metric for failed delete_mins.
-            nops++;
+            /* TODO: Possibly revert to including failed deletes in the operation count
+             * (pheet does this). However, it is important to distinguish failed
+             * deletes at this time since spy() is currently disabled. */
+            if (pq->delete_min(v)) {
+                nops++;
+            }
         }
     }
 

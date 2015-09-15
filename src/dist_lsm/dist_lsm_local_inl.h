@@ -272,6 +272,15 @@ template <class K, class V, int Rlx>
 int
 dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
+    (void)parent;
+    return 0;
+
+    // TODO: Reimplement spy in a performant and scalable way. The current implementation
+    // assumed that it would be called infrequently, and thus was half-intentionally
+    // tolerated even though it's extremely inefficient. Disable spying for now until
+    // we have a fast alternative.
+
+#if 0
     int num_spied = 0;
 
     const size_t num_threads    = parent->m_local.num_threads();
@@ -305,6 +314,7 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
     }
 
     return num_spied;
+#endif
 }
 
 template <class K, class V, int Rlx>
