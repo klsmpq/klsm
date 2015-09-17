@@ -21,12 +21,12 @@
 #define __DIST_LSM_LOCAL_H
 
 #include <atomic>
-#include <random>
 
 #include "components/block_storage.h"
 #include "components/item.h"
 #include "util/mm.h"
 #include "util/thread_local_ptr.h"
+#include "util/xorshf96.h"
 
 namespace kpq
 {
@@ -87,7 +87,7 @@ private:
      *  return it. */
     typename block<K, V>::peek_t m_cached_best;
 
-    std::mt19937 m_gen;
+    xorshf96 m_gen;
 };
 
 #include "dist_lsm_local_inl.h"

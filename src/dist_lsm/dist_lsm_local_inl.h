@@ -272,16 +272,11 @@ template <class K, class V, int Rlx>
 int
 dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
-    (void)parent;
-    return 0;
-
-    // TODO: Reimplement spy in a performant and scalable way. The current implementation
-    // assumed that it would be called infrequently, and thus was half-intentionally
-    // tolerated even though it's extremely inefficient. Disable spying for now until
-    // we have a fast alternative.
-
-#if 0
     int num_spied = 0;
+
+    if (m_tail != nullptr) {
+        return num_spied;
+    }
 
     const size_t num_threads    = parent->m_local.num_threads();
     const size_t current_thread = parent->m_local.current_thread();
@@ -291,30 +286,30 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
     }
 
     /* All except current thread, therefore n - 2. */
-    std::uniform_int_distribution<> rand_int(0, num_threads - 2);
-    size_t victim_id = rand_int(m_gen);
+    size_t victim_id = m_gen() % (num_threads - 1);
     if (victim_id >= current_thread) {
         victim_id++;
     }
 
     auto victim = parent->m_local.get(victim_id);
-    for (auto i = victim->m_head.load(std::memory_order_relaxed);
-            i != nullptr;
-            i = i->m_next.load(std::memory_order_relaxed)) {
+    auto spied_block = victim->m_head.load(std::memory_order_relaxed);
 
-        auto it = i->iterator();
-        for (auto p = it.next(); p.m_item != nullptr; p = it.next()) {
-            /* TODO: Verify that it's actually OK not to pass in the shared_lsm here.
-             * Intuitively, it seems to be fine since other local dist lsm's will preserve
-             * the correct bounds, and spy is only called when the local dist lsm is empty.
-             */
-            insert(p.m_item, p.m_version, nullptr);
-            num_spied++;
-        }
+    if (spied_block == nullptr) {
+        return num_spied;
     }
 
+    /* Got a block, add it to the local lsm. */
+
+    auto insert_block = m_block_storage.get_block(spied_block->power_of_2());
+    insert_block->copy(spied_block);
+
+    num_spied = insert_block->size();
+
+    /* TODO: It is not necessarily legal to not pass in the shared lsm here,
+     * since spy() may be called even if the local lsm is not empty. */
+    merge_insert(insert_block, nullptr);
+
     return num_spied;
-#endif
 }
 
 template <class K, class V, int Rlx>
