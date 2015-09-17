@@ -79,8 +79,9 @@ private:
 private:
     std::atomic<block<K, V> *> m_head; /**< The largest  block. */
     block<K, V>               *m_tail; /**< The smallest block. */
+    block<K, V>               *m_spied;
 
-    block_storage<K, V, 3> m_block_storage;
+    block_storage<K, V, 4> m_block_storage;
     item_allocator<item<K, V>, typename item<K, V>::reuse> m_item_allocator;
 
     /** Caches the previously peeked item in case we can short-circuit and simply

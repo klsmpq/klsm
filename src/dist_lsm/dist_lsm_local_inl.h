@@ -21,6 +21,7 @@ template <class K, class V, int Rlx>
 dist_lsm_local<K, V, Rlx>::dist_lsm_local() :
     m_head(nullptr),
     m_tail(nullptr),
+    m_spied(nullptr),
     m_cached_best(block<K, V>::peek_t::EMPTY())
 {
 }
@@ -265,6 +266,10 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
         }
     }
 
+    if (best.empty() && m_spied != nullptr) {
+        best = m_spied->peek();
+    }
+
     m_cached_best = best;
 }
 
@@ -276,6 +281,13 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 
     if (m_tail != nullptr) {
         return num_spied;
+    }
+
+    if (m_spied != nullptr) {
+        auto it = m_spied->peek();
+        if (!it.empty()) {
+            return num_spied;
+        }
     }
 
     const size_t num_threads    = parent->m_local.num_threads();
@@ -305,9 +317,10 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 
     num_spied = insert_block->size();
 
-    /* TODO: It is not necessarily legal to not pass in the shared lsm here,
-     * since spy() may be called even if the local lsm is not empty. */
-    merge_insert(insert_block, nullptr);
+    if (m_spied != nullptr) {
+        m_spied->set_unused();
+    }
+    m_spied = insert_block;
 
     return num_spied;
 }
