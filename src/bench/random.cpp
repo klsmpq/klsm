@@ -78,6 +78,7 @@ static std::atomic<bool> end_barrier(false);
 class packed_uniform_bool_distribution {
 public:
     packed_uniform_bool_distribution() :
+        m_rand_int(0ULL, std::numeric_limits<uint64_t>::max()),
         m_iteration(0)
     {
     }
@@ -93,7 +94,7 @@ public:
     }
 
 private:
-    std::uniform_int_distribution<int64_t> m_rand_int;
+    std::uniform_int_distribution<uint64_t> m_rand_int;
 
     constexpr static int ITERATIONS = 64;
     constexpr static int MASK = ITERATIONS - 1;
