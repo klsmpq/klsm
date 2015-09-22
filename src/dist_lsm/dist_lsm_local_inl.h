@@ -189,7 +189,7 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
         while (i->size() <= i->capacity() / 2) {
 
             /* Simply remove empty blocks. */
-            if (i->capacity() == 1) {
+            if (i->size() == 0) {
                 const auto next = i->m_next.load(std::memory_order_relaxed);
                 if (i == m_tail) {
                     m_tail = i->m_prev;
