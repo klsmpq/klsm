@@ -274,8 +274,14 @@ block_array<K, V, Rlx>::peek()
 
             for (size_t i = 0; i < count_in_block; i++, best++) {
                 if (!best->taken()) {
-                    ret = *best;
-                    return ret;
+                    /* Simply taking the first item here would bias peek()
+                     * towards the first item in the largest block. Instead,
+                     * retry with a random selection.
+                     * TODO: A possibly optimization is to retry on level up
+                     * the callstack, since we might be doing unnecessary
+                     * work if our local array copy is out of date.
+                     */
+                    break;
                 } else {
                     m_pivots.mark_first_taken_in(block_ix);
                 }
