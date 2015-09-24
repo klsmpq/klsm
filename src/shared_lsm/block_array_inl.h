@@ -253,6 +253,8 @@ block_array<K, V, Rlx>::peek()
             b = m_blocks[block_ix];
             best = b->peek_nth(m_pivots.nth_ix_in(selected_element, block_ix));
 
+            // TODO: If the current block is less than half-filled, trigger a shrink.
+
             break;
         }
 
