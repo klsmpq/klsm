@@ -63,29 +63,12 @@ dist_lsm_local<K, V, Rlx>::insert(item<K, V> *it,
         m_cached_best.m_item    = nullptr;
     }
 
-    /* If possible, simply append to the current tail block. */
+    /* Simply allocate the smallest block. Attempting to alloc larger
+     * blocks / append to an existing block's tail don't actually help. */
 
-    if (m_tail != nullptr && m_tail->last() < m_tail->capacity()) {
-        K tail_key;
-        if (m_tail->peek_tail(tail_key) && tail_key <= it_key) {
-            m_tail->insert_tail(it, version);
-            return;
-        }
-    }
-
-    /* Allocate the biggest possible array. This is an optimization
-     * only. For correctness, it is enough to always allocate a new
-     * array of capacity 1. */
-
-    block<K, V> *new_block;
-    if (m_tail == nullptr) {
-        new_block = m_block_storage.get_largest_block();
-    } else {
-        const size_t tail_size = m_tail->power_of_2();
-        new_block = m_block_storage.get_block((tail_size == 0) ? 0 : tail_size - 1);
-    }
-
+    block<K, V> *new_block = m_block_storage.get_block(0);
     new_block->insert(it, version);
+
     merge_insert(new_block, slsm);
 }
 
