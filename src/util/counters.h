@@ -43,6 +43,8 @@ struct counters
         successful_deletes += that.successful_deletes;
         failed_deletes += that.failed_deletes;
         block_shrinks += that.block_shrinks;
+        successful_peeks += that.successful_peeks;
+        failed_peeks += that.failed_peeks;
 
         return *this;
     }
@@ -55,15 +57,23 @@ struct counters
         printf("inserts: %lu\n"
                "successful_deletes: %lu\n"
                "failed_deletes: %lu\n"
-               "block_shrinks: %lu\n",
-               inserts, successful_deletes, failed_deletes, block_shrinks);
+               "block_shrinks: %lu\n"
+               "successful_peeks: %lu\n"
+               "failed_peeks: %lu\n",
+               inserts, successful_deletes, failed_deletes, block_shrinks,
+               successful_peeks, failed_peeks);
     }
 
     size_t inserts;
     size_t successful_deletes;
     size_t failed_deletes;
 
+    // slsm insert().
     size_t block_shrinks;
+
+    // slsm peek().
+    size_t successful_peeks;
+    size_t failed_peeks;
 };
 
 thread_local counters COUNTERS;

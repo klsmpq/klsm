@@ -261,14 +261,18 @@ block_array<K, V, Rlx>::peek()
         }
 
         if (best == nullptr) {
+            COUNTERS.failed_peeks++;
             continue;
         } else if (!best->taken()) {
             /* Found a valid element, return it. */
+            COUNTERS.successful_peeks++;
             ret = *best;
             return ret;
         } else if (block_ix < m_size) {
             /* The selected item has already been taken, fall back to removing
              * the minimal item within the same block (possibly the same item). */
+
+            COUNTERS.failed_peeks++;
 
             const size_t count_in_block = m_pivots.count_in(block_ix);
             assert(count_in_block > 0);
