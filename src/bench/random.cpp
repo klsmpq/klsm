@@ -39,6 +39,7 @@
 #include "pqs/spraylist.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
+#include "util/counters.h"
 #include "util.h"
 
 constexpr int DEFAULT_SEED       = 0;
@@ -67,6 +68,7 @@ struct settings {
     int seed;
     int size;
     std::string type;
+    bool print_counters;
 };
 
 static hwloc_wrapper hwloc;
@@ -111,6 +113,7 @@ usage()
             "       -i: Specifies the initial size of the priority queue (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
+            "       -c: Print performance counters (default = false)\n"
             "       pq: The data structure to use as the backing priority queue\n"
             "           (one of '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
@@ -128,10 +131,8 @@ static void
 bench_thread(T *pq,
              const int thread_id,
              const struct settings &settings,
-             std::promise<size_t> &&result)
+             std::promise<kpq::counters> &&result)
 {
-    size_t nops = 0;
-
 #ifdef HAVE_VALGRIND
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
@@ -175,13 +176,15 @@ bench_thread(T *pq,
         if (rand_bool(gen)) {
             v = rand_int(gen);
             pq->insert(v, v);
-            nops++;
+            kpq::COUNTERS.inserts++;
         } else {
             /* TODO: Possibly revert to including failed deletes in the operation count
              * (pheet does this). However, it is important to distinguish failed
              * deletes at this time since spy() is currently disabled. */
             if (pq->delete_min(v)) {
-                nops++;
+                kpq::COUNTERS.successful_deletes++;
+            } else {
+                kpq::COUNTERS.failed_deletes++;
             }
         }
     }
@@ -190,7 +193,7 @@ bench_thread(T *pq,
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-    result.set_value(nops);
+    result.set_value(kpq::COUNTERS);
 }
 
 template <class T>
@@ -209,10 +212,10 @@ bench(T *pq,
 
     /* Start all threads. */
 
-    std::vector<std::future<size_t>> futures;
+    std::vector<std::future<kpq::counters>> futures;
     std::vector<std::thread> threads(settings.nthreads);
     for (int i = 0; i < settings.nthreads; i++) {
-        std::promise<size_t> p;
+        std::promise<kpq::counters> p;
         futures.push_back(p.get_future());
         threads[i] = std::thread(bench_thread<T>, pq, i, settings, std::move(p));
     }
@@ -238,15 +241,19 @@ bench(T *pq,
         thread.join();
     }
 
-    size_t nops = 0;
+    kpq::counters counters;
     for (auto &future : futures) {
-        nops += future.get();
+        counters += future.get();
     }
 
     const double elapsed = timediff_in_s(start, end);
-    size_t ops_per_s = (size_t)((double)nops / elapsed);
+    size_t ops_per_s = (size_t)((double)counters.operations() / elapsed);
 
     fprintf(stdout, "%zu\n", ops_per_s);
+
+    if (settings.print_counters) {
+        counters.print();
+    }
 
     return ret;
 }
@@ -256,11 +263,14 @@ main(int argc,
      char **argv)
 {
     int ret = 0;
-    struct settings settings = { DEFAULT_NTHREADS, DEFAULT_SEED, DEFAULT_SIZE, "" };
+    struct settings settings = { DEFAULT_NTHREADS, DEFAULT_SEED, DEFAULT_SIZE, "", false };
 
     int opt;
-    while ((opt = getopt(argc, argv, "i:n:s:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "ci:n:s:p:")) != -1) {
         switch (opt) {
+        case 'c':
+            settings.print_counters = true;
+            break;
         case 'i':
             errno = 0;
             settings.size = strtol(optarg, NULL, 0);

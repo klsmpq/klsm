@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "components/block.h"
+#include "util/counters.h"
 #include "util/xorshf96.h"
 #include "block_pivots.h"
 #include "block_pool.h"

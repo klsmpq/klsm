@@ -140,6 +140,8 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
             auto shrunk = pool->get_block(shrunk_power_of_2);
             shrunk->copy(b);
             block_set(i, shrunk);
+
+            COUNTERS.block_shrinks++;
         }
     }
 
