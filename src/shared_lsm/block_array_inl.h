@@ -132,7 +132,8 @@ block_array<K, V, Rlx>::compact(block_pool<K, V> *pool)
             continue;
         }
 
-        if (b->size() < b->capacity() / 2) {
+        const size_t size = b->last() - m_pivots.nth_ix_in(0, i);
+        if (size < b->capacity() / 2) {
            /* TODO: Improve shrinking. Ideally, we'd be able to shrink
             * to an arbitrary level and without physically copying blocks. */
            int shrunk_power_of_2 = b->power_of_2() - 1;
