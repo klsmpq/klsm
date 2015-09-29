@@ -203,7 +203,10 @@ outer:
     m_count_for_size = INVALID_COUNT_FOR_SIZE;
     m_count = count(size);
 
-    return elements_in_tentative_range;
+    /* Note that m_count >= elements_in_tentative_range >= actual # elements in range.
+     * We return m_count in this case s.t. peek() can assign a random element
+     * out of the full available range. */
+    return m_count;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
