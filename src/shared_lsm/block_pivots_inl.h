@@ -53,6 +53,8 @@ size_t
 block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
                                            const size_t size)
 {
+    COUNT_INC(pivot_shrinks);
+
     /* Find the minimal element and initially set pivots s.t. it is the only
      * element in the pivot set. */
 
@@ -98,6 +100,8 @@ block_pivots<K, V, Rlx, MaxBlocks>::grow(const int initial_range_size,
                                          block<K, V> **blocks,
                                          const size_t size)
 {
+    COUNT_INC(pivot_grows);
+
     return resize(initial_range_size,
                   m_maximal_pivot,
                   std::numeric_limits<K>::max(),

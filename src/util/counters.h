@@ -28,9 +28,12 @@
     D(inserts) \
     D(successful_deletes) \
     D(failed_deletes) \
+    D(slsm_inserts) \
     D(slsm_deletes) \
     D(dlsm_deletes) \
     D(block_shrinks) \
+    D(pivot_shrinks) \
+    D(pivot_grows) \
     D(successful_peeks) \
     D(failed_peeks) \
     D(requested_spies) \
