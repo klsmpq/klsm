@@ -28,9 +28,13 @@
     D(inserts) \
     D(successful_deletes) \
     D(failed_deletes) \
-    D(slsm_inserts) \
+    D(slsm_inserts) /* Block inserts into shared lsm. */ \
+    D(slsm_insert_retries) /* Block insert retries through concurrent modification. */ \
     D(slsm_deletes) \
     D(dlsm_deletes) \
+    D(slsm_peek_cache_hit) /* Number of times the cached item is returned by the slsm. */ \
+    D(slsm_peeks_performed) /* Number of times we got past the cached item. */ \
+    D(slsm_peek_attempts) /* Number of actual block array peek() calls. */ \
     D(block_shrinks) \
     D(pivot_shrinks) \
     D(pivot_grows) \

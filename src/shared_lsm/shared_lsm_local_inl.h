@@ -62,6 +62,7 @@ shared_lsm_local<K, V, Rlx>::insert_block(
         versioned_array_ptr<K, V, Rlx> &global_array)
 {
     assert(m_block_pool.contains(b)), "Given block not allocated by shared lsm";
+    COUNT_INC(slsm_inserts);
 
     while (true) {
         /* Fetch a consistent copy of the global array. */
@@ -91,6 +92,7 @@ shared_lsm_local<K, V, Rlx>::insert_block(
             break;
         }
 
+        COUNT_INC(slsm_insert_retries);
         m_block_pool.free_local_except(b);
     }
 }
@@ -119,6 +121,7 @@ shared_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best,
     if (local_array_copy_is_fresh(global_array)
             && !m_cached_best.empty()
             && !m_cached_best.taken()) {
+        COUNT_INC(slsm_peek_cache_hit);
         best = m_cached_best;
         return;
     }
@@ -126,9 +129,11 @@ shared_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best,
     block_array<K, V, Rlx> *observed_packed;
     version_t observed_version;
 
+    COUNT_INC(slsm_peeks_performed);
     do {
         refresh_local_array_copy(observed_packed, observed_version, global_array);
         best = m_cached_best = m_local_array_copy.peek();
+        COUNT_INC(slsm_peek_attempts);
     } while (global_array.load()->version() != observed_version);
 }
 

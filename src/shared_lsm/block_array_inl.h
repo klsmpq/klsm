@@ -64,8 +64,6 @@ void
 block_array<K, V, Rlx>::insert(block<K, V> *new_block,
                                block_pool<K, V> *pool)
 {
-    COUNT_INC(slsm_inserts);
-
     if (m_size == 0) {
         block_set(0, new_block);
     } else {
