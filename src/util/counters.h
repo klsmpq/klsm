@@ -81,7 +81,7 @@ thread_local counters COUNTERS;
 #ifndef ENABLE_COUNTERS
 #define COUNT_INC(C)
 #else
-#define COUNT_INC(C) COUNTERS.C++
+#define COUNT_INC(C) kpq::COUNTERS.C++
 #endif
 
 }
