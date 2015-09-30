@@ -260,15 +260,18 @@ template <class K, class V, int Rlx>
 int
 dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
+    COUNT_INC(requested_spies);
     int num_spied = 0;
 
     if (m_tail != nullptr) {
+        COUNT_INC(aborted_spies);
         return num_spied;
     }
 
     if (m_spied != nullptr) {
         auto it = m_spied->peek();
         if (!it.empty()) {
+            COUNT_INC(aborted_spies);
             return num_spied;
         }
     }
@@ -290,6 +293,7 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
     auto spied_block = victim->m_head.load(std::memory_order_relaxed);
 
     if (spied_block == nullptr) {
+        COUNT_INC(aborted_spies);
         return num_spied;
     }
 

@@ -24,6 +24,7 @@
 
 #include "components/block_storage.h"
 #include "components/item.h"
+#include "util/counters.h"
 #include "util/mm.h"
 #include "util/thread_local_ptr.h"
 #include "util/xorshf96.h"

@@ -22,6 +22,7 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 
 #define V(D) \
     D(inserts) \
@@ -31,7 +32,9 @@
     D(dlsm_deletes) \
     D(block_shrinks) \
     D(successful_peeks) \
-    D(failed_peeks)
+    D(failed_peeks) \
+    D(requested_spies) \
+    D(aborted_spies)
 
 namespace kpq
 {
