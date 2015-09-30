@@ -23,6 +23,14 @@
 #include <cstddef>
 #include <cstdio>
 
+#define V(D) \
+    D(inserts) \
+    D(successful_deletes) \
+    D(failed_deletes) \
+    D(block_shrinks) \
+    D(successful_peeks) \
+    D(failed_peeks)
+
 namespace kpq
 {
 
@@ -39,12 +47,9 @@ struct counters
 
     counters &operator+=(const counters &that)
     {
-        inserts += that.inserts;
-        successful_deletes += that.successful_deletes;
-        failed_deletes += that.failed_deletes;
-        block_shrinks += that.block_shrinks;
-        successful_peeks += that.successful_peeks;
-        failed_peeks += that.failed_peeks;
+#define D_OP_ADD(C) C += that.C;
+        V(D_OP_ADD)
+#undef D_OP_ADD
 
         return *this;
     }
@@ -54,26 +59,17 @@ struct counters
     }
 
     void print() const {
-        printf("inserts: %lu\n"
-               "successful_deletes: %lu\n"
-               "failed_deletes: %lu\n"
-               "block_shrinks: %lu\n"
-               "successful_peeks: %lu\n"
-               "failed_peeks: %lu\n",
-               inserts, successful_deletes, failed_deletes, block_shrinks,
-               successful_peeks, failed_peeks);
+#define D_PRINT_FORMAT(C) #C ": %lu\n"
+#define D_PRINT_ARGS(C) C,
+        printf(V(D_PRINT_FORMAT) "%s",
+               V(D_PRINT_ARGS) "");
+#undef D_PRINT_ARGS
+#undef D_PRINT_FORMAT
     }
 
-    size_t inserts;
-    size_t successful_deletes;
-    size_t failed_deletes;
-
-    // slsm insert().
-    size_t block_shrinks;
-
-    // slsm peek().
-    size_t successful_peeks;
-    size_t failed_peeks;
+#define D_DECL(C) size_t C;
+    V(D_DECL)
+#undef D_DECL
 };
 
 thread_local counters COUNTERS;
