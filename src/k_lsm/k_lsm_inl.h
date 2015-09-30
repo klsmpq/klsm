@@ -106,16 +106,22 @@ k_lsm<K, V, Rlx>::delete_min(V &val)
         m_shared.find_min(best_shared);
 
         if (!best_dist.empty() && !best_shared.empty()) {
-            return (best_dist.m_key < best_shared.m_key)
-                    ? best_dist.take(val)
-                    : best_shared.take(val);
+            if (best_dist.m_key < best_shared.m_key) {
+                COUNT_INC(dlsm_deletes);
+                return best_dist.take(val);
+            } else {
+                COUNT_INC(slsm_deletes);
+                return best_shared.take(val);
+            }
         }
 
         if (!best_dist.empty() /* and best_shared is empty */) {
+            COUNT_INC(dlsm_deletes);
             return best_dist.take(val);
         }
 
         if (!best_shared.empty() /* and best_dist is empty */) {
+            COUNT_INC(slsm_deletes);
             return best_shared.take(val);
         }
     } while (m_dist.spy() > 0);

@@ -27,6 +27,8 @@
     D(inserts) \
     D(successful_deletes) \
     D(failed_deletes) \
+    D(slsm_deletes) \
+    D(dlsm_deletes) \
     D(block_shrinks) \
     D(successful_peeks) \
     D(failed_peeks)
@@ -73,6 +75,14 @@ struct counters
 };
 
 thread_local counters COUNTERS;
+
+#define ENABLE_COUNTERS 1
+
+#ifndef ENABLE_COUNTERS
+#define COUNT_INC(C)
+#else
+#define COUNT_INC(C) COUNTERS.C++
+#endif
 
 }
 

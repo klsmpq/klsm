@@ -22,6 +22,7 @@
 
 #include "dist_lsm/dist_lsm.h"
 #include "shared_lsm/shared_lsm.h"
+#include "util/counters.h"
 
 namespace kpq {
 
