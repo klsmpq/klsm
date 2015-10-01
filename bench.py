@@ -39,12 +39,17 @@ NCPUS = [  1,  2,  3
 
 REPS = 5
 
+KEYGEN = 0
+WORKLOAD = 0
+
 BIN = 'build/src/bench/random'
 
-def bench(algorithm, nthreads, seed, outfile):
+def bench(algorithm, nthreads, seed, outfile, options):
     output = subprocess.check_output([ BIN
+                                     , '-k', str(options.keygen)
                                      , '-p', str(nthreads)
                                      , '-s', str(seed)
+                                     , '-w', str(options.workload)
                                      , algorithm
                                      ])
 
@@ -57,12 +62,16 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-a", "--algorithms", dest = "algorithms", default = ",".join(ALGORITHMS),
             help = "Comma-separated list of %s" % ALGORITHMS)
+    parser.add_option("-k", "--keygen", dest = "keygen", default = KEYGEN,
+            help = "Keygen (0: uniform, 1: ascending)")
     parser.add_option("-p", "--nthreads", dest = "nthreads", default = ",".join(map(str, NCPUS)),
             help = "Comma-separated list of thread counts")
     parser.add_option("-o", "--outfile", dest = "outfile", default = '/dev/null',
             help = "Write results to outfile")
     parser.add_option("-r", "--reps", dest = "reps", type = 'int', default = REPS,
             help = "Repetitions per run")
+    parser.add_option("-w", "--workload", dest = "workload", type = 'int', default = WORKLOAD,
+            help = "Workload (0: uniform, 1: split, 2: producer)")
     (options, args) = parser.parse_args()
 
     algorithms = options.algorithms.split(',')
@@ -81,4 +90,4 @@ if __name__ == '__main__':
         for a in algorithms:
             for n in nthreads:
                 for r in xrange(options.reps):
-                    bench(a, n, r, f)
+                    bench(a, n, r, f, options)

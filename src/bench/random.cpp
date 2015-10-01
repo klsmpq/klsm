@@ -42,12 +42,6 @@
 #include "util/counters.h"
 #include "util.h"
 
-constexpr int DEFAULT_SEED       = 0;
-constexpr int DEFAULT_SIZE       = 1000000;  // Matches benchmarks from klsm paper.
-constexpr int DEFAULT_NTHREADS   = 1;
-constexpr int DEFAULT_RELAXATION = 256;
-constexpr int DEFAULT_SLEEP      = 10;
-
 #define PQ_CHEAP      "cheap"
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
@@ -63,12 +57,58 @@ constexpr int DEFAULT_SLEEP      = 10;
 #define PQ_SLSM       "slsm"
 #define PQ_SPRAY      "spray"
 
+/**
+ * Uniform: Each thread performs 50% inserts, 50% deletes.
+ * Split: 50% of threads perform inserts, 50% of threads perform deletes (in case of an
+ *        odd thread count there are more inserts than deletes).
+ * Producer: A single thread performs inserts, all others delete.
+ */
+enum {
+    WORKLOAD_UNIFORM = 0,
+    WORKLOAD_SPLIT,
+    WORKLOAD_PRODUCER,
+    WORKLOAD_COUNT,
+};
+
+/**
+ * Uniform: Keys are generated uniformly at random.
+ * Ascending: Keys are generated uniformly at random within a smaller integer range [x, x + z]
+ *            s.t. x rises over time.
+ */
+enum {
+    KEYS_UNIFORM = 0,
+    KEYS_ASCENDING,
+    KEYS_COUNT,
+};
+
+constexpr int DEFAULT_SEED       = 0;
+constexpr int DEFAULT_SIZE       = 1000000;  // Matches benchmarks from klsm paper.
+constexpr int DEFAULT_NTHREADS   = 1;
+constexpr int DEFAULT_RELAXATION = 256;
+constexpr int DEFAULT_SLEEP      = 10;
+constexpr auto DEFAULT_COUNTERS  = false;
+constexpr auto DEFAULT_WORKLOAD  = WORKLOAD_UNIFORM;
+constexpr auto DEFAULT_KEYS      = KEYS_UNIFORM;
+
 struct settings {
     int nthreads;
     int seed;
     int size;
     std::string type;
     bool print_counters;
+    int keys;
+    int workload;
+
+    bool are_valid() const {
+        if (nthreads < 1
+                || size < 1
+                || keys < 0 || keys >= KEYS_COUNT
+                || workload < 0 || workload >= WORKLOAD_COUNT) {
+            return false;
+        }
+
+        return true;
+    }
 };
 
 static hwloc_wrapper hwloc;
@@ -109,26 +149,115 @@ static void
 usage()
 {
     fprintf(stderr,
-            "USAGE: random [-s seed] [-p nthreads] [-i size] pq\n"
+            "USAGE: random [-c] [-i size] [-k keys] [-p nthreads] [-s seed] [-w workload] pq\n"
+            "       -c: Print performance counters (default = %d)\n"
             "       -i: Specifies the initial size of the priority queue (default = %d)\n"
+            "       -k: Specifies the key generation type, one of %d: uniform, %d: ascending (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
-            "       -c: Print performance counters (default = false)\n"
+            "       -w: Specifies the workload type, one of %d: uniform, %d: split, %d: producer (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
             "           (one of '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s')\n",
+            DEFAULT_COUNTERS,
             DEFAULT_SIZE,
+            KEYS_UNIFORM, KEYS_ASCENDING, DEFAULT_KEYS,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
+            WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, DEFAULT_WORKLOAD,
             PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM16, PQ_KLSM128, PQ_KLSM256, PQ_KLSM4096,
             PQ_LINDEN, PQ_LSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
     exit(EXIT_FAILURE);
 }
 
-template <class T>
+class workload_uniform {
+public:
+    workload_uniform(const struct settings &settings,
+                     const int thread_id) :
+        m_gen(settings.seed + thread_id)
+    {
+    }
+
+    bool insert() { return m_rand_bool(m_gen); }
+
+private:
+    std::mt19937 m_gen;
+    packed_uniform_bool_distribution m_rand_bool;
+};
+
+class workload_split {
+public:
+    workload_split(const struct settings &,
+                   const int thread_id) :
+        m_thread_id(thread_id)
+    {
+    }
+
+    bool insert() const { return ((m_thread_id & 1) == 0); }
+
+private:
+    const int m_thread_id;
+};
+
+class workload_producer {
+public:
+    workload_producer(const struct settings &,
+                      const int thread_id) :
+        m_thread_id(thread_id)
+    {
+    }
+
+    bool insert() const { return (m_thread_id == 0); }
+
+private:
+    const int m_thread_id;
+};
+
+class keygen_uniform {
+public:
+    keygen_uniform(const struct settings &settings,
+                          const int thread_id) :
+        m_gen(settings.seed + thread_id)
+    {
+    }
+
+    uint32_t next()
+    {
+        return m_rand_int(m_gen);
+    }
+
+private:
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<> m_rand_int;
+};
+
+class keygen_ascending {
+public:
+    keygen_ascending(const struct settings &settings,
+                     const int thread_id) :
+        m_gen(settings.seed + thread_id),
+        m_rand_int(0, UPPER_BOUND),
+        m_base(0)
+    {
+    }
+
+    uint32_t next()
+    {
+        return m_rand_int(m_gen) + m_base++;
+    }
+
+private:
+    static constexpr uint32_t UPPER_BOUND = 512;
+
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<uint32_t> m_rand_int;
+    uint32_t m_base;
+};
+
+template <class PriorityQueue, class WorkLoad, class KeyGeneration>
 static void
-bench_thread(T *pq,
+bench_thread(PriorityQueue *pq,
              const int thread_id,
              const struct settings &settings,
              std::promise<kpq::counters> &&result)
@@ -136,10 +265,8 @@ bench_thread(T *pq,
 #ifdef HAVE_VALGRIND
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
-
-    std::mt19937 gen(settings.seed + thread_id);
-    std::uniform_int_distribution<> rand_int;
-    packed_uniform_bool_distribution rand_bool;
+    WorkLoad workload(settings, thread_id);
+    KeyGeneration keygen(settings, thread_id);
 
     hwloc.pin_to_core(thread_id);
 
@@ -152,9 +279,8 @@ bench_thread(T *pq,
     const int slice_size = settings.size / settings.nthreads;
     const int initial_size = (thread_id == settings.nthreads - 1) ?
                              settings.size - thread_id * slice_size : slice_size;
-    const int initial_seed = settings.seed + thread_id + settings.nthreads;
-    const auto initial_elems = random_array(initial_size, initial_seed);
-    for (auto elem : initial_elems) {
+    for (int i = 0; i < initial_size; i++) {
+        uint32_t elem = keygen.next();
         pq->insert(elem, elem);
     }
     fill_barrier.fetch_sub(1, std::memory_order_relaxed);
@@ -173,8 +299,8 @@ bench_thread(T *pq,
 
     uint32_t v;
     while (!end_barrier.load(std::memory_order_relaxed)) {
-        if (rand_bool(gen)) {
-            v = rand_int(gen);
+        if (workload.insert()) {
+            v = keygen.next();
             pq->insert(v, v);
             kpq::COUNTERS.inserts++;
         } else {
@@ -196,9 +322,9 @@ bench_thread(T *pq,
     result.set_value(kpq::COUNTERS);
 }
 
-template <class T>
+template <class PriorityQueue>
 static int
-bench(T *pq,
+bench(PriorityQueue *pq,
       const struct settings &settings)
 {
     if (settings.nthreads > 1 && !pq->supports_concurrency()) {
@@ -212,12 +338,44 @@ bench(T *pq,
 
     /* Start all threads. */
 
+    auto fn = bench_thread<PriorityQueue, workload_uniform, keygen_uniform>;
+    switch (settings.workload) {
+    case WORKLOAD_UNIFORM:
+        switch (settings.keys) {
+        case KEYS_UNIFORM:
+            fn = bench_thread<PriorityQueue, workload_uniform, keygen_uniform>; break;
+        case KEYS_ASCENDING:
+            fn = bench_thread<PriorityQueue, workload_uniform, keygen_ascending>; break;
+        default: assert(false);
+        }
+        break;
+    case WORKLOAD_SPLIT:
+        switch (settings.keys) {
+        case KEYS_UNIFORM:
+            fn = bench_thread<PriorityQueue, workload_split, keygen_uniform>; break;
+        case KEYS_ASCENDING:
+            fn = bench_thread<PriorityQueue, workload_split, keygen_ascending>; break;
+        default: assert(false);
+        }
+        break;
+    case WORKLOAD_PRODUCER:
+        switch (settings.keys) {
+        case KEYS_UNIFORM:
+            fn = bench_thread<PriorityQueue, workload_producer, keygen_uniform>; break;
+        case KEYS_ASCENDING:
+            fn = bench_thread<PriorityQueue, workload_producer, keygen_ascending>; break;
+        default: assert(false);
+        }
+        break;
+    default: assert(false);
+    }
+
     std::vector<std::future<kpq::counters>> futures;
     std::vector<std::thread> threads(settings.nthreads);
     for (int i = 0; i < settings.nthreads; i++) {
         std::promise<kpq::counters> p;
         futures.push_back(p.get_future());
-        threads[i] = std::thread(bench_thread<T>, pq, i, settings, std::move(p));
+        threads[i] = std::thread(fn, pq, i, settings, std::move(p));
     }
 
     /* Wait until threads are done filling their queue. */
@@ -258,58 +416,64 @@ bench(T *pq,
     return ret;
 }
 
+static int safe_parse_int_arg(const char *arg)
+{
+    errno = 0;
+    const int i = strtol(arg, NULL, 0);
+    if (errno != 0) {
+        usage();
+    }
+    return i;
+}
+
 int
 main(int argc,
      char **argv)
 {
     int ret = 0;
-    struct settings settings = { DEFAULT_NTHREADS, DEFAULT_SEED, DEFAULT_SIZE, "", false };
+    struct settings settings = { DEFAULT_NTHREADS
+                               , DEFAULT_SEED
+                               , DEFAULT_SIZE
+                               , ""
+                               , DEFAULT_COUNTERS
+                               , DEFAULT_KEYS
+                               , DEFAULT_WORKLOAD
+                               };
 
     int opt;
-    while ((opt = getopt(argc, argv, "ci:n:s:p:")) != -1) {
+    while ((opt = getopt(argc, argv, "ci:k:n:p:s:w:")) != -1) {
         switch (opt) {
         case 'c':
             settings.print_counters = true;
             break;
         case 'i':
-            errno = 0;
-            settings.size = strtol(optarg, NULL, 0);
-            if (errno != 0) {
-                usage();
-            }
+            settings.size = safe_parse_int_arg(optarg);
+            break;
+        case 'k':
+            settings.keys = safe_parse_int_arg(optarg);
             break;
         case 'p':
-            errno = 0;
-            settings.nthreads = strtol(optarg, NULL, 0);
-            if (errno != 0) {
-                usage();
-            }
+            settings.nthreads = safe_parse_int_arg(optarg);
             break;
         case 's':
-            errno = 0;
-            settings.seed = strtol(optarg, NULL, 0);
-            if (errno != 0) {
-                usage();
-            }
+            settings.seed = safe_parse_int_arg(optarg);
+            break;
+        case 'w':
+            settings.workload = safe_parse_int_arg(optarg);
             break;
         default:
             usage();
         }
     }
 
-    if (settings.nthreads < 1) {
-        usage();
-    }
-
-    if (settings.size < 1) {
+    settings.type = argv[optind];
+    if (!settings.are_valid()) {
         usage();
     }
 
     if (optind != argc - 1) {
         usage();
     }
-
-    settings.type = argv[optind];
 
     if (settings.type == PQ_CHEAP) {
         kpqbench::cheap<uint32_t, uint32_t> pq;
