@@ -12,7 +12,7 @@ __thread unsigned long *seeds;
 
 namespace kpqbench {
 
-constexpr unsigned int INITIAL_SIZE = 1 << 15;
+constexpr unsigned int INITIAL_SIZE = 1000000;
 
 /** See documentation of --elasticity in spraylist/test.c. */
 #define READ_ADD_REM_ELASTIC_TX (4)
