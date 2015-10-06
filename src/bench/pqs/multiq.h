@@ -22,9 +22,9 @@
 
 #include <atomic>
 #include <queue>
-#include <random>
 
 #include "util/thread_local_ptr.h"
+#include "util/xorshf96.h"
 
 namespace kpqbench
 {
@@ -39,9 +39,12 @@ class multiq
 {
 private:
     constexpr static K SENTINEL_KEY = std::numeric_limits<K>::max();
+    constexpr static int CACHE_LINE_SIZE = 64;
 
     struct entry
     {
+        entry(K k, V v) : key(k), value(v) { }
+
         K key;
         V value;
 
@@ -53,17 +56,28 @@ private:
 
     typedef std::priority_queue<entry, std::vector<entry>, std::greater<entry>> pq;
 
-    struct multiq_local
+    struct local_queue
     {
-        multiq_local() :
-            m_is_locked(false)
+        local_queue()
         {
             m_pq.push({ SENTINEL_KEY, V { } });
+            m_top = SENTINEL_KEY;
         }
 
-        std::atomic<bool> m_is_locked;
         pq m_pq;
-    };
+        K m_top;
+
+        char m_padding[CACHE_LINE_SIZE - sizeof(m_top) - sizeof(m_pq)];
+    } __attribute__((aligned(64)));
+
+    struct local_lock
+    {
+        local_lock() : m_is_locked(false) { }
+
+        std::atomic<bool> m_is_locked;
+
+        char m_padding[CACHE_LINE_SIZE - sizeof(m_is_locked)];
+    } __attribute__((aligned(64)));
 
 public:
     multiq(const size_t num_threads);
@@ -84,10 +98,10 @@ private:
     void unlock(const size_t ix);
 
 private:
-    kpq::thread_local_ptr<std::default_random_engine> m_local_gen;
-
     const size_t m_num_threads;
-    multiq_local *m_queues;
+
+    local_queue *m_queues;
+    local_lock *m_locks;
 };
 
 #include "multiq_inl.h"

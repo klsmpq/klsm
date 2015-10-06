@@ -17,39 +17,38 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+static thread_local kpq::xorshf96 local_rng;
+
 template <class K, class V, int C>
 multiq<K, V, C>::multiq(const size_t num_threads) :
     m_num_threads(num_threads)
 {
-    m_queues = new multiq_local[num_threads * C]();
+    m_queues = new local_queue[num_queues()]();
+    m_locks = new local_lock[num_queues()]();
 }
 
 template <class K, class V, int C>
 multiq<K, V, C>::~multiq()
 {
     delete[] m_queues;
+    delete[] m_locks;
 }
 
 template <class K, class V, int C>
 bool
 multiq<K, V, C>::delete_min(V &value)
 {
-    auto &gen = *m_local_gen.get();
-
     /* Peek at two random queues and lock the one with the minimal item. */
 
-    std::uniform_int_distribution<size_t> dist(0, num_queues() - 1);
+    const int nqueues = num_queues();
     size_t i, j;
 
     while (true) {
         do {
-            i = dist(gen);
-            j = dist(gen);
+            i = local_rng() % nqueues;
+            j = local_rng() % nqueues;
 
-            auto ith_top = m_queues[i].m_pq.top();
-            auto jth_top = m_queues[j].m_pq.top();
-
-            if (ith_top > jth_top) {
+            if (m_queues[i].m_top > m_queues[j].m_top) {
                 std::swap(i, j);
             }
         } while (!lock(i));
@@ -79,18 +78,17 @@ void
 multiq<K, V, C>::insert(const K &key,
                         const V &value)
 {
-    auto gen = m_local_gen.get();
-
     /* Lock a random priority queue and insert into it. */
 
-    std::uniform_int_distribution<size_t> dist(0, num_queues() - 1);
+    const int nqueues = num_queues();
     size_t i;
 
     do {
-        i = dist(*gen);
+        i = local_rng() % nqueues;
     } while (!lock(i));
 
-    m_queues[i].m_pq.push({key, value});
+    m_queues[i].m_pq.emplace(key, value);
+    m_queues[i].m_top = m_queues[i].m_pq.top().key;
 
     unlock(i);
 }
@@ -100,7 +98,7 @@ bool
 multiq<K, V, C>::lock(const size_t ix)
 {
     bool expected = false;
-    return m_queues[ix].m_is_locked.compare_exchange_strong(
+    return m_locks[ix].m_is_locked.compare_exchange_strong(
             expected, true, std::memory_order_relaxed);
 }
 
@@ -109,7 +107,7 @@ void
 multiq<K, V, C>::unlock(const size_t ix)
 {
     bool expected = true;
-    const bool succeeded = m_queues[ix].m_is_locked.compare_exchange_strong(
+    const bool succeeded = m_locks[ix].m_is_locked.compare_exchange_strong(
                     expected, false, std::memory_order_relaxed);
     assert(succeeded), (void)succeeded;
 }
