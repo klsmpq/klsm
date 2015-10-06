@@ -275,26 +275,12 @@ int
 dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
     COUNT_INC(requested_spies);
-    int num_spied = 0;
-
-    if (m_tail != nullptr) {
-        COUNT_INC(aborted_spies);
-        return num_spied;
-    }
-
-    if (m_spied != nullptr) {
-        auto it = m_spied->peek();
-        if (!it.empty()) {
-            COUNT_INC(aborted_spies);
-            return num_spied;
-        }
-    }
 
     const size_t num_threads    = parent->m_local.num_threads();
     const size_t current_thread = parent->m_local.current_thread();
 
     if (num_threads < 2) {
-        return num_spied;
+        return 0;
     }
 
     /* All except current thread, therefore n - 2. */
@@ -304,6 +290,27 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
     }
 
     auto victim = parent->m_local.get(victim_id);
+    return spy(victim);
+}
+
+template <class K, class V, int Rlx>
+int
+dist_lsm_local<K, V, Rlx>::spy(dist_lsm_local<K, V, Rlx> *victim)
+{
+    if (m_tail != nullptr) {
+        COUNT_INC(aborted_spies);
+        return 0;
+    }
+
+    if (m_spied != nullptr) {
+        auto it = m_spied->peek();
+        if (!it.empty()) {
+            COUNT_INC(aborted_spies);
+            return 0;
+        }
+    }
+
+    int num_spied = 0;
     auto spied_block = victim->m_head.load(std::memory_order_relaxed);
 
     if (spied_block == nullptr) {

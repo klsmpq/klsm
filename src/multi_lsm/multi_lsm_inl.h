@@ -77,8 +77,10 @@ multi_lsm<K, V, C>::delete_min(V &val)
     const bool it2_empty = it2.empty();
 
     if (it1_empty && it2_empty) {
+        q1->spy(random_queue());
         return false;
     } else if (it1_empty) {
+        q1->spy(random_queue());
         return it2.take(val);
     } else if (it2_empty) {
         return it1.take(val);
