@@ -28,8 +28,6 @@
 #include <valgrind/callgrind.h>
 #endif
 
-#include "dist_lsm/dist_lsm.h"
-#include "k_lsm/k_lsm.h"
 #include "pqs/cheap.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
@@ -37,6 +35,9 @@
 #include "pqs/sequence_heap.h"
 #include "pqs/skip_queue.h"
 #include "pqs/spraylist.h"
+#include "dist_lsm/dist_lsm.h"
+#include "k_lsm/k_lsm.h"
+#include "multi_lsm/multi_lsm.h"
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
 #include "util/counters.h"
@@ -51,6 +52,7 @@
 #define PQ_KLSM4096   "klsm4096"
 #define PQ_LINDEN     "linden"
 #define PQ_LSM        "lsm"
+#define PQ_MLSM       "mlsm"
 #define PQ_MULTIQ     "multiq"
 #define PQ_SEQUENCE   "sequence"
 #define PQ_SKIP       "skip"
@@ -159,7 +161,7 @@ usage()
             "       pq: The data structure to use as the backing priority queue\n"
             "           (one of '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
-            "                   '%s', '%s')\n",
+            "                   '%s', '%s', '%s')\n",
             DEFAULT_COUNTERS,
             DEFAULT_SIZE,
             KEYS_UNIFORM, KEYS_ASCENDING, DEFAULT_KEYS,
@@ -167,7 +169,7 @@ usage()
             DEFAULT_SEED,
             WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, DEFAULT_WORKLOAD,
             PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM16, PQ_KLSM128, PQ_KLSM256, PQ_KLSM4096,
-            PQ_LINDEN, PQ_LSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
+            PQ_LINDEN, PQ_LSM, PQ_MLSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
     exit(EXIT_FAILURE);
 }
 
@@ -502,6 +504,9 @@ main(int argc,
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<uint32_t> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_MLSM) {
+        kpq::multi_lsm<uint32_t, uint32_t> pq(settings.nthreads);
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_MULTIQ) {
         kpqbench::multiq<uint32_t, uint32_t> pq(settings.nthreads);
