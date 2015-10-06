@@ -22,6 +22,7 @@
 
 #include "dist_lsm/dist_lsm_local.h"
 #include "util/counters.h"
+#include "util/thread_local_ptr.h"
 
 namespace kpq {
 
@@ -42,8 +43,12 @@ public:
 
 private:
     /** Relaxation is meaningless when there is no slsm. */
-    static constexpr int DUMMY_RELAXATION = std::numeric_limits<int>::max();
+    static constexpr int DUMMY_RELAXATION = (1 << 20);
 
+    dist_lsm_local<K, V, DUMMY_RELAXATION> *random_local_queue() const;
+    dist_lsm_local<K, V, DUMMY_RELAXATION> *random_queue() const;
+
+private:
     const size_t m_num_threads;
     const size_t m_num_queues;
 
