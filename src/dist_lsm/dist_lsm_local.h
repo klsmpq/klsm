@@ -58,6 +58,9 @@ public:
      *  operation. */
     void peek(typename block<K, V>::peek_t &best);
 
+    /** Performs a peek without mutating blocks May be called from other threads. */
+    void safe_peek(typename block<K, V>::peek_t &best);
+
     /** Attempts to copy items from a random other thread's local clsm,
      *  and returns the number of items copied. */
     int spy(class dist_lsm<K, V, Rlx> *parent);

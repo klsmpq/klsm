@@ -17,7 +17,8 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-static thread_local xorshf96 multiq_local_rng;
+static thread_local xorshf96 mlsm_local_rng;
+static thread_local uint64_t mlsm_num_deletes;
 
 template <class K, class V, int C>
 multi_lsm<K, V, C>::multi_lsm(const size_t num_threads) :
@@ -55,6 +56,19 @@ template <class K, class V, int C>
 bool
 multi_lsm<K, V, C>::delete_min(V &val)
 {
+    // TODO: A better trigger for block maintenance. 1) it should take into account
+    // how often a pq has been peeked (including from by threads), and 2) it should also
+    // trigger if delete_min is never called (split workload).
+    if (mlsm_num_deletes++ > DELETES_BEFORE_MAINTENANCE) {
+        mlsm_num_deletes = 0;
+
+        const int base_ix = tid() * C;
+        typename block<K, V>::peek_t dummy_item;
+        for (int i = 0; i < C; i++) {
+            m_dist[base_ix + i].peek(dummy_item);
+        }
+    }
+
     /* Delete the better item from two random queues. */
 
     auto q1 = random_queue();
@@ -63,11 +77,8 @@ multi_lsm<K, V, C>::delete_min(V &val)
     typename block<K, V>::peek_t it1 = block<K, V>::peek_t::EMPTY();
     typename block<K, V>::peek_t it2 = block<K, V>::peek_t::EMPTY();
 
-    /* TODO: We still need lock-free peeks. We could then do maintenance on blocks
-     * every X calls to delete_min. */
-
-    q1->peek(it1);
-    q2->peek(it2);
+    q1->safe_peek(it1);
+    q2->safe_peek(it2);
 
     const bool it1_empty = it1.empty();
     const bool it2_empty = it2.empty();
@@ -90,7 +101,7 @@ dist_lsm_local<K, V, multi_lsm<K, V, C>::DUMMY_RELAXATION> *
 multi_lsm<K, V, C>::random_local_queue() const
 {
     const int id = tid();
-    const size_t ix = (C * id) + (multiq_local_rng() % C);
+    const size_t ix = (C * id) + (mlsm_local_rng() % C);
     assert(ix < m_num_queues);
     return &m_dist[ix];
 }
@@ -99,5 +110,5 @@ template <class K, class V, int C>
 dist_lsm_local<K, V, multi_lsm<K, V, C>::DUMMY_RELAXATION> *
 multi_lsm<K, V, C>::random_queue() const
 {
-    return &m_dist[multiq_local_rng() % m_num_queues];
+    return &m_dist[mlsm_local_rng() % m_num_queues];
 }

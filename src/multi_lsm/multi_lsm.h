@@ -38,12 +38,13 @@ public:
 
     bool delete_min(V &val);
 
-    void init_thread(const size_t) const { }
+    void init_thread(const size_t) const { set_tid(); }
     constexpr static bool supports_concurrency() { return true; }
 
 private:
     /** Relaxation is meaningless when there is no slsm. */
     static constexpr int DUMMY_RELAXATION = (1 << 20);
+    static constexpr int DELETES_BEFORE_MAINTENANCE = 128;
 
     dist_lsm_local<K, V, DUMMY_RELAXATION> *random_local_queue() const;
     dist_lsm_local<K, V, DUMMY_RELAXATION> *random_queue() const;

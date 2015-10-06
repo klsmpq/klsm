@@ -257,6 +257,20 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
 }
 
 template <class K, class V, int Rlx>
+void
+dist_lsm_local<K, V, Rlx>::safe_peek(typename block<K, V>::peek_t &best)
+{
+    for (auto i = m_head.load(std::memory_order_relaxed);
+            i != nullptr;
+            i = i->m_next.load(std::memory_order_relaxed)) {
+        auto candidate = i->peek();
+        if (best.empty() || (!candidate.empty() && candidate.m_key < best.m_key)) {
+            best = candidate;
+        }
+    }
+}
+
+template <class K, class V, int Rlx>
 int
 dist_lsm_local<K, V, Rlx>::spy(dist_lsm<K, V, Rlx> *parent)
 {
