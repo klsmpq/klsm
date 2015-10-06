@@ -44,7 +44,6 @@ public:
 private:
     /** Relaxation is meaningless when there is no slsm. */
     static constexpr int DUMMY_RELAXATION = (1 << 20);
-    static constexpr int DELETES_BEFORE_MAINTENANCE = 128;
 
     dist_lsm_local<K, V, DUMMY_RELAXATION> *random_local_queue() const;
     dist_lsm_local<K, V, DUMMY_RELAXATION> *random_queue() const;

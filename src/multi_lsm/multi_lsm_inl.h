@@ -18,7 +18,6 @@
  */
 
 static thread_local xorshf96 mlsm_local_rng;
-static thread_local uint64_t mlsm_num_deletes;
 
 template <class K, class V, int C>
 multi_lsm<K, V, C>::multi_lsm(const size_t num_threads) :
@@ -56,28 +55,15 @@ template <class K, class V, int C>
 bool
 multi_lsm<K, V, C>::delete_min(V &val)
 {
-    // TODO: A better trigger for block maintenance. 1) it should take into account
-    // how often a pq has been peeked (including from by threads), and 2) it should also
-    // trigger if delete_min is never called (split workload).
-    if (mlsm_num_deletes++ > DELETES_BEFORE_MAINTENANCE) {
-        mlsm_num_deletes = 0;
-
-        const int base_ix = tid() * C;
-        typename block<K, V>::peek_t dummy_item;
-        for (int i = 0; i < C; i++) {
-            m_dist[base_ix + i].peek(dummy_item);
-        }
-    }
-
     /* Delete the better item from two random queues. */
 
-    auto q1 = random_queue();
+    auto q1 = random_local_queue();
     auto q2 = random_queue();
 
     typename block<K, V>::peek_t it1 = block<K, V>::peek_t::EMPTY();
     typename block<K, V>::peek_t it2 = block<K, V>::peek_t::EMPTY();
 
-    q1->safe_peek(it1);
+    q1->peek(it1);
     q2->safe_peek(it2);
 
     const bool it1_empty = it1.empty();
