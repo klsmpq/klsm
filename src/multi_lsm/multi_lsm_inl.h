@@ -58,7 +58,14 @@ multi_lsm<K, V, C>::delete_min(V &val)
     /* Delete the better item from two random queues. */
 
     auto q1 = random_local_queue();
+    if (q1->empty()) {
+        q1 = random_local_queue();
+    }
+
     auto q2 = random_queue();
+    if (q2->empty()) {
+        q2 = random_queue();
+    }
 
     typename block<K, V>::peek_t it1 = block<K, V>::peek_t::EMPTY();
     typename block<K, V>::peek_t it2 = block<K, V>::peek_t::EMPTY();

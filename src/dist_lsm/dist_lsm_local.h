@@ -65,6 +65,8 @@ public:
      *  and returns the number of items copied. */
     int spy(class dist_lsm<K, V, Rlx> *parent);
 
+    bool empty() const { return m_head.load(std::memory_order_relaxed) == nullptr; }
+
     void print() const;
 
 private:
