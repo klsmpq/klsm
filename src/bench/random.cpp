@@ -43,6 +43,8 @@
 #include "util/counters.h"
 #include "util.h"
 
+#define ENABLE_QUALITY 1
+
 #define PQ_CHEAP      "cheap"
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
@@ -291,6 +293,11 @@ bench_thread(PriorityQueue *pq,
     CALLGRIND_START_INSTRUMENTATION;
 #endif
 
+#ifdef ENABLE_QUALITY
+    auto insertions = new std::vector<std::pair<uint32_t, uint32_t>>();
+    auto deletions  = new std::vector<std::pair<uint32_t, uint32_t>>();
+#endif
+
     while (!start_barrier.load(std::memory_order_relaxed)) {
         /* Wait. */
     }
@@ -303,13 +310,19 @@ bench_thread(PriorityQueue *pq,
     while (!end_barrier.load(std::memory_order_relaxed)) {
         if (workload.insert()) {
             v = keygen.next();
+#ifdef ENABLE_QUALITY
+            const uint32_t tick = (uint32_t)rdtsc();
+            insertions->emplace_back(v, tick);
+            pq->insert(v, tick);
+#else
             pq->insert(v, v);
+#endif
             kpq::COUNTERS.inserts++;
         } else {
-            /* TODO: Possibly revert to including failed deletes in the operation count
-             * (pheet does this). However, it is important to distinguish failed
-             * deletes at this time since spy() is currently disabled. */
             if (pq->delete_min(v)) {
+#ifdef ENABLE_QUALITY
+                deletions->emplace_back(v, (uint32_t)rdtsc());
+#endif
                 kpq::COUNTERS.successful_deletes++;
             } else {
                 kpq::COUNTERS.failed_deletes++;

@@ -46,4 +46,7 @@ std::vector<uint32_t>
 random_array(const size_t n,
              const int seed);
 
+uint64_t
+rdtsc();
+
 #endif /* __UTIL_H */
