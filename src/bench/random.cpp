@@ -133,7 +133,7 @@ static std::atomic<bool> end_barrier(false);
 struct packed_item_id {
     uint32_t thread_id    : 9;
     uint32_t element_id   : 23;
-    uint32_t tick;
+    uint64_t tick;
 };
 
 class packed_uniform_bool_distribution {
@@ -297,6 +297,11 @@ bench_thread(PriorityQueue *pq,
 
 #ifdef ENABLE_QUALITY
     uint32_t insertion_id = 0;
+
+    auto insertions = new std::vector<std::pair<KEY_TYPE, VAL_TYPE>>();
+    auto deletions  = new std::vector<VAL_TYPE>();
+    kpq::COUNTERS.insertion_sequence = insertions;
+    kpq::COUNTERS.deletion_sequence  = deletions;
 #endif
 
     const int slice_size = settings.size / settings.nthreads;
@@ -305,7 +310,9 @@ bench_thread(PriorityQueue *pq,
     for (int i = 0; i < initial_size; i++) {
         uint32_t elem = keygen.next();
 #ifdef ENABLE_QUALITY
-        pq->insert(elem, { (uint32_t)thread_id, insertion_id++, (uint32_t)rdtsc() });
+        VAL_TYPE v = { (uint32_t)thread_id, insertion_id++, rdtsc() };
+        insertions->emplace_back(elem, v);
+        pq->insert(elem, v);
 #else
         pq->insert(elem, elem);
 #endif
@@ -314,13 +321,6 @@ bench_thread(PriorityQueue *pq,
 
 #ifdef HAVE_VALGRIND
     CALLGRIND_START_INSTRUMENTATION;
-#endif
-
-#ifdef ENABLE_QUALITY
-    auto insertions = new std::vector<std::pair<KEY_TYPE, VAL_TYPE>>();
-    auto deletions  = new std::vector<VAL_TYPE>();
-    kpq::COUNTERS.insertion_sequence = insertions;
-    kpq::COUNTERS.deletion_sequence  = deletions;
 #endif
 
     while (!start_barrier.load(std::memory_order_relaxed)) {
@@ -337,7 +337,7 @@ bench_thread(PriorityQueue *pq,
         if (workload.insert()) {
             k = keygen.next();
 #ifdef ENABLE_QUALITY
-            v = { (uint32_t)thread_id, insertion_id++, (uint32_t)rdtsc() };
+            v = { (uint32_t)thread_id, insertion_id++, rdtsc() };
             insertions->emplace_back(k, v);
             pq->insert(k, v);
 #else
@@ -349,7 +349,7 @@ bench_thread(PriorityQueue *pq,
 #ifdef ENABLE_QUALITY
                 deletions->emplace_back(packed_item_id { v.thread_id
                                                        , v.element_id
-                                                       , (uint32_t)rdtsc()
+                                                       , rdtsc()
                                                        });
 #endif
                 kpq::COUNTERS.successful_deletes++;
@@ -367,13 +367,13 @@ bench_thread(PriorityQueue *pq,
 }
 
 #ifdef ENABLE_QUALITY
-typedef std::pair<uint32_t, uint32_t> sort_t; // <Incoming vector #, timestamp>.
+typedef std::pair<uint32_t, uint64_t> sort_t; // <Incoming vector #, timestamp>.
 typedef std::vector<std::pair<KEY_TYPE, VAL_TYPE>> insertion_sequence_t;
 typedef std::vector<VAL_TYPE> deletion_sequence_t;
 
-struct sort_less {
+struct sort_greater {
     bool operator()(const sort_t &l, const sort_t &r) {
-        return (l.second < r.second);  // Sort by timestamp.
+        return (l.second > r.second);  // Sort by timestamp.
     }
 };
 
@@ -384,7 +384,7 @@ sort_insertion_sequence(const std::vector<void *> &insertion_sequences,
     std::vector<uint32_t> sort_ixs(insertion_sequences.size(), 0);
 
     /* Create the sorting priority queue and fill it with initial list heads. */
-    std::priority_queue<sort_t, std::vector<sort_t>, sort_less> sort_pq;
+    std::priority_queue<sort_t, std::vector<sort_t>, sort_greater> sort_pq;
     for (uint32_t i = 0; i < insertion_sequences.size(); i++) {
         auto v = (insertion_sequence_t *)insertion_sequences[i];
         if (v->empty()) {
@@ -415,7 +415,7 @@ sort_deletion_sequence(const std::vector<void *> &deletion_sequences,
     std::vector<uint32_t> sort_ixs(deletion_sequences.size(), 0);
 
     /* Create the sorting priority queue and fill it with initial list heads. */
-    std::priority_queue<sort_t, std::vector<sort_t>, sort_less> sort_pq;
+    std::priority_queue<sort_t, std::vector<sort_t>, sort_greater> sort_pq;
     for (uint32_t i = 0; i < deletion_sequences.size(); i++) {
         auto v = (deletion_sequence_t *)deletion_sequences[i];
         if (v->empty()) {
@@ -443,6 +443,8 @@ static void
 evaluate_quality(std::vector<void *> &insertion_sequences,
                  std::vector<void *> &deletion_sequences)
 {
+    /* Merge all insertions and deletions into global sequences. */
+
     insertion_sequence_t global_insertion_sequence;
     sort_insertion_sequence(insertion_sequences, global_insertion_sequence);
 
@@ -462,6 +464,35 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
     /* Iterate through the sequences. For each timestamp, do insertions first
      * and then deletions, emulating each step on a sequential priority queue
      * and determining the rank error. */
+
+    assert(!global_deletion_sequence.empty() && !global_insertion_sequence.empty());
+
+    uint64_t next_ins_tick = global_insertion_sequence.front().second.tick;
+    uint32_t ins_ix = 0;
+    uint64_t next_del_tick = global_deletion_sequence.front().tick;
+    uint32_t del_ix = 0;
+    assert(next_ins_tick < next_del_tick);
+
+    typedef std::pair<KEY_TYPE, VAL_TYPE> elem_t;
+    constexpr auto elem_greater  = [] (const elem_t &l, const elem_t &r) {
+        return (l.first < r.first);
+    };
+
+    std::vector<elem_t> pq;
+    while (true) {
+        /* Do insertions. */
+        while (next_ins_tick <= next_del_tick) {
+            pq.emplace_back(global_insertion_sequence[ins_ix++]);
+            std::push_heap(pq.begin(), pq.end(), elem_greater);
+
+            if (ins_ix >= global_insertion_sequence.size()) {
+                next_ins_tick = std::numeric_limits<uint64_t>::max();
+                break;
+            }
+
+            next_ins_tick = global_insertion_sequence[ins_ix].second.tick;
+        }
+    }
 }
 #endif
 
