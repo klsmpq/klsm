@@ -82,6 +82,13 @@ struct counters
 #define D_DECL(C) size_t C;
     V(D_DECL)
 #undef D_DECL
+
+#ifdef ENABLE_QUALITY
+    /** Two special-case members which are used to store thread-local sequences
+     *  of insertions and deletions for the quality benchmark. */
+    void *insertion_sequence;
+    void *deletion_sequence;
+#endif
 };
 
 thread_local counters COUNTERS;

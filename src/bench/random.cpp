@@ -17,6 +17,8 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define ENABLE_QUALITY 1
+
 #include <ctime>
 #include <future>
 #include <getopt.h>
@@ -42,8 +44,6 @@
 #include "shared_lsm/shared_lsm.h"
 #include "util/counters.h"
 #include "util.h"
-
-#define ENABLE_QUALITY 1
 
 #define PQ_CHEAP      "cheap"
 #define PQ_DLSM       "dlsm"
@@ -318,6 +318,8 @@ bench_thread(PriorityQueue *pq,
 #ifdef ENABLE_QUALITY
     auto insertions = new std::vector<std::pair<KEY_TYPE, VAL_TYPE>>();
     auto deletions  = new std::vector<VAL_TYPE>();
+    kpq::COUNTERS.insertion_sequence = insertions;
+    kpq::COUNTERS.deletion_sequence  = deletions;
 #endif
 
     while (!start_barrier.load(std::memory_order_relaxed)) {
@@ -344,7 +346,10 @@ bench_thread(PriorityQueue *pq,
         } else {
             if (pq->delete_min(v)) {
 #ifdef ENABLE_QUALITY
-                deletions->emplace_back({ v.thread_id, v.element_id, (uint32_t)rdtsc() });
+                deletions->emplace_back(packed_item_id { v.thread_id
+                                                       , v.element_id
+                                                       , (uint32_t)rdtsc()
+                                                       });
 #endif
                 kpq::COUNTERS.successful_deletes++;
             } else {
