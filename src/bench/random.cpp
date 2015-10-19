@@ -61,6 +61,14 @@
 #define PQ_SLSM       "slsm"
 #define PQ_SPRAY      "spray"
 
+#ifdef ENABLE_QUALITY
+#define KEY_TYPE      uint32_t
+#define VAL_TYPE      packed_item_id
+#else
+#define KEY_TYPE      uint32_t
+#define VAL_TYPE      uint32_t
+#endif
+
 /**
  * Uniform: Each thread performs 50% inserts, 50% deletes.
  * Split: 50% of threads perform inserts, 50% of threads perform deletes (in case of an
@@ -120,6 +128,12 @@ static hwloc_wrapper hwloc;
 static std::atomic<int> fill_barrier;
 static std::atomic<bool> start_barrier(false);
 static std::atomic<bool> end_barrier(false);
+
+struct packed_item_id {
+    uint32_t thread_id    : 9;
+    uint32_t element_id   : 23;
+    uint32_t tick;
+};
 
 class packed_uniform_bool_distribution {
 public:
@@ -280,12 +294,20 @@ bench_thread(PriorityQueue *pq,
     /* Fill up to initial size. Do this per thread in order to build a balanced DLSM
      * instead of having one local LSM containing all initial elems. */
 
+#ifdef ENABLE_QUALITY
+    uint32_t insertion_id = 0;
+#endif
+
     const int slice_size = settings.size / settings.nthreads;
     const int initial_size = (thread_id == settings.nthreads - 1) ?
                              settings.size - thread_id * slice_size : slice_size;
     for (int i = 0; i < initial_size; i++) {
         uint32_t elem = keygen.next();
+#ifdef ENABLE_QUALITY
+        pq->insert(elem, { (uint32_t)thread_id, insertion_id++, (uint32_t)rdtsc() });
+#else
         pq->insert(elem, elem);
+#endif
     }
     fill_barrier.fetch_sub(1, std::memory_order_relaxed);
 
@@ -294,8 +316,8 @@ bench_thread(PriorityQueue *pq,
 #endif
 
 #ifdef ENABLE_QUALITY
-    auto insertions = new std::vector<std::pair<uint32_t, uint32_t>>();
-    auto deletions  = new std::vector<std::pair<uint32_t, uint32_t>>();
+    auto insertions = new std::vector<std::pair<KEY_TYPE, VAL_TYPE>>();
+    auto deletions  = new std::vector<VAL_TYPE>();
 #endif
 
     while (!start_barrier.load(std::memory_order_relaxed)) {
@@ -306,22 +328,23 @@ bench_thread(PriorityQueue *pq,
     CALLGRIND_ZERO_STATS;
 #endif
 
-    uint32_t v;
+    KEY_TYPE k;
+    VAL_TYPE v;
     while (!end_barrier.load(std::memory_order_relaxed)) {
         if (workload.insert()) {
-            v = keygen.next();
+            k = keygen.next();
 #ifdef ENABLE_QUALITY
-            const uint32_t tick = (uint32_t)rdtsc();
-            insertions->emplace_back(v, tick);
-            pq->insert(v, tick);
+            v = { (uint32_t)thread_id, insertion_id++, (uint32_t)rdtsc() };
+            insertions->emplace_back(k, v);
+            pq->insert(k, v);
 #else
-            pq->insert(v, v);
+            pq->insert(k, k);
 #endif
             kpq::COUNTERS.inserts++;
         } else {
             if (pq->delete_min(v)) {
 #ifdef ENABLE_QUALITY
-                deletions->emplace_back(v, (uint32_t)rdtsc());
+                deletions->emplace_back({ v.thread_id, v.element_id, (uint32_t)rdtsc() });
 #endif
                 kpq::COUNTERS.successful_deletes++;
             } else {
@@ -491,51 +514,57 @@ main(int argc,
     }
 
     if (settings.type == PQ_CHEAP) {
-        kpqbench::cheap<uint32_t, uint32_t> pq;
+        kpqbench::cheap<KEY_TYPE, VAL_TYPE> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_DLSM) {
-        kpq::dist_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
+        kpq::dist_lsm<KEY_TYPE, VAL_TYPE, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_GLOBALLOCK) {
-        kpqbench::GlobalLock<uint32_t, uint32_t> pq;
+        kpqbench::GlobalLock<KEY_TYPE, VAL_TYPE> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_KLSM16) {
-        kpq::k_lsm<uint32_t, uint32_t, 16> pq;
+        kpq::k_lsm<KEY_TYPE, VAL_TYPE, 16> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_KLSM128) {
-        kpq::k_lsm<uint32_t, uint32_t, 128> pq;
+        kpq::k_lsm<KEY_TYPE, VAL_TYPE, 128> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_KLSM256) {
-        kpq::k_lsm<uint32_t, uint32_t, 256> pq;
+        kpq::k_lsm<KEY_TYPE, VAL_TYPE, 256> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_KLSM4096) {
-        kpq::k_lsm<uint32_t, uint32_t, 4096> pq;
+        kpq::k_lsm<KEY_TYPE, VAL_TYPE, 4096> pq;
         ret = bench(&pq, settings);
+#ifndef ENABLE_QUALITY
     } else if (settings.type == PQ_LINDEN) {
         kpqbench::Linden pq(kpqbench::Linden::DEFAULT_OFFSET);
         pq.insert(42, 42); /* A hack to avoid segfault on destructor in empty linden queue. */
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
-        kpq::LSM<uint32_t> pq;
+        kpq::LSM<KEY_TYPE> pq;
         ret = bench(&pq, settings);
+#endif
     } else if (settings.type == PQ_MLSM) {
-        kpq::multi_lsm<uint32_t, uint32_t> pq(settings.nthreads);
+        kpq::multi_lsm<KEY_TYPE, VAL_TYPE> pq(settings.nthreads);
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_MULTIQ) {
-        kpqbench::multiq<uint32_t, uint32_t> pq(settings.nthreads);
+        kpqbench::multiq<KEY_TYPE, VAL_TYPE> pq(settings.nthreads);
         ret = bench(&pq, settings);
+#ifndef ENABLE_QUALITY
     } else if (settings.type == PQ_SEQUENCE) {
-        kpqbench::sequence_heap<uint32_t> pq;
+        kpqbench::sequence_heap<KEY_TYPE> pq;
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_SKIP) {
-        kpqbench::skip_queue<uint32_t> pq;
+        kpqbench::skip_queue<KEY_TYPE> pq;
         ret = bench(&pq, settings);
+#endif
     } else if (settings.type == PQ_SLSM) {
-        kpq::shared_lsm<uint32_t, uint32_t, DEFAULT_RELAXATION> pq;
+        kpq::shared_lsm<KEY_TYPE, VAL_TYPE, DEFAULT_RELAXATION> pq;
         ret = bench(&pq, settings);
+#ifndef ENABLE_QUALITY
     } else if (settings.type == PQ_SPRAY) {
         kpqbench::spraylist pq;
         ret = bench(&pq, settings);
+#endif
     } else {
         usage();
     }
