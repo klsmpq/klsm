@@ -22,6 +22,7 @@
 #include <ctime>
 #include <future>
 #include <getopt.h>
+#include <queue>
 #include <random>
 #include <thread>
 #include <unistd.h>
@@ -366,11 +367,97 @@ bench_thread(PriorityQueue *pq,
 }
 
 #ifdef ENABLE_QUALITY
+typedef std::pair<uint32_t, uint32_t> sort_t; // <Incoming vector #, timestamp>.
+typedef std::vector<std::pair<KEY_TYPE, VAL_TYPE>> insertion_sequence_t;
+typedef std::vector<VAL_TYPE> deletion_sequence_t;
+
+struct sort_less {
+    bool operator()(const sort_t &l, const sort_t &r) {
+        return (l.second < r.second);  // Sort by timestamp.
+    }
+};
+
 static void
-evaluate_quality(std::vector<void *> insertion_sequence,
-                 std::vector<void *> deletion_sequence)
+sort_insertion_sequence(const std::vector<void *> &insertion_sequences,
+                        insertion_sequence_t &global_insertion_sequence)
 {
-    /* Merge all insertions and deletions into global sequences. */
+    std::vector<uint32_t> sort_ixs(insertion_sequences.size(), 0);
+
+    /* Create the sorting priority queue and fill it with initial list heads. */
+    std::priority_queue<sort_t, std::vector<sort_t>, sort_less> sort_pq;
+    for (uint32_t i = 0; i < insertion_sequences.size(); i++) {
+        auto v = (insertion_sequence_t *)insertion_sequences[i];
+        if (v->empty()) {
+            continue;
+        }
+        const auto val = v->front().second;
+        sort_pq.emplace(i, val.tick);
+    }
+
+    while (!sort_pq.empty()) {
+        auto next = sort_pq.top();
+        sort_pq.pop();
+
+        const auto next_v_ix = sort_ixs[next.first]++;
+        const auto next_v = (insertion_sequence_t *)insertion_sequences[next.first];
+        global_insertion_sequence.push_back(next_v->at(next_v_ix));
+
+        if (next_v_ix + 1 < next_v->size()) {
+            sort_pq.emplace(next.first, next_v->at(next_v_ix + 1).second.tick);
+        }
+    }
+}
+
+static void
+sort_deletion_sequence(const std::vector<void *> &deletion_sequences,
+                       deletion_sequence_t &global_deletion_sequence)
+{
+    std::vector<uint32_t> sort_ixs(deletion_sequences.size(), 0);
+
+    /* Create the sorting priority queue and fill it with initial list heads. */
+    std::priority_queue<sort_t, std::vector<sort_t>, sort_less> sort_pq;
+    for (uint32_t i = 0; i < deletion_sequences.size(); i++) {
+        auto v = (deletion_sequence_t *)deletion_sequences[i];
+        if (v->empty()) {
+            continue;
+        }
+        const auto val = v->front();
+        sort_pq.emplace(i, val.tick);
+    }
+
+    while (!sort_pq.empty()) {
+        auto next = sort_pq.top();
+        sort_pq.pop();
+
+        const auto next_v_ix = sort_ixs[next.first]++;
+        const auto next_v = (deletion_sequence_t *)deletion_sequences[next.first];
+        global_deletion_sequence.push_back(next_v->at(next_v_ix));
+
+        if (next_v_ix + 1 < next_v->size()) {
+            sort_pq.emplace(next.first, next_v->at(next_v_ix + 1).tick);
+        }
+    }
+}
+
+static void
+evaluate_quality(std::vector<void *> &insertion_sequences,
+                 std::vector<void *> &deletion_sequences)
+{
+    insertion_sequence_t global_insertion_sequence;
+    sort_insertion_sequence(insertion_sequences, global_insertion_sequence);
+
+    for (auto ptr : insertion_sequences) {
+        auto v = (insertion_sequence_t *)ptr;
+        delete v;
+    }
+
+    deletion_sequence_t global_deletion_sequence;
+    sort_deletion_sequence(deletion_sequences, global_deletion_sequence);
+
+    for (auto ptr : deletion_sequences) {
+        auto v = (deletion_sequence_t *)ptr;
+        delete v;
+    }
 
     /* Iterate through the sequences. For each timestamp, do insertions first
      * and then deletions, emulating each step on a sequential priority queue
@@ -462,10 +549,11 @@ bench(PriorityQueue *pq,
 
     kpq::counters counters;
     for (auto &future : futures) {
-        counters += future.get();
+        auto counter = future.get();
+        counters += counter;
 #ifdef ENABLE_QUALITY
-        insertion_sequences.push_back(counters.insertion_sequence);
-        deletion_sequences.push_back(counters.deletion_sequence);
+        insertion_sequences.push_back(counter.insertion_sequence);
+        deletion_sequences.push_back(counter.deletion_sequence);
 #endif
     }
 
