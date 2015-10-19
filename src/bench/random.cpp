@@ -365,6 +365,19 @@ bench_thread(PriorityQueue *pq,
     result.set_value(kpq::COUNTERS);
 }
 
+#ifdef ENABLE_QUALITY
+static void
+evaluate_quality(std::vector<void *> insertion_sequence,
+                 std::vector<void *> deletion_sequence)
+{
+    /* Merge all insertions and deletions into global sequences. */
+
+    /* Iterate through the sequences. For each timestamp, do insertions first
+     * and then deletions, emulating each step on a sequential priority queue
+     * and determining the rank error. */
+}
+#endif
+
 template <class PriorityQueue>
 static int
 bench(PriorityQueue *pq,
@@ -442,10 +455,23 @@ bench(PriorityQueue *pq,
         thread.join();
     }
 
+#ifdef ENABLE_QUALITY
+    std::vector<void *> insertion_sequences;
+    std::vector<void *> deletion_sequences;
+#endif
+
     kpq::counters counters;
     for (auto &future : futures) {
         counters += future.get();
+#ifdef ENABLE_QUALITY
+        insertion_sequences.push_back(counters.insertion_sequence);
+        deletion_sequences.push_back(counters.deletion_sequence);
+#endif
     }
+
+#ifdef ENABLE_QUALITY
+    evaluate_quality(insertion_sequences, deletion_sequences);
+#endif
 
     const double elapsed = timediff_in_s(start, end);
     size_t ops_per_s = (size_t)((double)counters.operations() / elapsed);
@@ -459,7 +485,8 @@ bench(PriorityQueue *pq,
     return ret;
 }
 
-static int safe_parse_int_arg(const char *arg)
+static int
+safe_parse_int_arg(const char *arg)
 {
     errno = 0;
     const int i = strtol(arg, NULL, 0);
