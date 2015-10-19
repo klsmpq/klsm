@@ -55,7 +55,7 @@ void
 spraylist::insert(const uint32_t &k,
                   const uint32_t &v)
 {
-    sl_add(m_q, v, READ_ADD_REM_ELASTIC_TX);
+    sl_add(m_q, k, READ_ADD_REM_ELASTIC_TX);
 }
 
 bool
