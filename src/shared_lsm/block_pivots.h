@@ -74,8 +74,8 @@ private:
      * are called 'pivots and are required to relax the delete_min operation.
      * Pivots should be absolute indices (not dependent on block's m_first/m_last).
      */
-    int m_pivots[MaxBlocks];
-    int m_first_in_block[MaxBlocks];
+    int m_upper[MaxBlocks];
+    int m_lower[MaxBlocks];
     K m_maximal_pivot;
 
     /**

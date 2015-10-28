@@ -21,8 +21,8 @@
 
 template <class K, class V, int Rlx, int MaxBlocks>
 block_pivots<K, V, Rlx, MaxBlocks>::block_pivots() :
-    m_pivots { 0 },
-    m_first_in_block { 0 },
+    m_upper { 0 },
+    m_lower { 0 },
     m_maximal_pivot(std::numeric_limits<K>::min()),
     m_count { 0 },
     m_count_for_size { INVALID_COUNT_FOR_SIZE }
@@ -38,8 +38,8 @@ template <class K, class V, int Rlx, int MaxBlocks>
 block_pivots<K, V, Rlx, MaxBlocks> &
 block_pivots<K, V, Rlx, MaxBlocks>::operator=(const block_pivots<K, V, Rlx, MaxBlocks> &that)
 {
-    memcpy(m_pivots, that.m_pivots, sizeof(m_pivots));
-    memcpy(m_first_in_block, that.m_first_in_block, sizeof(m_first_in_block));
+    memcpy(m_upper, that.m_upper, sizeof(m_upper));
+    memcpy(m_lower, that.m_lower, sizeof(m_lower));
     m_maximal_pivot = that.m_maximal_pivot;
 
     m_count = that.m_count;
@@ -64,10 +64,10 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
     for (size_t i = 0; i < size; i++) {
         auto b = blocks[i];
         size_t candidate_ix;
-        const size_t first = m_first_in_block[i];
+        const size_t first = m_lower[i];
         auto candidate  = b->peek(candidate_ix, first);
 
-        m_first_in_block[i] = m_pivots[i] = std::max(b->first(), first);
+        m_lower[i] = m_upper[i] = std::max(b->first(), first);
 
         if ((best.empty() && !candidate.empty()) ||
                 (!best.empty() && !candidate.empty() && candidate.m_key < best.m_key)) {
@@ -82,7 +82,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
         return 0;
     }
 
-    m_pivots[best_block_ix] = best_item_ix + 1;
+    m_upper[best_block_ix] = best_item_ix + 1;
 
     m_count = 1;
     m_count_for_size = size;
@@ -122,7 +122,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
      * create a second pivot vector and pointers to the currently legal solution
      * and the in-progress solution. */
     int temp_array[MaxBlocks];
-    int *pivots = m_pivots;
+    int *pivots = m_upper;
     int *tentative_pivots = temp_array;
 
     // We could skip owned() checks by keeping a bitmap around - once an item is taken,
@@ -200,8 +200,8 @@ outer:
 
     /* Return the valid solution. */
     m_maximal_pivot = mid;
-    if (m_pivots != tentative_pivots) {
-        memcpy(m_pivots, tentative_pivots, sizeof(m_pivots));
+    if (m_upper != tentative_pivots) {
+        memcpy(m_upper, tentative_pivots, sizeof(m_upper));
     }
 
     m_count_for_size = INVALID_COUNT_FOR_SIZE;
@@ -233,8 +233,8 @@ size_t
 block_pivots<K, V, Rlx, MaxBlocks>::count_in(const size_t block_ix) const
 {
     assert(block_ix < MaxBlocks);
-    assert(m_first_in_block[block_ix] <= m_pivots[block_ix]);
-    return m_pivots[block_ix] - m_first_in_block[block_ix];
+    assert(m_lower[block_ix] <= m_upper[block_ix]);
+    return m_upper[block_ix] - m_lower[block_ix];
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
@@ -243,7 +243,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::nth_ix_in(const size_t relative_element_ix,
                                               const size_t block_ix) const
 {
     assert(block_ix < MaxBlocks);
-    return m_first_in_block[block_ix] + relative_element_ix;
+    return m_lower[block_ix] + relative_element_ix;
 }
 
 template <class K, class V, int Rlx, int MaxBlocks>
@@ -251,7 +251,7 @@ void
 block_pivots<K, V, Rlx, MaxBlocks>::mark_first_taken_in(const size_t block_ix)
 {
     assert(block_ix < MaxBlocks);
-    m_first_in_block[block_ix]++;
+    m_lower[block_ix]++;
     if (block_ix < m_count_for_size) {
         m_count--;
     }
@@ -279,12 +279,12 @@ block_pivots<K, V, Rlx, MaxBlocks>::insert(const size_t block_ix,
                                            const int first_in_block,
                                            const int pivot)
 {
-    memmove(&m_pivots[block_ix + 1],
-            &m_pivots[block_ix],
-            sizeof(m_pivots[0]) * (size - block_ix));
-    memmove(&m_first_in_block[block_ix + 1],
-            &m_first_in_block[block_ix],
-            sizeof(m_first_in_block[0]) * (size - block_ix));
+    memmove(&m_upper[block_ix + 1],
+            &m_upper[block_ix],
+            sizeof(m_upper[0]) * (size - block_ix));
+    memmove(&m_lower[block_ix + 1],
+            &m_lower[block_ix],
+            sizeof(m_lower[0]) * (size - block_ix));
     set(block_ix, first_in_block, pivot);
 }
 
@@ -294,8 +294,8 @@ block_pivots<K, V, Rlx, MaxBlocks>::set(const size_t block_ix,
                                         const int first_in_block,
                                         const int pivot)
 {
-    m_first_in_block[block_ix] = first_in_block;
-    m_pivots[block_ix] = pivot;
+    m_lower[block_ix] = first_in_block;
+    m_upper[block_ix] = pivot;
     m_count_for_size = INVALID_COUNT_FOR_SIZE;
 }
 
@@ -308,7 +308,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::copy(const size_t src_ix,
         return;
     }
 
-    m_first_in_block[dst_ix] = m_first_in_block[src_ix];
-    m_pivots[dst_ix] = m_pivots[src_ix];
+    m_lower[dst_ix] = m_lower[src_ix];
+    m_upper[dst_ix] = m_upper[src_ix];
     m_count_for_size = INVALID_COUNT_FOR_SIZE;
 }
