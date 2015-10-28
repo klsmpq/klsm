@@ -24,6 +24,7 @@
 #include <getopt.h>
 #include <queue>
 #include <random>
+#include <set>
 #include <thread>
 #include <unistd.h>
 
@@ -98,7 +99,11 @@ constexpr int DEFAULT_SEED       = 0;
 constexpr int DEFAULT_SIZE       = 1000000;  // Matches benchmarks from klsm paper.
 constexpr int DEFAULT_NTHREADS   = 1;
 constexpr int DEFAULT_RELAXATION = 256;
+#ifdef ENABLE_QUALITY
+constexpr int DEFAULT_SLEEP      = 1;
+#else
 constexpr int DEFAULT_SLEEP      = 10;
+#endif
 constexpr auto DEFAULT_COUNTERS  = false;
 constexpr auto DEFAULT_WORKLOAD  = WORKLOAD_UNIFORM;
 constexpr auto DEFAULT_KEYS      = KEYS_UNIFORM;
@@ -433,6 +438,8 @@ sort_deletion_sequence(const std::vector<void *> &deletion_sequences,
         const auto next_v = (deletion_sequence_t *)deletion_sequences[next.first];
         global_deletion_sequence.push_back(next_v->at(next_v_ix));
 
+        assert(next_v_ix < next_v->size());
+
         if (next_v_ix + 1 < next_v->size()) {
             sort_pq.emplace(next.first, next_v->at(next_v_ix + 1).tick);
         }
@@ -474,25 +481,61 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
     assert(next_ins_tick < next_del_tick);
 
     typedef std::pair<KEY_TYPE, VAL_TYPE> elem_t;
-    constexpr auto elem_greater  = [] (const elem_t &l, const elem_t &r) {
-        return (l.first < r.first);
+    struct elem_less {
+        bool operator()(const elem_t &l, const elem_t &r) {
+            return (l.first < r.first);
+        }
     };
 
-    std::vector<elem_t> pq;
-    while (true) {
-        /* Do insertions. */
-        while (next_ins_tick <= next_del_tick) {
-            pq.emplace_back(global_insertion_sequence[ins_ix++]);
-            std::push_heap(pq.begin(), pq.end(), elem_greater);
+    uint64_t rank_sum = 0;
+    const uint64_t insertion_count = global_insertion_sequence.size();
+    const uint64_t deletion_count = global_deletion_sequence.size();
 
-            if (ins_ix >= global_insertion_sequence.size()) {
+    bool keep_running = true;
+    std::multiset<elem_t, elem_less> pq;
+    while (keep_running) {
+        assert(ins_ix < insertion_count);
+        assert(next_ins_tick <= next_del_tick);
+
+        /* Do insertions. */
+        while (ins_ix < insertion_count && next_ins_tick <= next_del_tick) {
+            pq.emplace(global_insertion_sequence[ins_ix++]);
+
+            if (ins_ix >= insertion_count) {
                 next_ins_tick = std::numeric_limits<uint64_t>::max();
                 break;
             }
 
             next_ins_tick = global_insertion_sequence[ins_ix].second.tick;
         }
+
+        /* Do deletions. */
+        while (next_del_tick < next_ins_tick) {
+            const auto deleted_item = global_deletion_sequence[del_ix++];
+
+            uint64_t rank = 0;
+            for (auto it = pq.begin(); it != pq.end(); it++) {
+                const auto item = it->second;
+                if (item.element_id == deleted_item.element_id
+                        && item.thread_id == deleted_item.thread_id) {
+                    pq.erase(it);
+                    break;
+                }
+                rank++;
+            }
+
+            rank_sum += rank;
+
+            if (del_ix >= deletion_count) {
+                keep_running = false;
+                break;
+            }
+
+            next_del_tick = global_deletion_sequence[del_ix].tick;
+        }
     }
+
+    fprintf(stderr, "avg rank: %f\n", (double)rank_sum / global_deletion_sequence.size());
 }
 #endif
 
