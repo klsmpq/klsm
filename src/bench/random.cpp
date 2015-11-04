@@ -17,7 +17,7 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define ENABLE_QUALITY 1
+// #define ENABLE_QUALITY 1
 
 #include <ctime>
 #include <future>
