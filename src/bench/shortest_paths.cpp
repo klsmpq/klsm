@@ -69,12 +69,12 @@ struct task_t {
     task_t(vertex_t *v,
            const size_t distance) : v(v), distance(distance)
     {
-        num_tasks.fetch_add(1, std::memory_order_relaxed);
+        num_tasks.fetch_add(1, std::memory_order_seq_cst);
     }
 
     ~task_t()
     {
-        num_tasks.fetch_sub(1, std::memory_order_relaxed);
+        num_tasks.fetch_sub(1, std::memory_order_seq_cst);
     }
 
     vertex_t *v;
@@ -149,14 +149,14 @@ verify_graph(const vertex_t *graph,
 {
     for (size_t i = 0; i < n; i++) {
         const vertex_t *v = &graph[i];
-        const size_t v_dist = v->distance.load(std::memory_order_relaxed);
+        const size_t v_dist = v->distance.load(std::memory_order_seq_cst);
 
         for (size_t j = 0; j < v->num_edges; j++) {
             const edge_t *e = &v->edges[j];
             const size_t new_dist = v_dist + e->weight;
 
             const vertex_t *w = &graph[e->target];
-            const size_t w_dist = w->distance.load(std::memory_order_relaxed);
+            const size_t w_dist = w->distance.load(std::memory_order_seq_cst);
 
             assert(new_dist >= w_dist), (void)new_dist, (void)w_dist;
         }
@@ -183,18 +183,18 @@ bench_thread(T *pq,
 {
     hwloc.pin_to_core(thread_id);
 
-    while (!start_barrier.load(std::memory_order_relaxed)) {
+    while (!start_barrier.load(std::memory_order_seq_cst)) {
         /* Wait. */
     }
 
-    while (num_tasks.load(std::memory_order_relaxed) > 0) {
+    while (num_tasks.load(std::memory_order_seq_cst) > 0) {
         task_t *task;
         if (!pq->delete_min(task)) {
             continue;
         }
 
         const vertex_t *v = task->v;
-        const size_t v_dist = v->distance.load(std::memory_order_relaxed);
+        const size_t v_dist = v->distance.load(std::memory_order_seq_cst);
 
         if (task->distance > v_dist) {
             delete task;
@@ -206,7 +206,7 @@ bench_thread(T *pq,
             const size_t new_dist = v_dist + e->weight;
 
             vertex_t *w = &graph[e->target];
-            size_t w_dist = w->distance.load(std::memory_order_relaxed);
+            size_t w_dist = w->distance.load(std::memory_order_seq_cst);
 
             if (new_dist >= w_dist) {
                 continue;
@@ -215,7 +215,7 @@ bench_thread(T *pq,
             bool dist_updated;
             do {
                 dist_updated = w->distance.compare_exchange_strong(w_dist, new_dist,
-                               std::memory_order_relaxed);
+                               std::memory_order_seq_cst);
             } while (!dist_updated && w_dist > new_dist);
 
             if (dist_updated) {
@@ -252,7 +252,7 @@ bench(T *pq,
     }
 
     /* Begin benchmark. */
-    start_barrier.store(true, std::memory_order_relaxed);
+    start_barrier.store(true, std::memory_order_seq_cst);
 
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -264,7 +264,7 @@ bench(T *pq,
     clock_gettime(CLOCK_MONOTONIC, &end);
     /* End benchmark. */
 
-    assert(num_tasks.load(std::memory_order_relaxed) == 0);
+    assert(num_tasks.load(std::memory_order_seq_cst) == 0);
     verify_graph(graph, settings.num_nodes);
 
     const double elapsed = timediff_in_s(start, end);

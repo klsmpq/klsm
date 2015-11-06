@@ -76,7 +76,7 @@ template <class K, class V, int Rlx, int Algn>
 block_array<K, V, Rlx> *
 versioned_array_ptr<K, V, Rlx, Algn>::load_packed()
 {
-    return m_ptr.load(std::memory_order_relaxed);
+    return m_ptr.load(std::memory_order_seq_cst);
 }
 
 template <class K, class V, int Rlx, int Algn>
@@ -87,5 +87,5 @@ versioned_array_ptr<K, V, Rlx, Algn>::compare_exchange_strong(
 {
     return m_ptr.compare_exchange_strong(expected_packed,
                                          packed_ptr(desired.ptr()),
-                                         std::memory_order_relaxed);
+                                         std::memory_order_seq_cst);
 }

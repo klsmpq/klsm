@@ -56,7 +56,7 @@ public:
     {
         const int i = index_of(n);
 
-        T *bucket = m_buckets[i].load(std::memory_order_relaxed);
+        T *bucket = m_buckets[i].load(std::memory_order_seq_cst);
         if (bucket == nullptr) {
             bucket = new T[1 << i];
             T *expected = nullptr;

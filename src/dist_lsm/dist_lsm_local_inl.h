@@ -112,25 +112,25 @@ dist_lsm_local<K, V, Rlx>::merge_insert(block<K, V> *const new_block,
         insert_block->set_unused();
 
         if (other_block != nullptr) {
-            other_block->m_next.store(nullptr, std::memory_order_relaxed);
+            other_block->m_next.store(nullptr, std::memory_order_seq_cst);
         } else {
-            m_head.store(nullptr, std::memory_order_relaxed);
+            m_head.store(nullptr, std::memory_order_seq_cst);
         }
         m_tail = other_block;
     } else {
         /* Insert the new block into the list. */
         insert_block->m_prev = other_block;
         if (other_block != nullptr) {
-            other_block->m_next.store(insert_block, std::memory_order_relaxed);
+            other_block->m_next.store(insert_block, std::memory_order_seq_cst);
         } else {
-            m_head.store(insert_block, std::memory_order_relaxed);
+            m_head.store(insert_block, std::memory_order_seq_cst);
         }
         m_tail = insert_block;
     }
 
     /* Remove merged blocks from the list. */
     while (delete_block != nullptr) {
-        auto next_block = delete_block->m_next.load(std::memory_order_relaxed);
+        auto next_block = delete_block->m_next.load(std::memory_order_seq_cst);
         delete_block->set_unused();
         delete_block = next_block;
     }
@@ -165,23 +165,23 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
         return;
     }
 
-    for (auto i = m_head.load(std::memory_order_relaxed);
+    for (auto i = m_head.load(std::memory_order_seq_cst);
             i != nullptr;
-            i = i->m_next.load(std::memory_order_relaxed)) {
+            i = i->m_next.load(std::memory_order_seq_cst)) {
 
         auto candidate = i->peek();
         while (i->size() <= i->capacity() / 2) {
 
             /* Simply remove empty blocks. */
             if (i->size() == 0) {
-                const auto next = i->m_next.load(std::memory_order_relaxed);
+                const auto next = i->m_next.load(std::memory_order_seq_cst);
                 if (i == m_tail) {
                     m_tail = i->m_prev;
                 } else {
                     next->m_prev = i->m_prev;
                 }
 
-                if (i == m_head.load(std::memory_order_relaxed)) {
+                if (i == m_head.load(std::memory_order_seq_cst)) {
                     m_head = next;
                 } else {
                     i->m_prev->m_next = next;
@@ -197,18 +197,18 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
             block<K, V> *new_block = m_block_storage.get_block(i->power_of_2() - 1);
             new_block->copy(i);
 
-            new_block->m_next.store(i->m_next.load(std::memory_order_relaxed),
-                                    std::memory_order_relaxed);
+            new_block->m_next.store(i->m_next.load(std::memory_order_seq_cst),
+                                    std::memory_order_seq_cst);
             new_block->m_prev = i->m_prev;
 
             /* Merge. TODO: Shrink-Merge optimization. */
 
-            auto next = new_block->m_next.load(std::memory_order_relaxed);
+            auto next = new_block->m_next.load(std::memory_order_seq_cst);
             if (next != nullptr && new_block->capacity() == next->capacity()) {
                 auto merged_block = m_block_storage.get_block(new_block->power_of_2() + 1);
                 merged_block->merge(new_block, next);
 
-                merged_block->m_next = next->m_next.load(std::memory_order_relaxed);
+                merged_block->m_next = next->m_next.load(std::memory_order_seq_cst);
                 merged_block->m_prev = new_block->m_prev;
 
                 new_block->set_unused();
@@ -217,7 +217,7 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
 
             /* Insert new block. */
 
-            next = new_block->m_next.load(std::memory_order_relaxed);
+            next = new_block->m_next.load(std::memory_order_seq_cst);
 
             if (next == nullptr) {
                 m_tail = new_block;
@@ -226,15 +226,15 @@ dist_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best)
             }
 
             if (new_block->m_prev == nullptr) {
-                m_head.store(new_block, std::memory_order_relaxed);
+                m_head.store(new_block, std::memory_order_seq_cst);
             } else {
-                new_block->m_prev->m_next.store(new_block, std::memory_order_relaxed);
+                new_block->m_prev->m_next.store(new_block, std::memory_order_seq_cst);
             }
 
             /* Bookkeeping and rerun peek(). */
 
             for (auto j = i; j != nullptr && j != next;) {
-                const auto k = j->m_next.load(std::memory_order_relaxed);
+                const auto k = j->m_next.load(std::memory_order_seq_cst);
                 j->set_unused();
                 j = k;
             }
@@ -260,9 +260,9 @@ template <class K, class V, int Rlx>
 void
 dist_lsm_local<K, V, Rlx>::safe_peek(typename block<K, V>::peek_t &best)
 {
-    for (auto i = m_head.load(std::memory_order_relaxed);
+    for (auto i = m_head.load(std::memory_order_seq_cst);
             i != nullptr;
-            i = i->m_next.load(std::memory_order_relaxed)) {
+            i = i->m_next.load(std::memory_order_seq_cst)) {
         auto candidate = i->peek();
         if (best.empty() || (!candidate.empty() && candidate.m_key < best.m_key)) {
             best = candidate;
@@ -311,7 +311,7 @@ dist_lsm_local<K, V, Rlx>::spy(dist_lsm_local<K, V, Rlx> *victim)
     }
 
     int num_spied = 0;
-    auto spied_block = victim->m_head.load(std::memory_order_relaxed);
+    auto spied_block = victim->m_head.load(std::memory_order_seq_cst);
 
     if (spied_block == nullptr) {
         COUNT_INC(aborted_spies);

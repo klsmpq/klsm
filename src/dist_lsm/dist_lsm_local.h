@@ -66,7 +66,7 @@ public:
     int spy(class dist_lsm<K, V, Rlx> *parent);
     int spy(dist_lsm_local<K, V, Rlx> *victim);
 
-    bool empty() const { return m_head.load(std::memory_order_relaxed) == nullptr; }
+    bool empty() const { return m_head.load(std::memory_order_seq_cst) == nullptr; }
 
     void print() const;
 

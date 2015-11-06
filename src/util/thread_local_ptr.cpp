@@ -31,7 +31,7 @@ void
 set_tid()
 {
     if (m_tid == TID_UNSET) {
-        m_tid = m_max_tid.fetch_add(1, std::memory_order_relaxed);
+        m_tid = m_max_tid.fetch_add(1, std::memory_order_seq_cst);
     }
 }
 
@@ -44,7 +44,7 @@ tid()
 int32_t
 max_tid()
 {
-    return m_max_tid.load(std::memory_order_relaxed);
+    return m_max_tid.load(std::memory_order_seq_cst);
 }
 
 }

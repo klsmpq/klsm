@@ -328,7 +328,7 @@ block<K, V>::clear()
     m_first = 0;
     m_last  = 0;
 
-    m_next.store(nullptr, std::memory_order_relaxed);
+    m_next.store(nullptr, std::memory_order_seq_cst);
     m_prev = nullptr;
 }
 

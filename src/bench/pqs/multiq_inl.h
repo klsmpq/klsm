@@ -99,7 +99,7 @@ multiq<K, V, C>::lock(const size_t ix)
 {
     bool expected = false;
     return m_locks[ix].m_is_locked.compare_exchange_strong(
-            expected, true, std::memory_order_relaxed);
+            expected, true, std::memory_order_seq_cst);
 }
 
 template <class K, class V, int C>
@@ -108,7 +108,7 @@ multiq<K, V, C>::unlock(const size_t ix)
 {
     bool expected = true;
     const bool succeeded = m_locks[ix].m_is_locked.compare_exchange_strong(
-                    expected, false, std::memory_order_relaxed);
+                    expected, false, std::memory_order_seq_cst);
     assert(succeeded), (void)succeeded;
 }
 

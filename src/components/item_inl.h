@@ -29,7 +29,7 @@ item<K, V>::initialize(const K &key, const V &val)
 {
     assert(!used());
 
-    m_version.fetch_add(1, std::memory_order_relaxed); /* TODO: Really relaxed? */
+    m_version.fetch_add(1, std::memory_order_seq_cst); /* TODO: Really relaxed? */
     m_key = key;
     m_val = val;
 
@@ -46,7 +46,7 @@ item<K, V>::take(const version_t version,
     version_t expected = version;
     return m_version.compare_exchange_strong(expected,
                                              expected + 1,
-                                             std::memory_order_relaxed);
+                                             std::memory_order_seq_cst);
 }
 
 
@@ -68,7 +68,7 @@ template <class K, class V>
 version_t
 item<K, V>::version() const
 {
-    return m_version.load(std::memory_order_relaxed);
+    return m_version.load(std::memory_order_seq_cst);
 }
 
 template <class K, class V>

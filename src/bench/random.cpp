@@ -385,13 +385,13 @@ bench_thread(PriorityQueue *pq,
         pq->insert(elem, elem);
 #endif
     }
-    fill_barrier.fetch_sub(1, std::memory_order_relaxed);
+    fill_barrier.fetch_sub(1, std::memory_order_seq_cst);
 
 #ifdef HAVE_VALGRIND
     CALLGRIND_START_INSTRUMENTATION;
 #endif
 
-    while (!start_barrier.load(std::memory_order_relaxed)) {
+    while (!start_barrier.load(std::memory_order_seq_cst)) {
         /* Wait. */
     }
 
@@ -401,7 +401,7 @@ bench_thread(PriorityQueue *pq,
 
     KEY_TYPE k;
     VAL_TYPE v;
-    while (!end_barrier.load(std::memory_order_relaxed)) {
+    while (!end_barrier.load(std::memory_order_seq_cst)) {
         if (workload.insert()) {
             k = keygen.next();
 #ifdef ENABLE_QUALITY
@@ -640,7 +640,7 @@ bench(PriorityQueue *pq,
 
     int ret = 0;
 
-    fill_barrier.store(settings.nthreads, std::memory_order_relaxed);
+    fill_barrier.store(settings.nthreads, std::memory_order_seq_cst);
 
     /* Start all threads. */
 
@@ -718,18 +718,18 @@ bench(PriorityQueue *pq,
     }
 
     /* Wait until threads are done filling their queue. */
-    while (fill_barrier.load(std::memory_order_relaxed) > 0) {
+    while (fill_barrier.load(std::memory_order_seq_cst) > 0) {
         /* Wait. */
     }
 
     /* Begin benchmark. */
-    start_barrier.store(true, std::memory_order_relaxed);
+    start_barrier.store(true, std::memory_order_seq_cst);
 
     struct timespec start, end;
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     usleep(1000000 * DEFAULT_SLEEP);
-    end_barrier.store(true, std::memory_order_relaxed);
+    end_barrier.store(true, std::memory_order_seq_cst);
 
     clock_gettime(CLOCK_MONOTONIC, &end);
     /* End benchmark. */
