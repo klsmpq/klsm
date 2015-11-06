@@ -64,10 +64,10 @@ block_pivots<K, V, Rlx, MaxBlocks>::shrink(block<K, V> **blocks,
     for (size_t i = 0; i < size; i++) {
         auto b = blocks[i];
         size_t candidate_ix;
-        const size_t first = m_lower[i];
-        auto candidate  = b->peek(candidate_ix, first);
+        const size_t first = std::max((size_t)m_lower[i], b->first());
 
-        m_lower[i] = m_upper[i] = std::max(b->first(), first);
+        auto candidate  = b->peek(candidate_ix, first);
+        m_lower[i] = m_upper[i] = candidate_ix;
 
         if ((best.empty() && !candidate.empty()) ||
                 (!best.empty() && !candidate.empty() && candidate.m_key < best.m_key)) {

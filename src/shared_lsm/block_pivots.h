@@ -66,7 +66,7 @@ private:
                   const size_t size);
 
 private:
-    static constexpr size_t INVALID_COUNT_FOR_SIZE = MaxBlocks + 1;
+    static constexpr size_t INVALID_COUNT_FOR_SIZE = -1;
 
     /**
      * For each block in the array, stores an index i such that for all indices j < i,
