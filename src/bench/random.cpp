@@ -446,7 +446,7 @@ sort_deletion_sequence(const std::vector<void *> &deletion_sequences,
     }
 }
 
-static void
+static double
 evaluate_quality(std::vector<void *> &insertion_sequences,
                  std::vector<void *> &deletion_sequences)
 {
@@ -535,7 +535,7 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
         }
     }
 
-    fprintf(stderr, "avg rank: %f\n", (double)rank_sum / global_deletion_sequence.size());
+    return (double)rank_sum / global_deletion_sequence.size();
 }
 #endif
 
@@ -632,13 +632,13 @@ bench(PriorityQueue *pq,
     }
 
 #ifdef ENABLE_QUALITY
-    evaluate_quality(insertion_sequences, deletion_sequences);
-#endif
-
+    fprintf(stdout, "%f\n", evaluate_quality(insertion_sequences, deletion_sequences));
+#else
     const double elapsed = timediff_in_s(start, end);
     size_t ops_per_s = (size_t)((double)counters.operations() / elapsed);
 
     fprintf(stdout, "%zu\n", ops_per_s);
+#endif
 
     if (settings.print_counters) {
         counters.print();
