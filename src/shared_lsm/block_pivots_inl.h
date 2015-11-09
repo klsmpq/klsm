@@ -138,7 +138,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
     int elements_in_tentative_range;
     while (true) {
         if (upper_bound < lower_bound) {
-            return elements_in_range;
+            goto out;
         }
 
         mid = lower_bound + (upper_bound - lower_bound) / 2;
@@ -179,7 +179,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
 outer:
         if (elements_in_tentative_range > Rlx + 1) {
             if (upper_bound == mid) {
-                return elements_in_range;
+                goto out;
             }
             upper_bound = std::min(mid, maximal_key);
         } else if (elements_in_tentative_range < Rlx / 2) {
@@ -204,6 +204,7 @@ outer:
         memcpy(m_upper, tentative_pivots, sizeof(m_upper));
     }
 
+out:
     m_count_for_size = INVALID_COUNT_FOR_SIZE;
     m_count = count(size);
 
