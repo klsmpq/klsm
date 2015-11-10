@@ -24,20 +24,16 @@ itree::~itree()
 
 int
 itree::itree_insert(const uint64_t index,
-                    itree_t **root,
                     uint64_t *holes)
 {
     *holes = 0;
-
-    int ret = _itree_insert(index, root, holes);
-
-    return ret;
+    return _itree_insert(index, &m_root, holes);
 }
 
 void
-itree::itree_print(const itree_t *root)
+itree::itree_print()
 {
-    _itree_print(root, 0);
+    _itree_print(m_root, 0);
 }
 
 void

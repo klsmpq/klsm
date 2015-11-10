@@ -49,11 +49,10 @@ public:
      */
     int
     itree_insert(const uint64_t index,
-                 itree_t **root,
                  uint64_t *holes);
 
     void
-    itree_print(const itree_t *root);
+    itree_print();
 
 private:
     void
