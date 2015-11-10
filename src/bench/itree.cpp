@@ -40,10 +40,9 @@ int
 itree::erase(const elem_t &index,
              uint64_t *rank)
 {
-    *rank = 0;
-    int ret = 0;
-
+    int ret = _itree_erase(index, &m_root, rank);
     if (ret == 0) {
+        *rank = m_size - *rank;
         m_size--;
     }
     return 0;
@@ -264,6 +263,66 @@ itree::_itree_insert(const elem_t &index,
     return ret;
 }
 
+int
+itree::_itree_erase(const elem_t &index,
+                    itree_t **root,
+                    uint64_t *rank)
+{
+
+    itree_t *droot = *root;
+    int ret = 0;
+
+    if (droot == nullptr) {
+        fprintf(stderr, "Key %u not found\n", index.key);
+        return -1;
+    } else if (droot->k > index) {
+        if ((ret = _itree_erase(index, &droot->l, rank)) != 0) {
+            return ret;
+        }
+        *rank += droot->v + 1;
+    } else if (index > droot->k) {
+        if ((ret = _itree_erase(index, &droot->r, rank)) != 0) {
+            return ret;
+        }
+        droot->v--;
+    } else { /* index == k */
+        *rank = droot->v;
+
+        if (droot->l == nullptr && droot->r == nullptr) {
+            *root = nullptr;
+            free(droot);
+        } else if (droot->l == nullptr) {
+            *root = droot->r;
+            free(droot);
+        } else if (droot->r == nullptr) {
+            *root = droot->l;
+            free(droot);
+        } else {
+            /* Two child nodes exist. Replace the current node with its successor,
+             * and remove the successor. */
+
+            itree_iter_t *iter = itree_iter_init(droot->r);
+            itree_t *succ = itree_iter_next(iter);
+            itree_iter_free(iter);
+            assert(succ != nullptr);
+
+            droot->k = succ->k;
+            droot->v--;
+
+            uint64_t dummy = 0;
+            _itree_erase(succ->k, &droot->r, &dummy);
+        }
+    }
+
+    /* Rebalance if necessary. */
+    if (*root != nullptr) {
+        _itree_rebalance(root);
+        _itree_set_height(*root);
+    }
+
+    return ret;
+}
+
 void
 itree::itree_free(itree_t *root)
 {
@@ -287,7 +346,7 @@ itree::itree_free(itree_t *root)
 /* itree_iter definitions. */
 
 itree::itree_iter_t *
-itree::itree_iter_init(const itree_t *root)
+itree::itree_iter_init(itree_t *root)
 {
     itree_iter_t *iter = (itree_iter_t *)malloc(sizeof(itree_iter_t));
     if (iter == NULL) {
@@ -297,7 +356,7 @@ itree::itree_iter_init(const itree_t *root)
     memset(iter, 0, sizeof(itree_iter_t));
     iter->root = root;
 
-    const itree_t *n = root;
+    itree_t *n = root;
     do {
         ITER_PUSH(iter, n);
         n = n->l;
@@ -306,16 +365,16 @@ itree::itree_iter_init(const itree_t *root)
     return iter;
 }
 
-const itree::itree_t *
+itree::itree_t *
 itree::itree_iter_next(itree_iter_t *iter)
 {
     if (iter->top == 0) {
         return NULL;
     }
 
-    const itree_t *next = ITER_POP(iter);
+    itree_t *next = ITER_POP(iter);
 
-    const itree_t *n = next->r;
+    itree_t *n = next->r;
     while (n != NULL) {
         ITER_PUSH(iter, n);
         n = n->l;

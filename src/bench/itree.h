@@ -40,10 +40,10 @@ private:
     } itree_t;
 
     typedef struct __itree_iter_t {
-        const itree_t *root;                    /**< The root of the iterated tree. */
-        const itree_t *stack[ITREE_MAX_DEPTH];  /**< The node stack. Tree depth cannot be exceeded
-                                                     since keys are uint64_t. */
-        int top;                                /**< The current top stack index. */
+        itree_t *root;                    /**< The root of the iterated tree. */
+        itree_t *stack[ITREE_MAX_DEPTH];  /**< The node stack. Tree depth cannot be exceeded
+                                               since keys are uint64_t. */
+        int top;                          /**< The current top stack index. */
     } itree_iter_t;
 
 public:
@@ -84,6 +84,10 @@ private:
                   itree_t **root,
                   uint64_t *holes);
     int
+    _itree_erase(const elem_t &index,
+                 itree_t **root,
+                 uint64_t *rank);
+    int
     _itree_new_node(const elem_t &index,
                           itree_t **root);
     void
@@ -114,7 +118,7 @@ private:
      *  * The iterator is ready to use.
      */
     itree_iter_t *
-    itree_iter_init(const itree_t *root);
+    itree_iter_init(itree_t *root);
 
     /**
      * Returns the next node of the tree, or NULL if the end has been
@@ -123,7 +127,7 @@ private:
      * Precondition:
      *  * iter != NULL.
      */
-    const itree_t *
+    itree_t *
     itree_iter_next(itree_iter_t *iter);
 
     void

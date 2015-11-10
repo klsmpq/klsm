@@ -446,20 +446,18 @@ sort_deletion_sequence(const std::vector<void *> &deletion_sequences,
     }
 }
 
-static double
+static void
 evaluate_quality(std::vector<void *> &insertion_sequences,
-                 std::vector<void *> &deletion_sequences)
+                 std::vector<void *> &deletion_sequences,
+                 double *mean,
+                 uint64_t *max,
+                 double *stddev)
 {
     /* Merge all insertions and deletions into global sequences. The insertion
      * sequence is used to look up inserted keys later on. */
 
     insertion_sequence_t global_insertion_sequence;
     sort_insertion_sequence(insertion_sequences, global_insertion_sequence);
-
-    for (auto ptr : insertion_sequences) {
-        auto v = (insertion_sequence_t *)ptr;
-        delete v;
-    }
 
     deletion_sequence_t global_deletion_sequence;
     sort_deletion_sequence(deletion_sequences, global_deletion_sequence);
@@ -553,9 +551,10 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
     }
 
     const double rank_stddev = std::sqrt(rank_squared_difference / ranks.size());
-    fprintf(stderr, "max: %zu, stddev: %f\n", rank_max, rank_stddev);
 
-    return rank_mean;
+    *mean   = rank_mean;
+    *max    = rank_max;
+    *stddev = rank_stddev;
 }
 #endif
 
@@ -652,7 +651,10 @@ bench(PriorityQueue *pq,
     }
 
 #ifdef ENABLE_QUALITY
-    fprintf(stdout, "%f\n", evaluate_quality(insertion_sequences, deletion_sequences));
+    uint64_t max;
+    double mean, stddev;
+    evaluate_quality(insertion_sequences, deletion_sequences, &mean, &max, &stddev);
+    fprintf(stdout, "%f, %lu, %f\n", mean, max, stddev);
 #else
     const double elapsed = timediff_in_s(start, end);
     size_t ops_per_s = (size_t)((double)counters.operations() / elapsed);
