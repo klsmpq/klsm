@@ -488,6 +488,9 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
     };
 
     uint64_t rank_sum = 0;
+    uint64_t rank_max = 0;
+    std::vector<uint64_t> ranks; 
+
     const uint64_t insertion_count = global_insertion_sequence.size();
     const uint64_t deletion_count = global_deletion_sequence.size();
 
@@ -524,7 +527,9 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
                 rank++;
             }
 
+            ranks.push_back(rank);
             rank_sum += rank;
+            rank_max = std::max(rank_max, rank);
 
             if (del_ix >= deletion_count) {
                 keep_running = false;
@@ -535,7 +540,17 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
         }
     }
 
-    return (double)rank_sum / global_deletion_sequence.size();
+    const double rank_mean = (double)rank_sum / ranks.size();
+
+    double rank_squared_difference = 0;
+    for (uint64_t rank : ranks) {
+        rank_squared_difference += std::pow(rank - rank_mean, 2);
+    }
+
+    const double rank_stddev = std::sqrt(rank_squared_difference / ranks.size());
+    fprintf(stderr, "max: %zu, stddev: %f\n", rank_max, rank_stddev);
+
+    return rank_mean;
 }
 #endif
 
