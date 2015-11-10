@@ -2,14 +2,23 @@
 #define __ITREE_H
 
 #include <cstdint>
+#include <utility>
 
 class itree
 {
+public:
+    struct elem_t {
+        uint32_t key;
+        uint32_t thread_id;
+        uint32_t element_id;
+    };
+
+private:
     static constexpr int ITREE_MAX_DEPTH = (8 * sizeof(uint64_t));
 
     typedef struct __itree_t {
         struct __itree_t *l, *r;    /**< The left and right child nodes. */
-        uint64_t k1, k2;            /**< The key interval [k1, k2]. */
+        uint64_t k;                   /**< The key. */
         uint64_t v;                 /**< The # of elements in the right subtree. */
         uint8_t h;                  /**< The height of this node. height(node without
                                      *   children) == 0. */

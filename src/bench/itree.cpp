@@ -55,9 +55,8 @@ itree::_itree_print(const itree_t *root,
         return;
     }
 
-    printf("%*s{ k: [%llu, %llu], v: %llu, h: %d }\n", level * INDENT, "",
-           (long long unsigned)root->k1,
-           (long long unsigned)root->k2,
+    printf("%*s{ k: %llu, v: %llu, h: %d }\n", level * INDENT, "",
+           (long long unsigned)root->k,
            (long long unsigned)root->v,
            root->h);
 
@@ -74,57 +73,9 @@ itree::_itree_new_node(const uint64_t index,
         perror("calloc");
         return -1;
     }
-    droot->k1 = index;
-    droot->k2 = index;
+    droot->k = index;
     *root = droot;
     return 0;
-}
-
-/**
- * Extends node by adding index to the node interval.
- *
- * Preconditions:
- *  * node != NULL.
- *  * index is immediately adjacent to the node interval.
- *
- * Postconditions:
- *  * The node interval has been extended by index.
- */
-void
-itree::_itree_extend_node(const uint64_t index,
-                          itree_t *node)
-{
-    assert(index == node->k1 - 1 || node->k2 + 1 == index);
-
-    if (index < node->k1) {
-        node->k1 = index;
-    } else {
-        node->k2 = index;
-    }
-}
-
-/**
- * Merges lower into upper. Lower is *not* deleted.
- *
- * Preconditions:
- *  * lower, upper != NULL.
- *  * upper->k2 + 1 == lower->k1 - 1 OR
- *    upper->k1 - 1 == lower->k2 + 1
- *
- * Postconditions:
- *  * The nodes are merged.
- */
-void
-itree::_itree_merge_nodes(itree_t *upper,
-                          itree_t *lower)
-{
-    assert(upper->k2 + 1 == lower->k1 - 1 || upper->k1 - 1 == lower->k2 + 1);
-
-    if (upper->k1 > lower->k2) {
-        upper->k1 = lower->k1;
-    } else {
-        upper->k2 = lower->k2;
-    }
 }
 
 inline int8_t
@@ -148,7 +99,7 @@ itree::_itree_count(const itree_t *root)
     if (root == NULL) {
         return 0;
     }
-    return root->k2 - root->k1 + 1 + root->v + _itree_count(root->l);
+    return 1 + root->v + _itree_count(root->l);
 }
 
 /**
@@ -186,7 +137,7 @@ itree::_itree_rebalance(itree_t **root)
             r->l = droot->r->r;
             droot->r->r = r;
 
-            droot->r->v += r->v + r->k2 - r->k1 + 1;
+            droot->r->v += r->v + 1;
 
             _itree_set_height(r);
 
@@ -228,7 +179,7 @@ itree::_itree_rebalance(itree_t **root)
         l->r = droot;
         *root = l;
 
-        l->v += droot->v + droot->k2 - droot->k1 + 1;
+        l->v += droot->v + 1;
 
         _itree_set_height(droot);
         _itree_set_height(l);
@@ -243,23 +194,10 @@ itree::_itree_descend_l(const uint64_t index,
 {
     itree_t *droot = *root;
 
-    *holes += droot->v + droot->k2 - droot->k1 + 1;
+    *holes += droot->v + 1;
 
-    if (droot->k1 == index + 1) {
-        if (util->u == NULL) {
-            util->u = droot;
-        } else {
-            util->l = droot;
-        }
-    }
     int ret = _itree_insert(index, &droot->l, holes, util);
     if (ret != 0) { return ret; }
-
-    /* Remove the lower node. */
-    if (util->l != NULL && util->l == droot->l) {
-        const int in_left_subtree = (index == util->l->k2 + 1);
-        droot->l = in_left_subtree ? util->l->l : util->l->r;
-    }
 
     return 0;
 }
@@ -272,34 +210,11 @@ itree::_itree_descend_r(const uint64_t index,
 {
     itree_t *droot = *root;
 
-    if (droot->k2 == index - 1) {
-        if (util->u == NULL) {
-            util->u = droot;
-        } else {
-            util->l = droot;
-        }
-    }
-
-    const int below_merge = (util->u != NULL);
-
     /* Index was added as a new descendant node. */
-    if (util->u == NULL && util->u != droot) {
-        droot->v++;
-    }
+    droot->v++;
 
     int ret = _itree_insert(index, &droot->r, holes, util);
     if (ret != 0) { return ret; }
-
-    /* Remove the lower node. */
-    if (util->l != NULL && util->l == droot->r) {
-        const int in_left_subtree = (index == util->l->k2 + 1);
-        droot->r = in_left_subtree ? util->l->l : util->l->r;
-    }
-
-    /* Adjust the subtree sum after a merge. */
-    if (util->l != NULL && util->l != droot && below_merge) {
-        droot->v -= util->l->k2 - util->l->k1 + 1;
-    }
 
     return 0;
 }
@@ -317,29 +232,17 @@ itree::_itree_insert(const uint64_t index,
     itree_t *droot = *root;
     int ret = 0;
 
-    /* Merge two existing nodes. */
-    if (droot == NULL && util->l != NULL) {
-        _itree_merge_nodes(util->u, util->l);
-        return 0;
-    }
-
-    /* Add to existing adjacent node. */
-    if (droot == NULL && util->u != NULL) {
-        _itree_extend_node(index, util->u);
-        return 0;
-    }
-
     /* New node. */
     if (droot == NULL) {
         return _itree_new_node(index, root);
     }
 
     /* Descend into left or right subtree. */
-    if (droot->k1 > index) {
+    if (droot->k > index) {
         if ((ret = _itree_descend_l(index, root, holes, util)) != 0) {
             return ret;
         }
-    } else if (index > droot->k2) {
+    } else if (index > droot->k) {
         if ((ret = _itree_descend_r(index, root, holes, util)) != 0) {
             return ret;
         }
