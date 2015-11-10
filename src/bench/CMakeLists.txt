@@ -16,7 +16,7 @@ target_link_libraries(heapsort
     skip_queue
 )
 
-add_executable(random random.cpp util.cpp)
+add_executable(random random.cpp itree.cpp util.cpp)
 target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
