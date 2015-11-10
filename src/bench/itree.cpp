@@ -15,7 +15,8 @@ namespace kpqbench {
 /* itree definitions. */
 
 itree::itree() :
-    m_root(nullptr)
+    m_root(nullptr),
+    m_size(0)
 {
 }
 
@@ -28,7 +29,11 @@ int
 itree::insert(const elem_t &index)
 {
     uint64_t holes = 0;
-    return _itree_insert(index, &m_root, &holes);
+    int ret = _itree_insert(index, &m_root, &holes);
+    if (ret == 0) {
+        m_size++;
+    }
+    return ret;
 }
 
 int
@@ -36,6 +41,11 @@ itree::erase(const elem_t &index,
              uint64_t *rank)
 {
     *rank = 0;
+    int ret = 0;
+
+    if (ret == 0) {
+        m_size--;
+    }
     return 0;
 }
 

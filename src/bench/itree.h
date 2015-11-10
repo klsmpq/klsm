@@ -1,6 +1,7 @@
 #ifndef __ITREE_H
 #define __ITREE_H
 
+#include <cstddef>
 #include <cstdint>
 #include <utility>
 
@@ -130,6 +131,7 @@ private:
 
 private:
     itree_t *m_root;
+    size_t m_size;
 };
 
 }
