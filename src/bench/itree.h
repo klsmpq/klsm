@@ -7,6 +7,11 @@
 
 namespace kpqbench {
 
+/**
+ * A specialized balanced binary tree used to emulate a sequential priority
+ * queue and efficiently determine removed elements' rank errors, i.e.
+ * their physical distance from the least element.
+ */
 class itree
 {
 public:
