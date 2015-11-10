@@ -27,16 +27,9 @@ itree::itree_insert(const uint64_t index,
                     itree_t **root,
                     uint64_t *holes)
 {
-    itree_util_t util;
-    memset(&util, 0, sizeof(itree_util_t));
-
     *holes = 0;
 
-    int ret = _itree_insert(index, root, holes, &util);
-
-    if (util.l != NULL) {
-        free(util.l);
-    }
+    int ret = _itree_insert(index, root, holes);
 
     return ret;
 }
@@ -189,14 +182,13 @@ itree::_itree_rebalance(itree_t **root)
 int
 itree::_itree_descend_l(const uint64_t index,
                         itree_t **root,
-                        uint64_t *holes,
-                        itree_util_t *util)
+                        uint64_t *holes)
 {
     itree_t *droot = *root;
 
     *holes += droot->v + 1;
 
-    int ret = _itree_insert(index, &droot->l, holes, util);
+    int ret = _itree_insert(index, &droot->l, holes);
     if (ret != 0) { return ret; }
 
     return 0;
@@ -205,15 +197,14 @@ itree::_itree_descend_l(const uint64_t index,
 int
 itree::_itree_descend_r(const uint64_t index,
                         itree_t **root,
-                        uint64_t *holes,
-                        itree_util_t *util)
+                        uint64_t *holes)
 {
     itree_t *droot = *root;
 
     /* Index was added as a new descendant node. */
     droot->v++;
 
-    int ret = _itree_insert(index, &droot->r, holes, util);
+    int ret = _itree_insert(index, &droot->r, holes);
     if (ret != 0) { return ret; }
 
     return 0;
@@ -226,8 +217,7 @@ itree::_itree_descend_r(const uint64_t index,
 int
 itree::_itree_insert(const uint64_t index,
                      itree_t **root,
-                     uint64_t *holes,
-                     itree_util_t *util)
+                     uint64_t *holes)
 {
     itree_t *droot = *root;
     int ret = 0;
@@ -239,11 +229,11 @@ itree::_itree_insert(const uint64_t index,
 
     /* Descend into left or right subtree. */
     if (droot->k > index) {
-        if ((ret = _itree_descend_l(index, root, holes, util)) != 0) {
+        if ((ret = _itree_descend_l(index, root, holes)) != 0) {
             return ret;
         }
     } else if (index > droot->k) {
-        if ((ret = _itree_descend_r(index, root, holes, util)) != 0) {
+        if ((ret = _itree_descend_r(index, root, holes)) != 0) {
             return ret;
         }
     } else {

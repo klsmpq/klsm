@@ -24,10 +24,6 @@ private:
                                      *   children) == 0. */
     } itree_t;
 
-    typedef struct {
-        itree_t *u, *l;             /**< Upper and lower adjacent nodes. */
-    } itree_util_t;
-
     typedef struct __itree_iter_t {
         const itree_t *root;                    /**< The root of the iterated tree. */
         const itree_t *stack[ITREE_MAX_DEPTH];  /**< The node stack. Tree depth cannot be exceeded
@@ -69,8 +65,7 @@ private:
     int
     _itree_insert(const uint64_t index,
                   itree_t **root,
-                  uint64_t *holes,
-                  itree_util_t *util);
+                  uint64_t *holes);
     int
     _itree_new_node(const uint64_t index,
                           itree_t **root);
@@ -91,13 +86,11 @@ private:
     int
     _itree_descend_l(const uint64_t index,
                      itree_t **root,
-                     uint64_t *holes,
-                     itree_util_t *util);
+                     uint64_t *holes);
     int
     _itree_descend_r(const uint64_t index,
                      itree_t **root,
-                     uint64_t *holes,
-                     itree_util_t *util);
+                     uint64_t *holes);
 
     /* Sets up the iterator to traverse the tree pointed to by root
      * inorder. Returns NULL on error.
