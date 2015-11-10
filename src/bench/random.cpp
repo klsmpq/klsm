@@ -24,7 +24,6 @@
 #include <getopt.h>
 #include <queue>
 #include <random>
-#include <set>
 #include <thread>
 #include <unistd.h>
 
@@ -45,6 +44,7 @@
 #include "sequential_lsm/lsm.h"
 #include "shared_lsm/shared_lsm.h"
 #include "util/counters.h"
+#include "itree.h"
 #include "util.h"
 
 #define PQ_CHEAP      "cheap"
@@ -450,7 +450,8 @@ static double
 evaluate_quality(std::vector<void *> &insertion_sequences,
                  std::vector<void *> &deletion_sequences)
 {
-    /* Merge all insertions and deletions into global sequences. */
+    /* Merge all insertions and deletions into global sequences. The insertion
+     * sequence is used to look up inserted keys later on. */
 
     insertion_sequence_t global_insertion_sequence;
     sort_insertion_sequence(insertion_sequences, global_insertion_sequence);
@@ -495,14 +496,15 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
     const uint64_t deletion_count = global_deletion_sequence.size();
 
     bool keep_running = true;
-    std::multiset<elem_t, elem_less> pq;
+    kpqbench::itree pq;
     while (keep_running) {
         assert(ins_ix < insertion_count);
         assert(next_ins_tick <= next_del_tick);
 
         /* Do insertions. */
         while (ins_ix < insertion_count && next_ins_tick <= next_del_tick) {
-            pq.emplace(global_insertion_sequence[ins_ix++]);
+            const auto elem = global_insertion_sequence[ins_ix++];
+            pq.insert({ elem.first, elem.second.thread_id, elem.second.element_id });
 
             if (ins_ix >= insertion_count) {
                 next_ins_tick = std::numeric_limits<uint64_t>::max();
@@ -516,16 +518,12 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
         while (next_del_tick < next_ins_tick) {
             const auto deleted_item = global_deletion_sequence[del_ix++];
 
-            uint64_t rank = 0;
-            for (auto it = pq.begin(); it != pq.end(); it++) {
-                const auto item = it->second;
-                if (item.element_id == deleted_item.element_id
-                        && item.thread_id == deleted_item.thread_id) {
-                    pq.erase(it);
-                    break;
-                }
-                rank++;
-            }
+            /* Look up the key. */
+            auto insertions = (insertion_sequence_t *)insertion_sequences[deleted_item.thread_id];
+            const KEY_TYPE key = insertions->at(deleted_item.element_id).first;
+
+            uint64_t rank;
+            pq.erase({ key, deleted_item.thread_id, deleted_item.element_id }, &rank);
 
             ranks.push_back(rank);
             rank_sum += rank;
@@ -538,6 +536,13 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
 
             next_del_tick = global_deletion_sequence[del_ix].tick;
         }
+    }
+
+    /* Clean up the insertion sequence. */
+
+    for (auto ptr : insertion_sequences) {
+        auto v = (insertion_sequence_t *)ptr;
+        delete v;
     }
 
     const double rank_mean = (double)rank_sum / ranks.size();

@@ -6,6 +6,8 @@
 #include <cstring>
 #include <algorithm>
 
+namespace kpqbench {
+
 /* itree defines. */
 
 #define INDENT (2)
@@ -23,15 +25,22 @@ itree::~itree()
 }
 
 int
-itree::itree_insert(const uint64_t index,
-                    uint64_t *holes)
+itree::insert(const elem_t &index)
 {
-    *holes = 0;
-    return _itree_insert(index, &m_root, holes);
+    uint64_t holes = 0;
+    return _itree_insert(index, &m_root, &holes);
+}
+
+int
+itree::erase(const elem_t &index,
+             uint64_t *rank)
+{
+    *rank = 0;
+    return 0;
 }
 
 void
-itree::itree_print()
+itree::print()
 {
     _itree_print(m_root, 0);
 }
@@ -45,7 +54,7 @@ itree::_itree_print(const itree_t *root,
     }
 
     printf("%*s{ k: %llu, v: %llu, h: %d }\n", level * INDENT, "",
-           (long long unsigned)root->k,
+           (long long unsigned)root->k.key,
            (long long unsigned)root->v,
            root->h);
 
@@ -54,7 +63,7 @@ itree::_itree_print(const itree_t *root,
 }
 
 int
-itree::_itree_new_node(const uint64_t index,
+itree::_itree_new_node(const elem_t &index,
                        itree_t **root)
 {
     itree_t *droot = (itree_t *)calloc(1, sizeof(itree_t));
@@ -176,7 +185,7 @@ itree::_itree_rebalance(itree_t **root)
 }
 
 int
-itree::_itree_descend_l(const uint64_t index,
+itree::_itree_descend_l(const elem_t &index,
                         itree_t **root,
                         uint64_t *holes)
 {
@@ -191,7 +200,7 @@ itree::_itree_descend_l(const uint64_t index,
 }
 
 int
-itree::_itree_descend_r(const uint64_t index,
+itree::_itree_descend_r(const elem_t &index,
                         itree_t **root,
                         uint64_t *holes)
 {
@@ -211,7 +220,7 @@ itree::_itree_descend_r(const uint64_t index,
  * Util keeps track of several internal variables needed for merging nodes.
  */
 int
-itree::_itree_insert(const uint64_t index,
+itree::_itree_insert(const elem_t &index,
                      itree_t **root,
                      uint64_t *holes)
 {
@@ -233,8 +242,7 @@ itree::_itree_insert(const uint64_t index,
             return ret;
         }
     } else {
-        fprintf(stderr, "Index %llu is already in tree\n",
-                (long long unsigned)index);
+        fprintf(stderr, "Index %u is already in tree\n", index.key);
         return -1;
     }
 
@@ -310,4 +318,6 @@ void
 itree::itree_iter_free(itree_iter_t *iter)
 {
     free(iter);
+}
+
 }

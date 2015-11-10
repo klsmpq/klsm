@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <utility>
 
+namespace kpqbench {
+
 class itree
 {
 public:
@@ -11,6 +13,18 @@ public:
         uint32_t key;
         uint32_t thread_id;
         uint32_t element_id;
+
+        bool operator>(const elem_t &that) const {
+            if (this->key != that.key) {
+                return this->key > that.key;
+            } else if (this->thread_id != that.thread_id) {
+                return this->thread_id > that.thread_id;
+            } else if (this->element_id != that.element_id) {
+                return this->element_id > that.element_id;
+            } else {
+                return false;
+            }
+        }
     };
 
 private:
@@ -18,7 +32,7 @@ private:
 
     typedef struct __itree_t {
         struct __itree_t *l, *r;    /**< The left and right child nodes. */
-        uint64_t k;                   /**< The key. */
+        elem_t k;                   /**< The key. */
         uint64_t v;                 /**< The # of elements in the right subtree. */
         uint8_t h;                  /**< The height of this node. height(node without
                                      *   children) == 0. */
@@ -48,11 +62,14 @@ public:
      *  * Index is in the tree.
      */
     int
-    itree_insert(const uint64_t index,
-                 uint64_t *holes);
+    insert(const elem_t &index);
+
+    int
+    erase(const elem_t &index,
+          uint64_t *rank);
 
     void
-    itree_print();
+    print();
 
 private:
     void
@@ -62,18 +79,12 @@ private:
     _itree_print(const itree_t *root,
                  uint8_t level);
     int
-    _itree_insert(const uint64_t index,
+    _itree_insert(const elem_t &index,
                   itree_t **root,
                   uint64_t *holes);
     int
-    _itree_new_node(const uint64_t index,
+    _itree_new_node(const elem_t &index,
                           itree_t **root);
-    void
-    _itree_extend_node(const uint64_t index,
-                       itree_t *node);
-    void
-    _itree_merge_nodes(itree_t *upper,
-                       itree_t *lower);
     void
     _itree_rebalance(itree_t **root);
     inline int8_t
@@ -83,11 +94,11 @@ private:
     inline uint64_t
     _itree_count(const itree_t *root);
     int
-    _itree_descend_l(const uint64_t index,
+    _itree_descend_l(const elem_t &index,
                      itree_t **root,
                      uint64_t *holes);
     int
-    _itree_descend_r(const uint64_t index,
+    _itree_descend_r(const elem_t &index,
                      itree_t **root,
                      uint64_t *holes);
 
@@ -120,5 +131,7 @@ private:
 private:
     itree_t *m_root;
 };
+
+}
 
 #endif /*  __ITREE_H */
