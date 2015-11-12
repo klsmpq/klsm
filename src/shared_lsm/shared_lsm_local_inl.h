@@ -83,8 +83,9 @@ shared_lsm_local<K, V, Rlx>::insert_block(
 
         /* Try to update the global array. */
 
-        if (global_array.compare_exchange_strong(observed_packed,
-                                                 new_blocks)) {
+        if (observed_version == global_array.version()
+                && global_array.compare_exchange_strong(observed_packed,
+                                                        new_blocks)) {
             m_block_pool.publish(new_blocks_ptr->m_blocks,
                                  new_blocks_ptr->m_size,
                                  new_blocks_ptr->version());
@@ -134,7 +135,7 @@ shared_lsm_local<K, V, Rlx>::peek(typename block<K, V>::peek_t &best,
         refresh_local_array_copy(observed_packed, observed_version, global_array);
         best = m_cached_best = m_local_array_copy.peek();
         COUNT_INC(slsm_peek_attempts);
-    } while (global_array.load()->version() != observed_version);
+    } while (global_array.version() != observed_version);
 }
 
 template <class K, class V, int Rlx>
@@ -142,7 +143,7 @@ bool
 shared_lsm_local<K, V, Rlx>::local_array_copy_is_fresh(
         versioned_array_ptr<K, V, Rlx> &global_array) const
 {
-    return (m_local_array_copy.version() == global_array.load()->version());
+    return (m_local_array_copy.version() == global_array.version());
 }
 
 template <class K, class V, int Rlx>
@@ -172,7 +173,7 @@ shared_lsm_local<K, V, Rlx>::refresh_local_array_copy(
 
         m_local_array_copy.copy_from(observed_unpacked);
 
-        if (global_array.load()->version() == observed_version
+        if (global_array.version() == observed_version
                 && observed_version == m_local_array_copy.version()) {
             break;
         }

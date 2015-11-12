@@ -40,6 +40,8 @@ public:
             block_array<K, V, Rlx> *&expected_packed,
             aligned_block_array<K, V, Rlx, Algn> &desired);
 
+    version_t version();
+
     block_array<K, V, Rlx> *unpack(block_array<K, V, Rlx> *ptr)
     {
         return unpacked_ptr(ptr);

@@ -66,6 +66,13 @@ versioned_array_ptr<K, V, Rlx, Algn>::load()
 }
 
 template <class K, class V, int Rlx, int Algn>
+version_t
+versioned_array_ptr<K, V, Rlx, Algn>::version()
+{
+    return load()->version();
+}
+
+template <class K, class V, int Rlx, int Algn>
 block_array<K, V, Rlx> *
 versioned_array_ptr<K, V, Rlx, Algn>::load_packed()
 {
