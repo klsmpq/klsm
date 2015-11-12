@@ -109,6 +109,8 @@ block_pivots<K, V, Rlx, MaxBlocks>::grow(const int initial_range_size,
                   size);
 }
 
+#define CORRECTED_TENTATIVE_COUNT() (elements_in_tentative_range + 1 - elements_with_maximal_key)
+
 template <class K, class V, int Rlx, int MaxBlocks>
 size_t
 block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
@@ -143,8 +145,11 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
 
         mid = lower_bound + (upper_bound - lower_bound) / 2;
 
-        // Used to obtain better bounds for next iteration.
+        // Used to 1) obtain better bounds for next iteration, and 2) count
+        // the number of items with the maximal encountered key - all but one of these
+        // may be ignored for the sake of relaxation bounds.
         K maximal_key = std::numeric_limits<K>::min();
+        int elements_with_maximal_key = 0;
 
         elements_in_tentative_range = elements_in_range;
         for (size_t block_ix = 0; block_ix < size; block_ix++) {
@@ -159,16 +164,22 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
             auto it = b->peek_nth(pivot);
             const auto end = it + last - pivot;
             for (; it < end; it++, pivot++) {
+                K key = it->m_key;
                 if (it->taken()) {
                     continue;
-                } else if (it->m_key > mid) {
+                } else if (key > mid) {
                     break;
                 } else {
                     elements_in_tentative_range++;
-                    maximal_key = std::max(maximal_key, it->m_key);
+                    if (key > maximal_key) {
+                        maximal_key = key;
+                        elements_with_maximal_key = 1;
+                    } else if (key == maximal_key) {
+                        elements_with_maximal_key++;
+                    }
                 }
 
-                if (elements_in_tentative_range > Rlx + 1) {
+                if (CORRECTED_TENTATIVE_COUNT() > Rlx + 1) {
                     tentative_pivots[block_ix] = pivot;
                     goto outer;
                 }
@@ -177,7 +188,7 @@ block_pivots<K, V, Rlx, MaxBlocks>::resize(const int initial_range_size,
         }
 
 outer:
-        if (elements_in_tentative_range > Rlx + 1) {
+        if (CORRECTED_TENTATIVE_COUNT() > Rlx + 1) {
             if (upper_bound == mid) {
                 goto out;
             }
@@ -213,6 +224,8 @@ out:
      * out of the full available range. */
     return m_count;
 }
+
+#undef CORRECTED_TENTATIVE_COUNT
 
 template <class K, class V, int Rlx, int MaxBlocks>
 size_t
