@@ -471,6 +471,13 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
      * and then deletions, emulating each step on a sequential priority queue
      * and determining the rank error. */
 
+    if (global_deletion_sequence.empty()) {
+        *mean   = 0.;
+        *max    = 0;
+        *stddev = 0.;
+        return;
+    }
+
     assert(!global_deletion_sequence.empty() && !global_insertion_sequence.empty());
 
     uint64_t next_ins_tick = global_insertion_sequence.front().second.tick;
@@ -488,7 +495,7 @@ evaluate_quality(std::vector<void *> &insertion_sequences,
 
     uint64_t rank_sum = 0;
     uint64_t rank_max = 0;
-    std::vector<uint64_t> ranks; 
+    std::vector<uint64_t> ranks;
 
     const uint64_t insertion_count = global_insertion_sequence.size();
     const uint64_t deletion_count = global_deletion_sequence.size();
