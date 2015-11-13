@@ -3,10 +3,10 @@ library(ggplot2)
 library(plyr)
 library(scales)
 
-pqplot <- function(csvfile) {
+pqplot <- function(infile, outfile) {
     # install.packages(c("Rmisc", "ggplot2", "plyr"))
 
-    df <- read.csv(csvfile, header = FALSE)
+    df <- read.csv(infile, header = FALSE)
     colnames(df) <- c("kernel", "p", "throughput")
 
     df$throughput <- df$throughput/1E6
@@ -39,19 +39,20 @@ pqplot <- function(csvfile) {
                       legend.justification = c(1, 1),
                       legend.background = element_rect(fill = alpha("black", 0)))
 
-    figfile <- "fig.png"
-    png(filename = figfile, width = 1024, height = 768)
+    png(filename = outfile, width = 1024, height = 768)
     plot(p)
     invisible(dev.off())
 }
 
 args <- commandArgs(trailingOnly = TRUE)
 if (length(args) == 0) {
-    f <- file("stdin")
+    infile <- file("stdin")
+    outfile <- "stdin.png"
 } else if (length(args) == 1) {
-    f <- args[1]
+    infile <- args[1]
+    outfile <- paste(basename(args[1]), ".png", sep = "")
 } else {
-    stop("USAGE: Rscript plot.R [filename]")
+    stop("USAGE: Rscript plot_throughput.R [filename]")
 }
 
-pqplot(f)
+pqplot(infile, outfile)
