@@ -92,6 +92,7 @@ enum {
 enum {
     KEYS_UNIFORM = 0,
     KEYS_ASCENDING,
+    KEYS_DESCENDING,
     KEYS_COUNT,
 };
 
@@ -176,7 +177,7 @@ usage()
             "USAGE: random [-c] [-i size] [-k keys] [-p nthreads] [-s seed] [-w workload] pq\n"
             "       -c: Print performance counters (default = %d)\n"
             "       -i: Specifies the initial size of the priority queue (default = %d)\n"
-            "       -k: Specifies the key generation type, one of %d: uniform, %d: ascending (default = %d)\n"
+            "       -k: Specifies the key generation type, one of %d: uniform, %d: ascending, %d: descending (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       -w: Specifies the workload type, one of %d: uniform, %d: split, %d: producer (default = %d)\n"
@@ -186,7 +187,7 @@ usage()
             "                   '%s', '%s', '%s')\n",
             DEFAULT_COUNTERS,
             DEFAULT_SIZE,
-            KEYS_UNIFORM, KEYS_ASCENDING, DEFAULT_KEYS,
+            KEYS_UNIFORM, KEYS_ASCENDING, KEYS_DESCENDING, DEFAULT_KEYS,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
             WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, DEFAULT_WORKLOAD,
@@ -273,6 +274,30 @@ public:
 
 private:
     static constexpr uint32_t UPPER_BOUND = 512;
+
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<uint32_t> m_rand_int;
+    uint32_t m_base;
+};
+
+class keygen_descending {
+public:
+    keygen_descending(const struct settings &settings,
+                      const int thread_id) :
+        m_gen(settings.seed + thread_id),
+        m_rand_int(0, UPPER_BOUND),
+        m_base(0)
+    {
+    }
+
+    uint32_t next()
+    {
+        return MAX - m_rand_int(m_gen) - m_base++;
+    }
+
+private:
+    static constexpr uint32_t UPPER_BOUND = 512;
+    static constexpr uint32_t MAX = std::numeric_limits<uint32_t>::max();
 
     std::mt19937 m_gen;
     std::uniform_int_distribution<uint32_t> m_rand_int;
@@ -589,6 +614,8 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_uniform, keygen_uniform>; break;
         case KEYS_ASCENDING:
             fn = bench_thread<PriorityQueue, workload_uniform, keygen_ascending>; break;
+        case KEYS_DESCENDING:
+            fn = bench_thread<PriorityQueue, workload_uniform, keygen_descending>; break;
         default: assert(false);
         }
         break;
@@ -598,6 +625,8 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_split, keygen_uniform>; break;
         case KEYS_ASCENDING:
             fn = bench_thread<PriorityQueue, workload_split, keygen_ascending>; break;
+        case KEYS_DESCENDING:
+            fn = bench_thread<PriorityQueue, workload_split, keygen_descending>; break;
         default: assert(false);
         }
         break;
@@ -607,6 +636,8 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_producer, keygen_uniform>; break;
         case KEYS_ASCENDING:
             fn = bench_thread<PriorityQueue, workload_producer, keygen_ascending>; break;
+        case KEYS_DESCENDING:
+            fn = bench_thread<PriorityQueue, workload_producer, keygen_descending>; break;
         default: assert(false);
         }
         break;
