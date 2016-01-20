@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_option("-a", "--algorithms", dest = "algorithms", default = ",".join(ALGORITHMS),
             help = "Comma-separated list of %s" % ALGORITHMS)
     parser.add_option("-k", "--keygen", dest = "keygen", default = KEYGEN,
-            help = "Keygen (0: uniform, 1: ascending)")
+            help = "Keygen (0: uniform, 1: ascending, 2: descending, 3: restricted8, 4:restricted16)")
     parser.add_option("-p", "--nthreads", dest = "nthreads", default = ",".join(map(str, NCPUS)),
             help = "Comma-separated list of thread counts")
     parser.add_option("-o", "--outfile", dest = "outfile", default = '/dev/null',

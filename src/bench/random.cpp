@@ -93,6 +93,8 @@ enum {
     KEYS_UNIFORM = 0,
     KEYS_ASCENDING,
     KEYS_DESCENDING,
+    KEYS_RESTRICTED_8,
+    KEYS_RESTRICTED_16,
     KEYS_COUNT,
 };
 
@@ -177,7 +179,8 @@ usage()
             "USAGE: random [-c] [-i size] [-k keys] [-p nthreads] [-s seed] [-w workload] pq\n"
             "       -c: Print performance counters (default = %d)\n"
             "       -i: Specifies the initial size of the priority queue (default = %d)\n"
-            "       -k: Specifies the key generation type, one of %d: uniform, %d: ascending, %d: descending (default = %d)\n"
+            "       -k: Specifies the key generation type, one of %d: uniform, %d: ascending, %d: descending,"
+            "           %d: restricted (8-bit), %d: restricted (16-bit) (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
             "       -w: Specifies the workload type, one of %d: uniform, %d: split, %d: producer (default = %d)\n"
@@ -187,7 +190,7 @@ usage()
             "                   '%s', '%s', '%s')\n",
             DEFAULT_COUNTERS,
             DEFAULT_SIZE,
-            KEYS_UNIFORM, KEYS_ASCENDING, KEYS_DESCENDING, DEFAULT_KEYS,
+            KEYS_UNIFORM, KEYS_ASCENDING, KEYS_DESCENDING, KEYS_RESTRICTED_8, KEYS_RESTRICTED_16, DEFAULT_KEYS,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
             WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, DEFAULT_WORKLOAD,
@@ -242,8 +245,9 @@ private:
 class keygen_uniform {
 public:
     keygen_uniform(const struct settings &settings,
-                          const int thread_id) :
-        m_gen(settings.seed + thread_id)
+                   const int thread_id) :
+        m_gen(settings.seed + thread_id),
+        m_rand_int(0, std::numeric_limits<uint32_t>::max())
     {
     }
 
@@ -254,7 +258,7 @@ public:
 
 private:
     std::mt19937 m_gen;
-    std::uniform_int_distribution<> m_rand_int;
+    std::uniform_int_distribution<uint32_t> m_rand_int;
 };
 
 class keygen_ascending {
@@ -302,6 +306,26 @@ private:
     std::mt19937 m_gen;
     std::uniform_int_distribution<uint32_t> m_rand_int;
     uint32_t m_base;
+};
+
+template <uint32_t UPPER_BOUND = std::numeric_limits<uint32_t>::max()>
+class keygen_restricted {
+public:
+    keygen_restricted(const struct settings &settings,
+                      const int thread_id) :
+        m_gen(settings.seed + thread_id),
+        m_rand_int(0, UPPER_BOUND)
+    {
+    }
+
+    uint32_t next()
+    {
+        return m_rand_int(m_gen);
+    }
+
+private:
+    std::mt19937 m_gen;
+    std::uniform_int_distribution<uint32_t> m_rand_int;
 };
 
 template <class PriorityQueue, class WorkLoad, class KeyGeneration>
@@ -616,6 +640,10 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_uniform, keygen_ascending>; break;
         case KEYS_DESCENDING:
             fn = bench_thread<PriorityQueue, workload_uniform, keygen_descending>; break;
+        case KEYS_RESTRICTED_8:
+            fn = bench_thread<PriorityQueue, workload_uniform, keygen_restricted<1 << 8>>; break;
+        case KEYS_RESTRICTED_16:
+            fn = bench_thread<PriorityQueue, workload_uniform, keygen_restricted<1 << 16>>; break;
         default: assert(false);
         }
         break;
@@ -627,6 +655,10 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_split, keygen_ascending>; break;
         case KEYS_DESCENDING:
             fn = bench_thread<PriorityQueue, workload_split, keygen_descending>; break;
+        case KEYS_RESTRICTED_8:
+            fn = bench_thread<PriorityQueue, workload_split, keygen_restricted<1 << 8>>; break;
+        case KEYS_RESTRICTED_16:
+            fn = bench_thread<PriorityQueue, workload_split, keygen_restricted<1 << 16>>; break;
         default: assert(false);
         }
         break;
@@ -638,6 +670,10 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_producer, keygen_ascending>; break;
         case KEYS_DESCENDING:
             fn = bench_thread<PriorityQueue, workload_producer, keygen_descending>; break;
+        case KEYS_RESTRICTED_8:
+            fn = bench_thread<PriorityQueue, workload_producer, keygen_restricted<1 << 8>>; break;
+        case KEYS_RESTRICTED_16:
+            fn = bench_thread<PriorityQueue, workload_producer, keygen_restricted<1 << 16>>; break;
         default: assert(false);
         }
         break;
