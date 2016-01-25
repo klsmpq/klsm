@@ -42,7 +42,7 @@ private:
     };
 
 public:
-    block_storage() : m_blocks { { nullptr } }, m_size(0) { }
+    block_storage() : m_blocks {{{ nullptr }}}, m_size(0) { }
     virtual ~block_storage();
 
     /**
