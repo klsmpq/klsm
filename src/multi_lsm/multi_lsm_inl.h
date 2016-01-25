@@ -17,7 +17,7 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-static thread_local xorshf96 mlsm_local_rng;
+static __thread xorshf96 mlsm_local_rng;
 
 template <class K, class V, int C>
 multi_lsm<K, V, C>::multi_lsm(const size_t num_threads) :

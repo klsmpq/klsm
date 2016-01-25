@@ -26,6 +26,8 @@
 namespace kpq
 {
 
+static __thread bool __xorshf96_initialized;
+
 /**
  * Fast Marsaglia xorshf random number generator.
  */
@@ -37,19 +39,15 @@ public:
     static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
     static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
 
-    xorshf96()
-    {
-        const auto d = std::chrono::high_resolution_clock::now().time_since_epoch();
-        x = std::chrono::duration_cast<std::chrono::nanoseconds>(d).count();
-    }
-
-    xorshf96(const uint64_t seed)
-    {
-        x = seed;
-    }
-
     uint64_t operator()()
     {
+        if (!__xorshf96_initialized) {
+            __xorshf96_initialized = true;
+            x = 123456789 + tid();
+            y = 362436069;
+            z = 521288629;
+        }
+
         x ^= x << 16;
         x ^= x >> 5;
         x ^= x << 1;
@@ -63,9 +61,9 @@ public:
     }
 
 private:
-    uint64_t x = 123456789;
-    uint64_t y = 362436069;
-    uint64_t z = 521288629;
+    uint64_t x;
+    uint64_t y;
+    uint64_t z;
 };
 
 }

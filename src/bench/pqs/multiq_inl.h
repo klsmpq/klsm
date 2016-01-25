@@ -17,7 +17,7 @@
  *  along with kpqueue.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-static thread_local kpq::xorshf96 local_rng;
+static __thread kpq::xorshf96 local_rng;
 
 template <class K, class V, int C>
 multiq<K, V, C>::multiq(const size_t num_threads) :

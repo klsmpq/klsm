@@ -91,9 +91,7 @@ struct counters
 #endif
 };
 
-thread_local counters COUNTERS;
-
-#define ENABLE_COUNTERS 1
+// static __thread counters COUNTERS;
 
 #ifndef ENABLE_COUNTERS
 #define COUNT_INC(C)

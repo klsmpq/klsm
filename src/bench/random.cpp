@@ -20,7 +20,6 @@
 // #define ENABLE_QUALITY 1
 
 #include <ctime>
-#include <future>
 #include <getopt.h>
 #include <queue>
 #include <random>
@@ -329,7 +328,7 @@ static void
 bench_thread(PriorityQueue *pq,
              const int thread_id,
              const struct settings &settings,
-             std::promise<kpq::counters> &&result)
+             uint32_t *opcount)
 {
 #ifdef HAVE_VALGRIND
     CALLGRIND_STOP_INSTRUMENTATION;
@@ -345,13 +344,13 @@ bench_thread(PriorityQueue *pq,
     /* Fill up to initial size. Do this per thread in order to build a balanced DLSM
      * instead of having one local LSM containing all initial elems. */
 
+    uint32_t nops = 0;
+
 #ifdef ENABLE_QUALITY
     uint32_t insertion_id = 0;
 
     auto insertions = new std::vector<std::pair<KEY_TYPE, VAL_TYPE>>();
     auto deletions  = new std::vector<VAL_TYPE>();
-    kpq::COUNTERS.insertion_sequence = insertions;
-    kpq::COUNTERS.deletion_sequence  = deletions;
 #endif
 
     const int slice_size = settings.size / settings.nthreads;
@@ -393,7 +392,7 @@ bench_thread(PriorityQueue *pq,
 #else
             pq->insert(k, k);
 #endif
-            kpq::COUNTERS.inserts++;
+            nops++;
         } else {
             if (pq->delete_min(v)) {
 #ifdef ENABLE_QUALITY
@@ -402,9 +401,9 @@ bench_thread(PriorityQueue *pq,
                                                        , rdtsc()
                                                        });
 #endif
-                kpq::COUNTERS.successful_deletes++;
+                nops++;
             } else {
-                kpq::COUNTERS.failed_deletes++;
+                nops++;
             }
         }
     }
@@ -413,7 +412,7 @@ bench_thread(PriorityQueue *pq,
     CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-    result.set_value(kpq::COUNTERS);
+    *opcount = nops;
 }
 
 #ifdef ENABLE_QUALITY
@@ -676,12 +675,10 @@ bench(PriorityQueue *pq,
     default: assert(false);
     }
 
-    std::vector<std::future<kpq::counters>> futures;
+    std::vector<uint32_t> opcounts(settings.nthreads);
     std::vector<std::thread> threads(settings.nthreads);
     for (int i = 0; i < settings.nthreads; i++) {
-        std::promise<kpq::counters> p;
-        futures.push_back(p.get_future());
-        threads[i] = std::thread(fn, pq, i, settings, std::move(p));
+        threads[i] = std::thread(fn, pq, i, settings, &opcounts[i]);
     }
 
     /* Wait until threads are done filling their queue. */
@@ -710,31 +707,19 @@ bench(PriorityQueue *pq,
     std::vector<void *> deletion_sequences;
 #endif
 
-    kpq::counters counters;
-    for (auto &future : futures) {
-        auto counter = future.get();
-        counters += counter;
-#ifdef ENABLE_QUALITY
-        insertion_sequences.push_back(counter.insertion_sequence);
-        deletion_sequences.push_back(counter.deletion_sequence);
-#endif
+    uint32_t opcount = 0;
+    for (int i = 0; i < settings.nthreads; i++) {
+        opcount += opcounts[i];
     }
 
 #ifdef ENABLE_QUALITY
-    uint64_t max;
-    double mean, stddev;
-    evaluate_quality(insertion_sequences, deletion_sequences, &mean, &max, &stddev);
-    fprintf(stdout, "%f, %lu, %f\n", mean, max, stddev);
+#error Quality not supported
 #else
     const double elapsed = timediff_in_s(start, end);
-    size_t ops_per_s = (size_t)((double)counters.operations() / elapsed);
+    size_t ops_per_s = (size_t)((double)opcount / elapsed);
 
     fprintf(stdout, "%zu\n", ops_per_s);
 #endif
-
-    if (settings.print_counters) {
-        counters.print();
-    }
 
     return ret;
 }
