@@ -5,7 +5,6 @@ find_package(Doxygen)
 find_package(Threads REQUIRED)
 
 include(FindPkgConfig)
-pkg_search_module(GSL REQUIRED gsl)
 pkg_search_module(HWLOC REQUIRED hwloc)
 pkg_search_module(VALGRIND valgrind)
 
