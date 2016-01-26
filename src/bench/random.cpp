@@ -718,7 +718,7 @@ bench(PriorityQueue *pq,
     const double elapsed = timediff_in_s(start, end);
     size_t ops_per_s = (size_t)((double)opcount / elapsed);
 
-    fprintf(stdout, "%zu\n", ops_per_s);
+    fprintf(stdout, "%s,%d,%zu\n", settings.type.c_str(), settings.nthreads, ops_per_s);
 #endif
 
     return ret;
