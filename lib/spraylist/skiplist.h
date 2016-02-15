@@ -62,8 +62,8 @@ extern uint8_t levelmax[64];
 
 typedef uint32_t val_t;
 typedef intptr_t level_t;
-#define VAL_MIN                         INT_MIN
-#define VAL_MAX                         INT_MAX
+#define VAL_MIN                         0
+#define VAL_MAX                         UINT32_MAX
 
 typedef ALIGNED(64) struct sl_node
 {
