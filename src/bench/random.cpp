@@ -81,6 +81,7 @@ enum {
     WORKLOAD_UNIFORM = 0,
     WORKLOAD_SPLIT,
     WORKLOAD_PRODUCER,
+    WORKLOAD_ALTERNATING,
     WORKLOAD_COUNT,
 };
 
@@ -183,7 +184,7 @@ usage()
             "           %d: restricted (8-bit), %d: restricted (16-bit) (default = %d)\n"
             "       -p: Specifies the number of threads (default = %d)\n"
             "       -s: Specifies the value used to seed the random number generator (default = %d)\n"
-            "       -w: Specifies the workload type, one of %d: uniform, %d: split, %d: producer (default = %d)\n"
+            "       -w: Specifies the workload type, one of %d: uniform, %d: split, %d: producer, %d: alternating (default = %d)\n"
             "       pq: The data structure to use as the backing priority queue\n"
             "           (one of '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
@@ -193,7 +194,7 @@ usage()
             KEYS_UNIFORM, KEYS_ASCENDING, KEYS_DESCENDING, KEYS_RESTRICTED_8, KEYS_RESTRICTED_16, DEFAULT_KEYS,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
-            WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, DEFAULT_WORKLOAD,
+            WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, WORKLOAD_ALTERNATING, DEFAULT_WORKLOAD,
             PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM16, PQ_KLSM128, PQ_KLSM256, PQ_KLSM4096,
             PQ_LINDEN, PQ_LSM, PQ_MLSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
     exit(EXIT_FAILURE);
@@ -240,6 +241,20 @@ public:
 
 private:
     const int m_thread_id;
+};
+
+class workload_alternating {
+public:
+    workload_alternating(const struct settings &,
+                         const int) :
+        m_insert(0)
+    {
+    }
+
+    bool insert() { return ((m_insert++ & 1) == 1); }
+
+private:
+    uint32_t m_insert;
 };
 
 class keygen_uniform {
@@ -674,6 +689,21 @@ bench(PriorityQueue *pq,
             fn = bench_thread<PriorityQueue, workload_producer, keygen_restricted<1 << 8>>; break;
         case KEYS_RESTRICTED_16:
             fn = bench_thread<PriorityQueue, workload_producer, keygen_restricted<1 << 16>>; break;
+        default: assert(false);
+        }
+        break;
+    case WORKLOAD_ALTERNATING:
+        switch (settings.keys) {
+        case KEYS_UNIFORM:
+            fn = bench_thread<PriorityQueue, workload_alternating, keygen_uniform>; break;
+        case KEYS_ASCENDING:
+            fn = bench_thread<PriorityQueue, workload_alternating, keygen_ascending>; break;
+        case KEYS_DESCENDING:
+            fn = bench_thread<PriorityQueue, workload_alternating, keygen_descending>; break;
+        case KEYS_RESTRICTED_8:
+            fn = bench_thread<PriorityQueue, workload_alternating, keygen_restricted<1 << 8>>; break;
+        case KEYS_RESTRICTED_16:
+            fn = bench_thread<PriorityQueue, workload_alternating, keygen_restricted<1 << 16>>; break;
         default: assert(false);
         }
         break;
