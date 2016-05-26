@@ -106,7 +106,7 @@ k_lsm<K, V, Rlx>::delete_min(V &val)
         m_shared.find_min(best_shared);
 
         if (!best_dist.empty() && !best_shared.empty()) {
-            if (best_dist.m_key < best_shared.m_key) {
+            if (best_dist.m_key <= best_shared.m_key) {
                 COUNT_INC(dlsm_deletes);
                 return best_dist.take(val);
             } else {
