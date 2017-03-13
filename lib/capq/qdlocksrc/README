@@ -1,0 +1,18 @@
+This directory contains parts of qd_lock_lib
+
+For more information about qd_lock_lib see:
+
+* http://www.it.uu.se/research/group/languages/software/qd_lock_lib
+
+  for background information and
+
+* https://github.com/kjellwinblad/qd_lock_lib
+
+  for source code.
+
+
+License
+-------
+
+This version of qd_lock_lib is licensed under GNU General Public
+License version 3. See LICENSE file for more information.

@@ -32,6 +32,7 @@
 #endif
 
 #include "pqs/cheap.h"
+#include "pqs/cppcapq.h"
 #include "pqs/globallock.h"
 #include "pqs/linden.h"
 #include "pqs/multiq.h"
@@ -47,6 +48,10 @@
 #include "itree.h"
 #include "util.h"
 
+#define PQ_CADM       "cadm"     /* CA-DM in  "The Contention Avoiding Concurrent Priority Queue" LCPC'2016 */
+#define PQ_CAIN       "cain"     /* CA-IN in  ... */
+#define PQ_CAPQ       "capq"     /* CA-PQ in  ... */
+#define PQ_CATREE     "catree"   /* CATree in ... */
 #define PQ_CHEAP      "cheap"
 #define PQ_DLSM       "dlsm"
 #define PQ_GLOBALLOCK "globallock"
@@ -188,15 +193,17 @@ usage()
             "       pq: The data structure to use as the backing priority queue\n"
             "           (one of '%s', '%s', '%s', '%s', '%s', '%s',\n"
             "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
-            "                   '%s', '%s', '%s')\n",
+            "                   '%s', '%s', '%s', '%s', '%s', '%s',\n"
+            "                   '%s')\n",
             DEFAULT_COUNTERS,
             DEFAULT_SIZE,
             KEYS_UNIFORM, KEYS_ASCENDING, KEYS_DESCENDING, KEYS_RESTRICTED_8, KEYS_RESTRICTED_16, DEFAULT_KEYS,
             DEFAULT_NTHREADS,
             DEFAULT_SEED,
             WORKLOAD_UNIFORM, WORKLOAD_SPLIT, WORKLOAD_PRODUCER, WORKLOAD_ALTERNATING, DEFAULT_WORKLOAD,
-            PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM16, PQ_KLSM128, PQ_KLSM256, PQ_KLSM4096,
-            PQ_LINDEN, PQ_LSM, PQ_MLSM, PQ_MULTIQ, PQ_SEQUENCE, PQ_SKIP, PQ_SLSM, PQ_SPRAY);
+            PQ_CADM, PQ_CAIN, PQ_CAPQ, PQ_CATREE, PQ_CHEAP, PQ_DLSM, PQ_GLOBALLOCK, PQ_KLSM16,
+            PQ_KLSM128, PQ_KLSM256, PQ_KLSM4096, PQ_LINDEN, PQ_LSM, PQ_MLSM, PQ_MULTIQ, PQ_SEQUENCE,
+            PQ_SKIP, PQ_SLSM, PQ_SPRAY);
     exit(EXIT_FAILURE);
 }
 
@@ -833,6 +840,21 @@ main(int argc,
         usage();
     }
 
+#ifndef ENABLE_QUALITY
+    if (settings.type == PQ_CADM) {
+        kpqbench::CPPCAPQ<true, false, true> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_CAIN) {
+        kpqbench::CPPCAPQ<false, true, true> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_CAPQ) {
+        kpqbench::CPPCAPQ<true, true, true> pq;
+        ret = bench(&pq, settings);
+    } else if (settings.type == PQ_CATREE) {
+        kpqbench::CPPCAPQ<false, false, true> pq;
+        ret = bench(&pq, settings);
+    } else
+#endif
     if (settings.type == PQ_CHEAP) {
         kpqbench::cheap<KEY_TYPE, VAL_TYPE> pq;
         ret = bench(&pq, settings);
@@ -857,7 +879,7 @@ main(int argc,
 #ifndef ENABLE_QUALITY
     } else if (settings.type == PQ_LINDEN) {
         kpqbench::Linden pq(kpqbench::Linden::DEFAULT_OFFSET);
-        pq.insert(42, 42); /* A hack to avoid segfault on destructor in empty linden queue. */
+        pq.insert((uint32_t)42, (uint32_t)42); /* A hack to avoid segfault on destructor in empty linden queue. */
         ret = bench(&pq, settings);
     } else if (settings.type == PQ_LSM) {
         kpq::LSM<KEY_TYPE> pq;

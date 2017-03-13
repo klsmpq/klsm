@@ -20,6 +20,7 @@ add_executable(random random.cpp itree.cpp util.cpp)
 target_link_libraries(random
     ${CMAKE_THREAD_LIBS_INIT}
     ${HWLOC_LIBRARIES}
+    capq
     linden
     sequence_heap
     sequential_lsm
