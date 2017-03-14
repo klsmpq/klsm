@@ -60,7 +60,7 @@ extern "C" {
 #endif
 
 #ifdef __sparc__
-#  define PAUSE    __asm__ volatile("rd    %%ccr, %%g0\n\t" \
+#  define PAUSE    asm volatile("rd    %%ccr, %%g0\n\t" \
 				::: "memory")
 
 #elif defined(__tile__)
@@ -86,7 +86,7 @@ extern "C" {
     uint32_t i;
     for (i = 0; i < num_reps; i++)
       {
-    __asm__ volatile ("NOP");
+	asm volatile ("NOP");
       }
   }
 

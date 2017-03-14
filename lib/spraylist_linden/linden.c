@@ -131,7 +131,6 @@ locate_preds(pq_t *pq, pkey_t k, node_t **preds, node_t **succs)
     d = is_marked_ref(x_next);
     x_next = get_unmarked_ref(x_next);
     assert(x_next != NULL);
-
     while (x_next->k < k || is_marked_ref(x_next->next[0]) 
         || ((i == 0) && d)) {
       /* Record bottom level deleted node not having delete flag 
@@ -181,7 +180,7 @@ retry:
 
   /* return if key already exists, i.e., is present in a non-deleted
    * node */
-  if (succs[0]->k == k && !is_marked_ref(preds[0]->next[0]) && preds[0]->next[0] == succs[0]) {
+  if (succs[0]->k == k && succs[0]->v == v && !is_marked_ref(preds[0]->next[0]) && preds[0]->next[0] == succs[0]) {
     new->inserting = 0;
     free_node(new);
     //	goto out;
@@ -297,10 +296,15 @@ restructure(pq_t *pq)
  * Traverse level 0 next pointers until one is found that does
  * not have the delete bit set. 
  */
+pval_t
+deletemin(pq_t *pq/*, thread_data_t *d*/) {
+  pkey_t key;
+  return deletemin_key(pq, &key/*, d*/);
+}
+
   pval_t
-deletemin(pq_t *pq, thread_data_t *d)
-{
-  pval_t   v = NULL;
+deletemin_key(pq_t *pq, pkey_t *key/*, thread_data_t *d*/) {
+  pval_t   v = 0;
   node_t *x, *nxt, *obs_head = NULL, *newhead, *cur;
   int offset, lvl;
 
@@ -321,6 +325,7 @@ deletemin(pq_t *pq, thread_data_t *d)
 
     // tail cannot be deleted
     if (get_unmarked_ref(nxt) == pq->tail) {
+      *key = -1; // empty flag
       goto out;
     }
 
@@ -334,14 +339,15 @@ deletemin(pq_t *pq, thread_data_t *d)
     /* the marker is on the preceding pointer */
     /* linearisation point deletemin */
     nxt = __sync_fetch_and_or(&x->next[0], 1);
-    if (is_marked_ref(nxt)) {
-      d->nb_collisions++;
-    }
+    /* if (is_marked_ref(nxt)) { */
+    /*   d->nb_collisions++; */
+    /* } */
   }
   while ( (x = get_unmarked_ref(nxt)) && is_marked_ref(nxt) );
 
   assert(!is_marked_ref(x));
 
+  *key = x->k;
   v = x->v;
 
 
@@ -404,8 +410,10 @@ pq_init(int max_offset)
   h->level = NUM_LEVELS;
   t->level = NUM_LEVELS;
 
-  for ( i = 0; i < NUM_LEVELS; i++ )
+  for ( i = 0; i < NUM_LEVELS; i++ ){
     h->next[i] = t;
+    t->next[i] = NULL;
+  }
 
   pq = malloc(sizeof *pq);
   pq->head = h;

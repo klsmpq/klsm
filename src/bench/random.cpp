@@ -904,7 +904,7 @@ main(int argc,
         ret = bench(&pq, settings);
 #ifndef ENABLE_QUALITY
     } else if (settings.type == PQ_SPRAY) {
-        kpqbench::spraylist pq;
+        kpqbench::spraylist pq(settings.nthreads);
         ret = bench(&pq, settings);
 #endif
     } else {
