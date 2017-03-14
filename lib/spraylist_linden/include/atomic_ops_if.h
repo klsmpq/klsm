@@ -63,7 +63,7 @@ uint8_t oldval;
 //Test-and-set
 #  define TAS_U8(a) tas_uint8(a)
 //Memory barrier
-#  define MEM_BARRIER __asm__ volatile("membar #LoadLoad | #LoadStore | #StoreLoad | #StoreStore");
+#  define MEM_BARRIER asm volatile("membar #LoadLoad | #LoadStore | #StoreLoad | #StoreStore"); 
 //end of sparc code
 
 #elif defined(__tile__)

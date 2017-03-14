@@ -1,0 +1,24 @@
+The code in this folder is based on the SprayList code with commit id
+e6c851d93156646efa4ce0a9dbdb2e1a3e8d3693 (*) but contains a patch that
+improves memory handling for the SprayList.
+
+Without the patch it is only possible to specify how much memory each
+thread will be able to allocate. This is problematic for the single
+source shortest paths benchmark as it makes it impossible to run the
+benchmark with a single thread and many threads using the same
+binary. The benchmark would either run out of memory when a single
+thread is used or there would not be enough memory on the machine when
+many threads are used.
+
+With the patch one can specify how much memory all threads can
+allocated together (the #define SSALLOC_SIZE_ALL in
+include/ssalloc.h). The patch makes sure that this amount of memory is
+divided between the threads (Note that the global variable
+number_of_threads has to be set to the correct value for this to
+work).
+
+(*) https://github.com/jkopinsky/SprayList/tree/e6c851d93156646efa4ce0a9dbdb2e1a3e8d3693
+
+
+
+
