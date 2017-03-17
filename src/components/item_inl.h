@@ -39,8 +39,9 @@ item<K, V>::initialize(const K &key, const V &val)
 template <class K, class V>
 bool
 item<K, V>::take(const version_t version,
-                 V &val)
+                 K &key, V &val)
 {
+    key = m_key;
     val = m_val;
 
     version_t expected = version;
@@ -49,6 +50,14 @@ item<K, V>::take(const version_t version,
                                              std::memory_order_relaxed);
 }
 
+template <class K, class V>
+bool
+item<K, V>::take(const version_t version,
+                 V &val)
+{
+    K key;
+    return take(version, key, val);
+}
 
 template <class K, class V>
 K

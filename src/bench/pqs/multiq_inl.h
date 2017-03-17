@@ -36,13 +36,12 @@ multiq<K, V, C>::~multiq()
 
 template <class K, class V, int C>
 bool
-multiq<K, V, C>::delete_min(V &value)
+multiq<K, V, C>::delete_min(K &key, V &value)
 {
     /* Peek at two random queues and lock the one with the minimal item. */
-
     const int nqueues = num_queues();
     size_t i, j;
-
+    int retry_count = 25 * C;
     while (true) {
         do {
             i = local_rng() % nqueues;
@@ -57,11 +56,17 @@ multiq<K, V, C>::delete_min(V &value)
         const auto item = pq.top();
 
         if (item.key == SENTINEL_KEY) {
-            // Empty queue, retry indefinitely.
-            // TODO: Not a permanent solution, but original data structure does the same.
+            // Empty queue, retry a few times.
+            // TODO: Not a permanent solution
             unlock(i);
-            return false;
+            if (retry_count == 0) {
+                return false;
+            } else {
+                retry_count--;
+                continue;
+            }
         } else {
+            key = item.key;
             value = item.value;
             pq.pop();
             unlock(i);
@@ -71,6 +76,15 @@ multiq<K, V, C>::delete_min(V &value)
 
     assert(false);  // Never reached.
     return false;
+}
+
+
+template <class K, class V, int C>
+bool
+multiq<K, V, C>::delete_min(V &value)
+{
+    K key;
+    return delete_min(key, value);
 }
 
 template <class K, class V, int C>

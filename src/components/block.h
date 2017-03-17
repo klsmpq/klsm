@@ -49,6 +49,7 @@ public:
         bool taken() const { return m_item->version() != m_version; }
         bool empty() const { return (m_item == nullptr); }
         bool take(V &val) { return m_item->take(m_version, val); }
+        bool take(K &key, V &val) { return m_item->take(m_version, key, val); }
 
         K m_key;
         item<K, V> *m_item;
