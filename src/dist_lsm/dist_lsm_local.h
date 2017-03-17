@@ -50,7 +50,8 @@ public:
                 shared_lsm<K, V, Rlx> *slsm);
     bool delete_min(dist_lsm<K, V, Rlx> *parent,
                     V &val);
-
+    bool delete_min(dist_lsm<K, V, Rlx> *parent,
+                    K &key, V &val);
     /** Iterates through local items and returns the best one found.
      *  In the process of finding the minimal item, unowned items
      *  in each block are removed and block merges are performed if possible.

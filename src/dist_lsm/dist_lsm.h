@@ -56,6 +56,7 @@ public:
      * If a locally minimal element is successfully found and removed, true is returned.
      */
     bool delete_min(V &val);
+    bool delete_min(K &key, V &val);
     void find_min(typename block<K, V>::peek_t &best);
 
     int spy();

@@ -49,6 +49,13 @@ dist_lsm<K, V, Rlx>::delete_min(V &val)
 }
 
 template <class K, class V, int Rlx>
+bool
+dist_lsm<K, V, Rlx>::delete_min(K &key, V &val)
+{
+    return m_local.get()->delete_min(this, key, val);
+}
+
+template <class K, class V, int Rlx>
 void
 dist_lsm<K, V, Rlx>::find_min(typename block<K, V>::peek_t &best)
 {

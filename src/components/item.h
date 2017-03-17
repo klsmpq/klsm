@@ -39,6 +39,8 @@ public:
                     const V &val);
     bool take(const version_t version,
               V &val);
+    bool take(const version_t version,
+              K &key, V &val);
 
     K key() const;
     V val() const;
