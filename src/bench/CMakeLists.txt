@@ -39,3 +39,19 @@ target_link_libraries(shortest_paths
     skip_queue
     thread_local_ptr
 )
+
+add_executable(file_shortest_paths file_shortest_paths.cpp util.cpp)
+target_link_libraries(file_shortest_paths
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${HWLOC_LIBRARIES}
+    linden
+    sequence_heap
+    sequential_lsm
+    skip_queue
+    thread_local_ptr
+    spraylist
+    capq
+    #/usr/local/lib/libpapi.a
+)
+
+add_executable(generate_random_graph generate_random_graph.cpp)
